@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Freestanding range with oven">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f6f7"/><stop offset="1" stop-color="#e3e4e8"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#bfc5cc"/><stop offset=".18" stop-color="#e9ecef"/><stop offset=".55" stop-color="#d2d7dd"/><stop offset="1" stop-color="#b6bdc4"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#39424a"/><stop offset=".45" stop-color="#20272d"/><stop offset="1" stop-color="#161b20"/></linearGradient>
+    <linearGradient id="handle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7d848c"/><stop offset=".4" stop-color="#ccd1d7"/><stop offset="1" stop-color="#767d85"/></linearGradient>
+    <radialGradient id="sh"><stop offset="0" stop-color="#0c0d10" stop-opacity=".26"/><stop offset="1" stop-color="#0c0d10" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="540" rx="220" ry="26" fill="url(#sh)"/>
+  <rect x="212" y="96" width="376" height="66" rx="8" fill="url(#body)" stroke="#98a0a8" stroke-width="2"/>
+  <rect x="252" y="116" width="180" height="26" rx="4" fill="#1d2429"/>
+  <rect x="266" y="126" width="52" height="7" rx="2" fill="#c8202b"/>
+  <circle cx="474" cy="129" r="13" fill="#8d949c"/><circle cx="474" cy="129" r="9" fill="#eceff2"/>
+  <circle cx="516" cy="129" r="13" fill="#8d949c"/><circle cx="516" cy="129" r="9" fill="#eceff2"/>
+  <circle cx="558" cy="129" r="13" fill="#8d949c"/><circle cx="558" cy="129" r="9" fill="#eceff2"/>
+  <rect x="212" y="166" width="376" height="42" rx="6" fill="#2b333a" stroke="#8f969e" stroke-width="2"/>
+  <ellipse cx="290" cy="187" rx="42" ry="13" fill="#111619"/><ellipse cx="290" cy="185" rx="30" ry="8" fill="#3c454d"/>
+  <ellipse cx="400" cy="187" rx="34" ry="11" fill="#111619"/><ellipse cx="400" cy="185" rx="24" ry="7" fill="#3c454d"/>
+  <ellipse cx="510" cy="187" rx="42" ry="13" fill="#111619"/><ellipse cx="510" cy="185" rx="30" ry="8" fill="#3c454d"/>
+  <rect x="212" y="208" width="376" height="316" rx="10" fill="url(#body)" stroke="#98a0a8" stroke-width="2"/>
+  <rect x="236" y="256" width="328" height="196" rx="8" fill="url(#glass)" stroke="#8f969e" stroke-width="2"/>
+  <rect x="258" y="278" width="284" height="152" rx="4" fill="#3a444c" opacity=".55"/>
+  <path d="M300 300 h200 M300 340 h200 M300 380 h200" stroke="#7d868f" stroke-width="2" opacity=".5"/>
+  <rect x="236" y="226" width="328" height="12" rx="6" fill="url(#handle)"/>
+  <rect x="236" y="470" width="328" height="42" rx="6" fill="#c8cdd3" stroke="#a3aab2" stroke-width="1.5"/>
+  <rect x="330" y="486" width="140" height="9" rx="4.5" fill="url(#handle)"/>
+</svg>

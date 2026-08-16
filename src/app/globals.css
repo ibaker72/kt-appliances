@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   KT Appliances — brand tokens
+   Black / white / retail red, with a warm off-white for merchandising bands.
+   The site has one fixed identity, so there is no OS dark-mode variant.
+   ========================================================================== */
+
+@theme {
+  /* Ink — navigation, headings, contrast bands, footer */
+  --color-ink-950: #0a0b0d;
+  --color-ink-900: #121417;
+  --color-ink-850: #191c20;
+  --color-ink-800: #23272c;
+  --color-ink-700: #333940;
+  --color-ink-600: #4b525a;
+  --color-ink-500: #6b737d;
+  --color-ink-400: #929aa3;
+  --color-ink-300: #b9bfc6;
+  --color-ink-200: #d5d9de;
+  --color-ink-100: #e8eaed;
+
+  /* Retail red — prices, primary CTAs, sale and active states. Used sparingly. */
+  --color-brand-600: #a3141d;
+  --color-brand-500: #c8202b;
+  --color-brand-400: #e02734;
+  --color-brand-50: #fdf2f2;
+
+  /* Warm neutrals — section backgrounds and hairlines */
+  --color-bone-50: #faf9f7;
+  --color-bone-100: #f4f2ef;
+  --color-bone-200: #ebe8e3;
+  --color-line: #e0ddd7;
+  --color-line-dark: #2c3137;
+
+  /* Supporting accents */
+  --color-success-600: #1c7c4a;
+  --color-success-50: #eef8f2;
+
+  --font-display: var(--font-archivo), "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Arial, sans-serif;
+
+  --radius-card: 3px;
+
+  --shadow-card: 0 1px 2px rgb(10 11 13 / 0.05);
+  --shadow-lift: 0 12px 30px -12px rgb(10 11 13 / 0.28);
+  --shadow-header: 0 1px 0 rgb(10 11 13 / 0.08);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: #ffffff;
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-feature-settings: "kern" 1;
+    text-rendering: optimizeLegibility;
+    /* Room for the mobile action bar so nothing sits underneath it. */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-500);
+    color: #ffffff;
+  }
+
+  /* One consistent focus treatment across links, buttons and form controls. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Dark surfaces need a light ring to stay visible. */
+  .on-dark :where(a, button, input, select, summary, [tabindex]):focus-visible {
+    outline-color: #ffffff;
+  }
+
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    font-size: 16px; /* prevents iOS zoom-on-focus */
+  }
+}
+
+@layer components {
+  /* Small uppercase label used above section headings and on spec rows. */
+  .eyebrow {
+    font-family: var(--font-display);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  /* Prices and any figure that should line up in a column. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Diagonal hazard band used on the top announcement strip. */
+  .stripe-band {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--color-ink-950) 0 10px,
+      var(--color-ink-850) 10px 20px
+    );
+  }
+}
+
+@layer utilities {
+  /* Product image hover: the photo grows, the frame does not. */
+  .zoom-frame img {
+    transition: transform 420ms cubic-bezier(0.2, 0.6, 0.2, 1);
+  }
+  .zoom-frame:hover img {
+    transform: scale(1.035);
+  }
+
+  /* Clamp helpers for card copy so grids stay on a rhythm. */
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

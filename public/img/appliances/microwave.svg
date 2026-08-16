@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Over-the-range microwave">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f6f7"/><stop offset="1" stop-color="#e3e4e8"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#bfc5cc"/><stop offset=".16" stop-color="#eaedf0"/><stop offset=".52" stop-color="#d3d8de"/><stop offset="1" stop-color="#b6bdc4"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#39424a"/><stop offset=".5" stop-color="#20272d"/><stop offset="1" stop-color="#171c21"/></linearGradient>
+    <linearGradient id="handle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7d848c"/><stop offset=".4" stop-color="#ccd1d7"/><stop offset="1" stop-color="#767d85"/></linearGradient>
+    <radialGradient id="sh"><stop offset="0" stop-color="#0c0d10" stop-opacity=".24"/><stop offset="1" stop-color="#0c0d10" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="446" rx="230" ry="24" fill="url(#sh)"/>
+  <rect x="152" y="184" width="496" height="248" rx="12" fill="url(#body)" stroke="#98a0a8" stroke-width="2"/>
+  <rect x="168" y="200" width="316" height="200" rx="8" fill="url(#glass)" stroke="#8f969e" stroke-width="2"/>
+  <rect x="188" y="220" width="276" height="160" rx="4" fill="#3a444c" opacity=".5"/>
+  <circle cx="326" cy="300" r="52" fill="#4b555e" opacity=".35"/>
+  <rect x="496" y="200" width="136" height="200" rx="6" fill="#dfe3e7" stroke="#a3aab2" stroke-width="1.5"/>
+  <rect x="510" y="214" width="108" height="34" rx="4" fill="#1d2429"/>
+  <rect x="522" y="226" width="52" height="10" rx="2" fill="#c8202b"/>
+  <g fill="#b6bdc4">
+    <rect x="510" y="264" width="30" height="20" rx="3"/><rect x="549" y="264" width="30" height="20" rx="3"/><rect x="588" y="264" width="30" height="20" rx="3"/>
+    <rect x="510" y="292" width="30" height="20" rx="3"/><rect x="549" y="292" width="30" height="20" rx="3"/><rect x="588" y="292" width="30" height="20" rx="3"/>
+    <rect x="510" y="320" width="30" height="20" rx="3"/><rect x="549" y="320" width="30" height="20" rx="3"/><rect x="588" y="320" width="30" height="20" rx="3"/>
+  </g>
+  <rect x="510" y="356" width="108" height="30" rx="4" fill="#c8202b" opacity=".9"/>
+  <rect x="176" y="410" width="300" height="12" rx="6" fill="url(#handle)"/>
+</svg>

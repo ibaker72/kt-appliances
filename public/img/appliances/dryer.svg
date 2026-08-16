@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Front load dryer">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f6f7"/><stop offset="1" stop-color="#e3e4e8"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c6ccd3"/><stop offset=".18" stop-color="#eef1f4"/><stop offset=".55" stop-color="#d9dee3"/><stop offset="1" stop-color="#bac1c8"/></linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eceff2"/><stop offset="1" stop-color="#d2d7dd"/></linearGradient>
+    <linearGradient id="door" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#454f58"/><stop offset=".5" stop-color="#2b333a"/><stop offset="1" stop-color="#1d2429"/></linearGradient>
+    <radialGradient id="sh"><stop offset="0" stop-color="#0c0d10" stop-opacity=".26"/><stop offset="1" stop-color="#0c0d10" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="536" rx="200" ry="26" fill="url(#sh)"/>
+  <rect x="252" y="112" width="296" height="410" rx="12" fill="url(#body)" stroke="#9aa2aa" stroke-width="2"/>
+  <rect x="266" y="126" width="268" height="70" rx="6" fill="url(#panel)" stroke="#a3aab2" stroke-width="1.5"/>
+  <circle cx="482" cy="161" r="20" fill="#8d949c"/><circle cx="482" cy="161" r="14" fill="#e9ecef"/><rect x="480" y="149" width="4" height="10" rx="2" fill="#c8202b"/>
+  <rect x="290" y="146" width="110" height="8" rx="4" fill="#b3bac1"/>
+  <rect x="290" y="164" width="78" height="6" rx="3" fill="#c0c6cd"/>
+  <rect x="290" y="178" width="52" height="6" rx="3" fill="#c0c6cd"/>
+  <rect x="278" y="222" width="244" height="278" rx="14" fill="#b9c0c7"/>
+  <rect x="288" y="232" width="224" height="258" rx="10" fill="url(#door)" stroke="#8f969e" stroke-width="2"/>
+  <rect x="308" y="252" width="184" height="6" rx="3" fill="#ffffff" opacity=".12"/>
+  <path d="M512 340 h16 a10 10 0 0 1 0 32 h-16z" fill="#9199a1"/>
+  <rect x="272" y="522" width="26" height="14" rx="3" fill="#8b9199"/>
+  <rect x="502" y="522" width="26" height="14" rx="3" fill="#8b9199"/>
+</svg>

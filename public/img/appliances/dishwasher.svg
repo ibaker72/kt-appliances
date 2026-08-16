@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Built-in dishwasher">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f6f7"/><stop offset="1" stop-color="#e3e4e8"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#bfc5cc"/><stop offset=".16" stop-color="#eaedf0"/><stop offset=".52" stop-color="#d3d8de"/><stop offset="1" stop-color="#b6bdc4"/></linearGradient>
+    <linearGradient id="handle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7d848c"/><stop offset=".4" stop-color="#ccd1d7"/><stop offset="1" stop-color="#767d85"/></linearGradient>
+    <radialGradient id="sh"><stop offset="0" stop-color="#0c0d10" stop-opacity=".26"/><stop offset="1" stop-color="#0c0d10" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="530" rx="205" ry="26" fill="url(#sh)"/>
+  <rect x="244" y="128" width="312" height="388" rx="10" fill="url(#body)" stroke="#98a0a8" stroke-width="2"/>
+  <rect x="256" y="140" width="288" height="52" rx="5" fill="#20272d" stroke="#8f969e" stroke-width="1.5"/>
+  <rect x="276" y="160" width="58" height="8" rx="3" fill="#c8202b"/>
+  <circle cx="380" cy="164" r="6" fill="#7d868f"/><circle cx="404" cy="164" r="6" fill="#7d868f"/><circle cx="428" cy="164" r="6" fill="#7d868f"/>
+  <rect x="464" y="158" width="60" height="12" rx="3" fill="#39424a"/>
+  <rect x="256" y="204" width="288" height="18" rx="9" fill="url(#handle)"/>
+  <rect x="256" y="240" width="288" height="264" rx="6" fill="#cfd4da" stroke="#a3aab2" stroke-width="1.5"/>
+  <path d="M256 300 h288 M256 372 h288 M256 444 h288" stroke="#aeb5bd" stroke-width="1.5" opacity=".7"/>
+  <rect x="268" y="516" width="24" height="12" rx="3" fill="#8b9199"/>
+  <rect x="508" y="516" width="24" height="12" rx="3" fill="#8b9199"/>
+</svg>

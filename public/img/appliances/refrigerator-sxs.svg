@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Side-by-side refrigerator">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f6f7"/><stop offset="1" stop-color="#e3e4e8"/></linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#bfc5cc"/><stop offset=".16" stop-color="#e6e9ed"/><stop offset=".48" stop-color="#ced3da"/><stop offset=".8" stop-color="#e8ebee"/><stop offset="1" stop-color="#b7bdc5"/></linearGradient>
+    <linearGradient id="steel2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b4bac2"/><stop offset=".2" stop-color="#dde1e6"/><stop offset=".6" stop-color="#c7cdd4"/><stop offset="1" stop-color="#aeb5bd"/></linearGradient>
+    <linearGradient id="handle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7d848c"/><stop offset=".4" stop-color="#c9ced4"/><stop offset="1" stop-color="#767d85"/></linearGradient>
+    <radialGradient id="sh"><stop offset="0" stop-color="#0c0d10" stop-opacity=".26"/><stop offset="1" stop-color="#0c0d10" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="543" rx="215" ry="27" fill="url(#sh)"/>
+  <rect x="252" y="70" width="296" height="460" rx="12" fill="url(#steel)" stroke="#98a0a8" stroke-width="2"/>
+  <rect x="262" y="80" width="118" height="440" rx="6" fill="url(#steel2)" stroke="#9aa2aa" stroke-width="1.5"/>
+  <rect x="392" y="80" width="146" height="440" rx="6" fill="url(#steel2)" stroke="#9aa2aa" stroke-width="1.5"/>
+  <rect x="284" y="118" width="74" height="112" rx="5" fill="#8f959d" opacity=".5"/>
+  <rect x="289" y="123" width="64" height="102" rx="4" fill="#e9ecef" opacity=".6"/>
+  <rect x="300" y="142" width="42" height="4" rx="2" fill="#7f868e" opacity=".65"/>
+  <rect x="300" y="160" width="30" height="4" rx="2" fill="#7f868e" opacity=".65"/>
+  <rect x="300" y="178" width="36" height="4" rx="2" fill="#7f868e" opacity=".65"/>
+  <rect x="358" y="132" width="10" height="330" rx="5" fill="url(#handle)"/>
+  <rect x="404" y="132" width="10" height="330" rx="5" fill="url(#handle)"/>
+  <rect x="272" y="530" width="26" height="14" rx="3" fill="#8b9199"/>
+  <rect x="502" y="530" width="26" height="14" rx="3" fill="#8b9199"/>
+</svg>

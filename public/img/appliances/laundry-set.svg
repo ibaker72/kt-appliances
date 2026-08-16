@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Matched washer and dryer set">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f6f7"/><stop offset="1" stop-color="#e3e4e8"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c6ccd3"/><stop offset=".18" stop-color="#eff1f4"/><stop offset=".55" stop-color="#dadee3"/><stop offset="1" stop-color="#bac1c8"/></linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eceff2"/><stop offset="1" stop-color="#d2d7dd"/></linearGradient>
+    <radialGradient id="glass" cx=".38" cy=".32"><stop offset="0" stop-color="#5c6873"/><stop offset=".55" stop-color="#2f3941"/><stop offset="1" stop-color="#1b2126"/></radialGradient>
+    <radialGradient id="sh"><stop offset="0" stop-color="#0c0d10" stop-opacity=".24"/><stop offset="1" stop-color="#0c0d10" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="528" rx="250" ry="26" fill="url(#sh)"/>
+  <g>
+    <rect x="124" y="150" width="264" height="366" rx="11" fill="url(#body)" stroke="#9aa2aa" stroke-width="2"/>
+    <rect x="136" y="162" width="240" height="60" rx="5" fill="url(#panel)" stroke="#a3aab2" stroke-width="1.5"/>
+    <circle cx="170" cy="192" r="17" fill="#8d949c"/><circle cx="170" cy="192" r="12" fill="#e9ecef"/>
+    <rect x="204" y="182" width="96" height="7" rx="3.5" fill="#b3bac1"/><rect x="204" y="198" width="64" height="5" rx="2.5" fill="#c0c6cd"/>
+    <circle cx="256" cy="366" r="104" fill="#b6bcc4"/><circle cx="256" cy="366" r="93" fill="#e7eaee" stroke="#a9b0b8" stroke-width="2"/>
+    <circle cx="256" cy="366" r="77" fill="url(#glass)"/><circle cx="256" cy="366" r="77" fill="none" stroke="#8f969e" stroke-width="3"/>
+    <ellipse cx="230" cy="336" rx="28" ry="18" fill="#fff" opacity=".16"/>
+  </g>
+  <g>
+    <rect x="412" y="150" width="264" height="366" rx="11" fill="url(#body)" stroke="#9aa2aa" stroke-width="2"/>
+    <rect x="424" y="162" width="240" height="60" rx="5" fill="url(#panel)" stroke="#a3aab2" stroke-width="1.5"/>
+    <circle cx="630" cy="192" r="17" fill="#8d949c"/><circle cx="630" cy="192" r="12" fill="#e9ecef"/>
+    <rect x="446" y="182" width="96" height="7" rx="3.5" fill="#b3bac1"/><rect x="446" y="198" width="64" height="5" rx="2.5" fill="#c0c6cd"/>
+    <rect x="436" y="248" width="216" height="244" rx="12" fill="#b9c0c7"/>
+    <rect x="445" y="257" width="198" height="226" rx="9" fill="#2b333a" stroke="#8f969e" stroke-width="2"/>
+    <rect x="463" y="275" width="162" height="5" rx="2.5" fill="#fff" opacity=".12"/>
+  </g>
+  <rect x="140" y="516" width="24" height="12" rx="3" fill="#8b9199"/><rect x="348" y="516" width="24" height="12" rx="3" fill="#8b9199"/>
+  <rect x="428" y="516" width="24" height="12" rx="3" fill="#8b9199"/><rect x="636" y="516" width="24" height="12" rx="3" fill="#8b9199"/>
+</svg>
