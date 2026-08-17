@@ -4,6 +4,7 @@ import { getSupabaseReadClient, isSupabaseConfigured } from "@/lib/supabase/clie
 import { DEMO_APPLIANCES } from "./demo-data";
 import type {
   CategoryMenu,
+  FacetCounts,
   HomeMerchandising,
   InventoryFacets,
   MenuLink,
@@ -40,7 +41,18 @@ import {
 const SAVINGS_SORT_CAP = 480;
 
 /** Returned whenever there is nothing to derive facets from, so filter UI hides itself. */
+const EMPTY_COUNTS: FacetCounts = {
+  brands: {},
+  subcategories: {},
+  colors: {},
+  conditions: {},
+  fuelTypes: {},
+  warranty: 0,
+  deals: 0,
+};
+
 const EMPTY_FACETS: InventoryFacets = {
+  counts: EMPTY_COUNTS,
   brands: [],
   categories: [],
   subcategories: [],
@@ -448,29 +460,150 @@ export async function getPublishedSlugs(): Promise<Array<{ slug: string; updated
   return (data ?? []).map((row) => ({ slug: str(row.slug), updatedAt: str(row.updated_at) }));
 }
 
-/** Available filter values, scoped to a category when one is given. */
-export async function getInventoryFacets(category?: ApplianceCategory): Promise<InventoryFacets> {
-  const client = getSupabaseReadClient();
+/** The columns faceting needs. Same shape from the database and the demo data. */
+interface FacetRow {
+  brand: string;
+  subcategory: string | null;
+  color: string | null;
+  condition: ApplianceCondition;
+  fuelType: FuelType | null;
+  price: number;
+  warranty: boolean;
+  deal: boolean;
+}
 
+/** Every dimension a facet count has to respect, minus the one being counted. */
+interface FacetSelection {
+  brands: string[];
+  subcategories: string[];
+  colors: string[];
+  conditions: ApplianceCondition[];
+  fuelTypes: FuelType[];
+  minPrice?: number;
+  maxPrice?: number;
+  warrantyOnly?: boolean;
+  dealsOnly?: boolean;
+}
+
+const NO_SELECTION: FacetSelection = {
+  brands: [],
+  subcategories: [],
+  colors: [],
+  conditions: [],
+  fuelTypes: [],
+};
+
+type FacetGroup = keyof Pick<
+  FacetSelection,
+  "brands" | "subcategories" | "colors" | "conditions" | "fuelTypes"
+> | "price" | "warrantyOnly" | "dealsOnly";
+
+/**
+ * Applies a selection to one row, optionally ignoring a single group.
+ *
+ * Skipping the group being counted is what makes multi-select behave: while
+ * counting brands, the brand filter is not applied, so every brand row shows
+ * what ticking it would add rather than zero.
+ */
+function rowMatches(row: FacetRow, selection: FacetSelection, skip?: FacetGroup): boolean {
+  const lower = (values: string[]) => values.map((value) => value.toLowerCase());
+
+  if (skip !== "brands" && selection.brands.length && !lower(selection.brands).includes(row.brand.toLowerCase())) {
+    return false;
+  }
+  if (
+    skip !== "subcategories" &&
+    selection.subcategories.length &&
+    !(row.subcategory && lower(selection.subcategories).includes(row.subcategory.toLowerCase()))
+  ) {
+    return false;
+  }
+  if (
+    skip !== "colors" &&
+    selection.colors.length &&
+    !(row.color && lower(selection.colors).includes(row.color.toLowerCase()))
+  ) {
+    return false;
+  }
+  if (skip !== "conditions" && selection.conditions.length && !selection.conditions.includes(row.condition)) {
+    return false;
+  }
+  if (
+    skip !== "fuelTypes" &&
+    selection.fuelTypes.length &&
+    !(row.fuelType && selection.fuelTypes.includes(row.fuelType))
+  ) {
+    return false;
+  }
+  if (skip !== "price") {
+    if (selection.minPrice != null && row.price < selection.minPrice) return false;
+    if (selection.maxPrice != null && row.price > selection.maxPrice) return false;
+  }
+  if (skip !== "warrantyOnly" && selection.warrantyOnly && !row.warranty) return false;
+  if (skip !== "dealsOnly" && selection.dealsOnly && !row.deal) return false;
+  return true;
+}
+
+/** Tallies one free-text dimension, keyed lower-case to match `ilike` lookups. */
+function tally(rows: FacetRow[], pick: (row: FacetRow) => string | null): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const row of rows) {
+    const value = pick(row);
+    if (!value) continue;
+    const key = value.toLowerCase();
+    out[key] = (out[key] ?? 0) + 1;
+  }
+  return out;
+}
+
+function deriveFacets(rows: FacetRow[], selection: FacetSelection): InventoryFacets {
   const sortedUnique = (values: Array<string | null>): string[] =>
     [...new Set(values.filter((value): value is string => Boolean(value)))].sort((a, b) =>
       a.localeCompare(b),
     );
 
-  const derive = (items: Appliance[]): InventoryFacets => {
-    const prices = items.map((item) => item.price).filter((price) => price > 0);
-    return {
-      brands: sortedUnique(items.map((item) => item.brand)),
-      categories: [...new Set(items.map((item) => item.category))],
-      subcategories: sortedUnique(items.map((item) => item.subcategory)),
-      colors: sortedUnique(items.map((item) => item.color)),
-      fuelTypes: FUEL_TYPES.filter((fuel) => items.some((item) => item.fuelType === fuel)),
-      minPrice: prices.length ? Math.floor(Math.min(...prices)) : 0,
-      maxPrice: prices.length ? Math.ceil(Math.max(...prices)) : 0,
-      hasDeals: items.some((item) => savingsFor(item) != null),
-      hasWarranty: items.some((item) => item.warrantyAvailable),
-    };
+  const forGroup = (group: FacetGroup) => rows.filter((row) => rowMatches(row, selection, group));
+  const prices = rows.map((row) => row.price).filter((price) => price > 0);
+
+  return {
+    counts: {
+      brands: tally(forGroup("brands"), (row) => row.brand),
+      subcategories: tally(forGroup("subcategories"), (row) => row.subcategory),
+      colors: tally(forGroup("colors"), (row) => row.color),
+      conditions: tally(forGroup("conditions"), (row) => row.condition),
+      fuelTypes: tally(forGroup("fuelTypes"), (row) => row.fuelType),
+      warranty: forGroup("warrantyOnly").filter((row) => row.warranty).length,
+      deals: forGroup("dealsOnly").filter((row) => row.deal).length,
+    },
+    brands: sortedUnique(rows.map((row) => row.brand)),
+    categories: [],
+    subcategories: sortedUnique(rows.map((row) => row.subcategory)),
+    colors: sortedUnique(rows.map((row) => row.color)),
+    fuelTypes: FUEL_TYPES.filter((fuel) => rows.some((row) => row.fuelType === fuel)),
+    minPrice: prices.length ? Math.floor(Math.min(...prices)) : 0,
+    maxPrice: prices.length ? Math.ceil(Math.max(...prices)) : 0,
+    hasDeals: rows.some((row) => row.deal),
+    hasWarranty: rows.some((row) => row.warranty),
   };
+}
+
+/**
+ * Available filter values, scoped to a category when one is given.
+ *
+ * `selection` is optional: pass the shopper's current filters to get counts that
+ * reflect them. Without it the counts describe the whole scope, which is what
+ * navigation and the homepage want.
+ */
+export async function getInventoryFacets(
+  category?: ApplianceCategory,
+  selection: FacetSelection = NO_SELECTION,
+): Promise<InventoryFacets> {
+  const client = getSupabaseReadClient();
+
+  const withCategories = (facets: InventoryFacets, categories: ApplianceCategory[]) => ({
+    ...facets,
+    categories,
+  });
 
   if (!client) {
     if (!isDemoInventory()) return EMPTY_FACETS;
@@ -481,13 +614,25 @@ export async function getInventoryFacets(category?: ApplianceCategory): Promise<
         item.status !== "sold" &&
         (!category || item.category === category),
     );
-    return derive(items);
+    const rows: FacetRow[] = items.map((item) => ({
+      brand: item.brand,
+      subcategory: item.subcategory,
+      color: item.color,
+      condition: item.condition,
+      fuelType: item.fuelType,
+      price: item.price,
+      warranty: item.warrantyAvailable,
+      deal: savingsFor(item) != null,
+    }));
+    return withCategories(deriveFacets(rows, selection), [
+      ...new Set(items.map((item) => item.category)),
+    ]);
   }
 
   let builder = client
     .from("appliances")
     .select(
-      "brand, category, subcategory, color, fuel_type, price, compare_at_price, warranty_available",
+      "brand, category, subcategory, color, condition, fuel_type, price, compare_at_price, warranty_available",
     )
     .eq("published", true)
     .in("status", ["available", "reserved"]);
@@ -499,26 +644,25 @@ export async function getInventoryFacets(category?: ApplianceCategory): Promise<
     return EMPTY_FACETS;
   }
 
-  const rows = (data ?? []) as Row[];
-  const prices = rows.map((row) => num(row.price)).filter((price) => price > 0);
-  return {
-    brands: sortedUnique(rows.map((row) => str(row.brand))),
-    categories: [
-      ...new Set(rows.map((row) => str(row.category)).filter(isApplianceCategory)),
-    ] as ApplianceCategory[],
-    subcategories: sortedUnique(rows.map((row) => nullableStr(row.subcategory))),
-    colors: sortedUnique(rows.map((row) => nullableStr(row.color))),
-    fuelTypes: FUEL_TYPES.filter((fuel) =>
-      rows.some((row) => nullableStr(row.fuel_type) === fuel),
-    ),
-    minPrice: prices.length ? Math.floor(Math.min(...prices)) : 0,
-    maxPrice: prices.length ? Math.ceil(Math.max(...prices)) : 0,
-    hasDeals: rows.some((row) => {
-      const compare = nullableNum(row.compare_at_price);
-      return compare != null && compare > num(row.price);
-    }),
-    hasWarranty: rows.some((row) => Boolean(row.warranty_available)),
-  };
+  const raw = (data ?? []) as Row[];
+  const rows: FacetRow[] = raw.map((row) => {
+    const compare = nullableNum(row.compare_at_price);
+    const price = num(row.price);
+    return {
+      brand: str(row.brand),
+      subcategory: nullableStr(row.subcategory),
+      color: nullableStr(row.color),
+      condition: (nullableStr(row.condition) ?? "scratch-and-dent") as ApplianceCondition,
+      fuelType: nullableStr(row.fuel_type) as FuelType | null,
+      price,
+      warranty: Boolean(row.warranty_available),
+      deal: compare != null && compare > price,
+    };
+  });
+
+  return withCategories(deriveFacets(rows, selection), [
+    ...new Set(raw.map((row) => str(row.category)).filter(isApplianceCategory)),
+  ] as ApplianceCategory[]);
 }
 
 /* -------------------------------------------------------------------------- */

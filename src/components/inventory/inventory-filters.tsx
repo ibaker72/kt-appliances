@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpDown, Check, Loader2, SlidersHorizontal, X } from "lucide-react";
+import { ArrowUpDown, Check, ChevronDown, Loader2, SlidersHorizontal, X } from "lucide-react";
 
 import { Button, buttonStyles } from "@/components/ui/button";
-import { SORT_LABELS, INVENTORY_SORTS, type InventoryFacets, type InventorySort } from "@/lib/inventory/query";
+import {
+  PRICE_BANDS,
+  SORT_LABELS,
+  INVENTORY_SORTS,
+  type InventoryFacets,
+  type InventorySort,
+} from "@/lib/inventory/query";
 import {
   APPLIANCE_CONDITIONS,
   CATEGORY_LIST,
@@ -105,6 +112,17 @@ interface InventoryFiltersProps {
   resultCount: number;
 }
 
+interface ToolbarProps extends InventoryFiltersProps {
+  summary: React.ReactNode;
+  /** Cards per row at `xl`. */
+  density?: 3 | 4;
+  /**
+   * Prebuilt hrefs keyed by column count. Deliberately data, not a callback:
+   * this is a client component, and a function cannot cross the RSC boundary.
+   */
+  densityHrefs?: Record<3 | 4, string>;
+}
+
 /**
  * Shared filter state, exposed to the browser layout as three pieces: a toolbar
  * (sort + mobile triggers), a desktop sidebar, and the mobile sheets. They are
@@ -178,7 +196,9 @@ export function InventoryToolbar({
   lockCategory = false,
   resultCount,
   summary,
-}: InventoryFiltersProps & { summary: React.ReactNode }) {
+  density,
+  densityHrefs,
+}: ToolbarProps) {
   const { draft, setDraft, apply, clearAll, pending, activeCount } = useFilterState({
     filters,
     basePath,
@@ -248,17 +268,14 @@ export function InventoryToolbar({
 
         {/* Desktop sort */}
         <div className="hidden items-center gap-2 lg:flex">
-          <label
-            htmlFor="inventory-sort"
-            className="font-display text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-500"
-          >
-            Sort
+          <label htmlFor="inventory-sort" className="text-ui font-semibold text-ink-600">
+            Sort by
           </label>
           <select
             id="inventory-sort"
             value={draft.sort}
             onChange={(event) => apply({ ...draft, sort: event.target.value as InventorySort })}
-            className="h-11 border border-ink-200 bg-white px-3 text-[14px] text-ink-950 focus:border-ink-900"
+            className="h-10 rounded-sm border border-ink-200 bg-white px-3 text-[14px] text-ink-950 focus:border-ink-900"
           >
             {sorts.map((sort) => (
               <option key={sort} value={sort}>
@@ -267,6 +284,38 @@ export function InventoryToolbar({
             ))}
           </select>
         </div>
+
+        {/* Density. Links rather than buttons, because it is URL state like
+            everything else here and so survives with scripting off. */}
+        {density && densityHrefs ? (
+          <div className="hidden items-center rounded-sm border border-ink-200 xl:flex">
+            {([4, 3] as const).map((cols) => (
+              <Link
+                key={cols}
+                href={densityHrefs[cols]}
+                scroll={false}
+                aria-label={`Show ${cols} per row`}
+                aria-current={density === cols}
+                className={cn(
+                  "grid h-10 w-10 place-items-center text-ink-600 transition-colors first:rounded-l-sm last:rounded-r-sm",
+                  density === cols ? "bg-ink-950 text-white" : "hover:bg-bone-100",
+                )}
+              >
+                <span aria-hidden className="flex gap-[2px]">
+                  {Array.from({ length: cols }).map((_, index) => (
+                    <span
+                      key={index}
+                      className={cn(
+                        "block h-3.5 w-[3px] rounded-[1px]",
+                        density === cols ? "bg-white" : "bg-ink-400",
+                      )}
+                    />
+                  ))}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {/* Mobile filter sheet */}
@@ -434,6 +483,7 @@ function FilterControls({
             name="type"
             type="checkbox"
             options={facets.subcategories.map((value) => ({ value, label: value }))}
+            counts={facets.counts.subcategories}
             selected={draft.types}
             onToggle={(value) => onChange({ ...draft, types: toggle(draft.types, value) })}
           />
@@ -447,6 +497,7 @@ function FilterControls({
             name="brand"
             type="checkbox"
             options={facets.brands.map((value) => ({ value, label: value }))}
+            counts={facets.counts.brands}
             selected={draft.brands}
             onToggle={(value) => onChange({ ...draft, brands: toggle(draft.brands, value) })}
           />
@@ -472,6 +523,7 @@ function FilterControls({
             value: condition,
             label: CONDITION_LABELS[condition],
           }))}
+          counts={facets.counts.conditions}
           selected={draft.conditions}
           onToggle={(value) =>
             onChange({ ...draft, conditions: toggle(draft.conditions, value as ApplianceCondition) })
@@ -486,6 +538,7 @@ function FilterControls({
             name="fuel"
             type="checkbox"
             options={facets.fuelTypes.map((fuel) => ({ value: fuel, label: FUEL_LABELS[fuel] }))}
+            counts={facets.counts.fuelTypes}
             selected={draft.fuelTypes}
             onToggle={(value) =>
               onChange({ ...draft, fuelTypes: toggle(draft.fuelTypes, value as FuelType) })
@@ -501,6 +554,7 @@ function FilterControls({
             name="color"
             type="checkbox"
             options={facets.colors.map((value) => ({ value, label: value }))}
+            counts={facets.counts.colors}
             selected={draft.colors}
             onToggle={(value) => onChange({ ...draft, colors: toggle(draft.colors, value) })}
           />
@@ -514,6 +568,7 @@ function FilterControls({
               <CheckRow
                 id={`filter-${scope}-warranty`}
                 label="Warranty available"
+                count={facets.counts.warranty}
                 checked={draft.warrantyOnly}
                 onChange={(checked) => onChange({ ...draft, warrantyOnly: checked })}
               />
@@ -523,6 +578,7 @@ function FilterControls({
                 id={`filter-${scope}-deals`}
                 label="Marked down from retail"
                 hint="Units with a verified retail price on record"
+                count={facets.counts.deals}
                 checked={draft.dealsOnly}
                 onChange={(checked) => onChange({ ...draft, dealsOnly: checked })}
               />
@@ -548,18 +604,45 @@ function FilterControls({
   );
 }
 
-function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * Collapsible filter group.
+ *
+ * Built on `<details>` so it opens and closes without JavaScript and without
+ * this component holding open/closed state for every group on the page.
+ */
+function FilterGroup({
+  label,
+  children,
+  defaultOpen = true,
+}: {
+  label: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
   return (
-    <fieldset className="py-5">
-      <legend className="eyebrow mb-3 text-ink-500">{label}</legend>
-      {children}
-    </fieldset>
+    <details open={defaultOpen} className="group py-3">
+      <summary className="flex cursor-pointer list-none items-center justify-between py-1 [&::-webkit-details-marker]:hidden">
+        <span className="text-ui font-semibold uppercase tracking-wide text-ink-950">{label}</span>
+        <ChevronDown
+          aria-hidden
+          className="size-4 shrink-0 text-ink-500 transition-transform group-open:rotate-180"
+          strokeWidth={2.5}
+        />
+      </summary>
+      <div className="pt-2">{children}</div>
+    </details>
   );
 }
 
+/** Values past this are hidden behind "Show more" — a warehouse carries a lot of brands. */
+const OPTION_CUTOFF = 8;
+
 /**
- * Radio or checkbox list. Long lists scroll rather than pushing the grid down —
- * a warehouse can carry a lot of brands.
+ * Radio or checkbox list with result counts.
+ *
+ * A count of zero still renders, disabled: seeing that a brand exists in this
+ * category but has nothing matching the current filters is more useful than the
+ * row silently vanishing, and it stops the list reshuffling on every click.
  */
 function OptionList({
   scope,
@@ -568,6 +651,7 @@ function OptionList({
   options,
   selected,
   onToggle,
+  counts,
 }: {
   scope: string;
   name: string;
@@ -575,32 +659,65 @@ function OptionList({
   options: Array<{ value: string; label: string }>;
   selected: string[];
   onToggle: (value: string) => void;
+  /** Keyed lower-case. Omitted for groups where a count means nothing. */
+  counts?: Record<string, number>;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const overflowing = options.length > OPTION_CUTOFF;
+  const visible = overflowing && !expanded ? options.slice(0, OPTION_CUTOFF) : options;
+
   return (
-    <ul className={cn("space-y-0.5", options.length > 8 ? "max-h-64 overflow-y-auto pr-1" : "")}>
-      {options.map((option) => {
-        const id = `filter-${scope}-${name}-${slug(option.value) || "all"}`;
-        const checked = selected.includes(option.value);
-        return (
-          <li key={option.value || "all"}>
-            <label
-              htmlFor={id}
-              className="flex min-h-11 cursor-pointer items-center gap-3 py-1 text-[14.5px] text-ink-800 hover:text-ink-950"
-            >
-              <input
-                id={id}
-                type={type}
-                name={`${scope}-${name}`}
-                checked={checked}
-                onChange={() => onToggle(option.value)}
-                className="size-[18px] shrink-0 accent-brand-500"
-              />
-              <span className={checked ? "font-semibold text-ink-950" : ""}>{option.label}</span>
-            </label>
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      <ul className="space-y-0.5">
+        {visible.map((option) => {
+          const id = `filter-${scope}-${name}-${slug(option.value) || "all"}`;
+          const checked = selected.includes(option.value);
+          // `tally` omits keys with no matches, so an absent entry is a real zero.
+          const count = counts ? (counts[option.value.toLowerCase()] ?? 0) : undefined;
+          const empty = count === 0 && !checked;
+          return (
+            <li key={option.value || "all"}>
+              <label
+                htmlFor={id}
+                className={cn(
+                  "flex min-h-9 items-center gap-2.5 py-0.5 text-[14px]",
+                  empty
+                    ? "cursor-not-allowed text-ink-400"
+                    : "cursor-pointer text-ink-800 hover:text-ink-950",
+                )}
+              >
+                <input
+                  id={id}
+                  type={type}
+                  name={`${scope}-${name}`}
+                  checked={checked}
+                  disabled={empty}
+                  onChange={() => onToggle(option.value)}
+                  className="size-[16px] shrink-0 accent-brand-500"
+                />
+                <span className={cn("min-w-0 flex-1 truncate", checked ? "font-semibold text-ink-950" : "")}>
+                  {option.label}
+                </span>
+                {count != null ? (
+                  <span className="shrink-0 text-ui text-ink-400 tnum">{count}</span>
+                ) : null}
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+
+      {overflowing ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          aria-expanded={expanded}
+          className="mt-1.5 text-ui font-semibold text-ink-700 underline underline-offset-4 hover:text-brand-500"
+        >
+          {expanded ? "Show less" : `Show all ${options.length}`}
+        </button>
+      ) : null}
+    </>
   );
 }
 
@@ -608,12 +725,14 @@ function CheckRow({
   id,
   label,
   hint,
+  count,
   checked,
   onChange,
 }: {
   id: string;
   label: string;
   hint?: string;
+  count?: number;
   checked: boolean;
   onChange: (checked: boolean) => void;
 }) {
@@ -630,10 +749,11 @@ function CheckRow({
           onChange={(event) => onChange(event.target.checked)}
           className="mt-[3px] size-[18px] shrink-0 accent-brand-500"
         />
-        <span>
+        <span className="min-w-0 flex-1">
           <span className={checked ? "font-semibold text-ink-950" : ""}>{label}</span>
           {hint ? <span className="mt-0.5 block text-[12.5px] text-ink-500">{hint}</span> : null}
         </span>
+        {count != null ? <span className="shrink-0 text-ui text-ink-400 tnum">{count}</span> : null}
       </label>
     </li>
   );
@@ -687,6 +807,36 @@ function PriceControl({
           onBlur={() => onCommit(localMin, localMax)}
         />
       </div>
+      {/* Presets are dropped when nothing in scope is priced inside them, so a
+          band never promises a range the warehouse cannot fill. */}
+      <ul className="mt-2.5 flex flex-wrap gap-1.5">
+        {PRICE_BANDS.filter(
+          (band) =>
+            bounds.max > 0 &&
+            (band.min == null || band.min <= bounds.max) &&
+            (band.max == null || band.max >= bounds.min),
+        ).map((band) => {
+          const active = min === band.min && max === band.max;
+          return (
+            <li key={band.label}>
+              <button
+                type="button"
+                aria-pressed={active}
+                onClick={() => onCommit(active ? undefined : band.min, active ? undefined : band.max)}
+                className={cn(
+                  "rounded-pill border px-2.5 py-1 text-[12.5px] transition-colors",
+                  active
+                    ? "border-ink-950 bg-ink-950 text-white"
+                    : "border-line bg-white text-ink-700 hover:border-ink-400",
+                )}
+              >
+                {band.label}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
       {bounds.max > 0 ? (
         <p className="mt-2.5 text-[12.5px] text-ink-500 tnum">
           In stock from ${bounds.min.toLocaleString("en-US")} to $

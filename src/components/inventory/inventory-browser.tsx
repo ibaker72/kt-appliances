@@ -56,7 +56,19 @@ export async function InventoryBrowser({
 
   const [result, facets] = await Promise.all([
     queryInventory(toInventoryQuery(scoped)),
-    getInventoryFacets(category ?? filters.category),
+    // Counts reflect what is already selected, so a row reading "3" means
+    // ticking it yields three results rather than three somewhere in the catalogue.
+    getInventoryFacets(category ?? filters.category, {
+      brands: scoped.brands,
+      subcategories: scoped.types,
+      colors: scoped.colors,
+      conditions: scoped.conditions,
+      fuelTypes: scoped.fuelTypes,
+      minPrice: scoped.min,
+      maxPrice: scoped.max,
+      warrantyOnly: scoped.warrantyOnly,
+      dealsOnly: scoped.dealsOnly,
+    }),
   ]);
 
   /**
@@ -99,11 +111,11 @@ export async function InventoryBrowser({
 
   return (
     <Container className="py-6 sm:py-8">
-      <div className="grid gap-8 lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[268px_minmax(0,1fr)]">
+      <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
         {/* Desktop sidebar. Sticky below the header so filters stay reachable in a
             long grid; `max-h`/`overflow` keep a tall filter set scrollable. */}
         <div className="hidden lg:block">
-          <div className="sticky top-[136px] max-h-[calc(100vh-160px)] overflow-y-auto pr-1">
+          <div className="sticky top-[152px] max-h-[calc(100vh-180px)] overflow-y-auto pr-1">
             <FilterSidebar
               filters={scoped}
               facets={facets}
@@ -123,7 +135,9 @@ export async function InventoryBrowser({
             className="mb-5"
           />
 
-          <div className="border-y border-line py-3.5">
+          {/* Sticky under the header so sort and density stay reachable in a long
+              grid. `top` matches the header's height at `lg`, where it sticks. */}
+          <div className="sticky top-[152px] z-20 -mx-1 border-y border-line bg-white/95 px-1 py-3 backdrop-blur-sm">
             <InventoryToolbar
               filters={scoped}
               facets={facets}
@@ -131,6 +145,11 @@ export async function InventoryBrowser({
               lockCategory={Boolean(category)}
               resultCount={result.total}
               summary={summary}
+              density={scoped.cols}
+              densityHrefs={{
+                3: `${basePath}${buildQueryString({ ...scoped, cols: 3 })}`,
+                4: `${basePath}${buildQueryString({ ...scoped, cols: 4 })}`,
+              }}
             />
           </div>
 
@@ -153,8 +172,8 @@ export async function InventoryBrowser({
                 ) : (
                   <InventoryGrid
                     appliances={result.items}
-                    columns={3}
-                    priorityCount={3}
+                    columns={scoped.cols}
+                    priorityCount={scoped.cols}
                     compareHref={compareHref}
                     compareIds={compareIds}
                   />
@@ -294,14 +313,14 @@ function ActiveFilterChips({
   if (chips.length === 0) return null;
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-2">
-      <h2 className="eyebrow mr-1 text-ink-500">Applied</h2>
+    <div className="mt-4 flex flex-wrap items-center gap-2 rounded-md border border-line bg-bone-50 px-3 py-2.5">
+      <h2 className="mr-1 text-ui font-semibold uppercase tracking-wide text-ink-500">Applied</h2>
       <ul className="flex flex-wrap items-center gap-2">
         {chips.map((chip) => (
           <li key={chip.key}>
             <Link
               href={chip.href}
-              className="inline-flex min-h-9 items-center gap-1.5 border border-ink-200 bg-bone-50 px-2.5 py-1 text-[13px] font-medium text-ink-800 transition-colors hover:border-brand-500 hover:text-brand-500"
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-pill border border-ink-300 bg-white px-3 py-1 text-[13px] font-medium text-ink-900 transition-colors hover:border-brand-500 hover:bg-brand-50 hover:text-brand-500"
             >
               {chip.label}
               <X aria-hidden className="size-3.5" strokeWidth={2.5} />

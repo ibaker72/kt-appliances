@@ -13,6 +13,7 @@ import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { CallLink, TextLink } from "@/components/contact/contact-links";
 import { getCategoryCounts } from "@/lib/inventory/repository";
+import { getCachedNavigationMenu } from "@/lib/inventory/navigation-cache";
 import { CATEGORIES, CATEGORY_LIST, type ApplianceCategory } from "@/lib/inventory/types";
 import type { RawSearchParams } from "@/lib/inventory/search-params";
 import { CORE_FAQS } from "@/lib/content/faq";
@@ -113,17 +114,18 @@ export async function CategoryPage({
   searchParams: RawSearchParams;
 }) {
   const category = CATEGORIES[slug];
-  const counts = await getCategoryCounts();
+  const [counts, menu] = await Promise.all([getCategoryCounts(), getCachedNavigationMenu()]);
   const count = counts[slug] ?? 0;
   const notes = BUYING_NOTES[slug];
   const faqs = CATEGORY_FAQ_INDEXES.map((index) => CORE_FAQS[index]);
+  // Reuses the header's cached read, so the merchandising strip costs no query.
+  const panel = menu.categories.find((entry) => entry.slug === slug);
 
   return (
     <>
       <ListViewTracker listName={category.name} category={slug} resultCount={count} />
 
       <PageHeader
-        eyebrow={`Scratch & dent ${category.name.toLowerCase()}`}
         title={category.name}
         description={category.intro}
         crumbs={[
@@ -145,6 +147,51 @@ export async function CategoryPage({
           </>
         }
       />
+
+      {/* Merchandising strip: how much is here, the types worth jumping straight
+          to, and the price bands — all gated on real stock by `getNavigationMenu`. */}
+      {panel && (panel.subcategories.length > 0 || panel.priceBands.length > 0) ? (
+        <div className="border-b border-line bg-bone-50">
+          <Container className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
+            {count > 0 ? (
+              <p className="text-ui font-semibold text-ink-950 tnum">
+                {count} available
+              </p>
+            ) : null}
+            {panel.subcategories.length > 0 ? (
+              <nav aria-label={`${category.name} types`} className="min-w-0">
+                <ul className="no-scrollbar flex items-center gap-2 overflow-x-auto">
+                  {panel.subcategories.map((link) => (
+                    <li key={link.href} className="shrink-0">
+                      <Link
+                        href={link.href}
+                        className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-white px-3 py-1 text-ui text-ink-700 transition-colors hover:border-ink-950 hover:text-brand-500"
+                      >
+                        {link.label}
+                        <span className="text-ink-400 tnum">{link.count}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            ) : null}
+            {panel.priceBands.length > 0 ? (
+              <ul className="ml-auto hidden items-center gap-2 lg:flex">
+                {panel.priceBands.map((band) => (
+                  <li key={band.href}>
+                    <Link
+                      href={band.href}
+                      className="text-ui text-ink-600 underline underline-offset-4 hover:text-brand-500"
+                    >
+                      {band.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </Container>
+        </div>
+      ) : null}
 
       <Suspense
         key={JSON.stringify(searchParams)}

@@ -34,6 +34,7 @@ export const FILTER_KEYS = [
   "sort",
   "page",
   "compare",
+  "cols",
 ] as const;
 
 export const PAGE_SIZE = 24;
@@ -89,6 +90,8 @@ export interface ParsedFilters {
    * to compare must never change which units are shown.
    */
   compare: string[];
+  /** Grid density. A view preference, so it rides in the URL with the filters. */
+  cols: 3 | 4;
 }
 
 /** Free-text facet values (brand, subcategory, color) come from the data, so they
@@ -132,6 +135,7 @@ export function parseFilters(params: RawSearchParams): ParsedFilters {
     page: Math.max(1, positiveInt(first(params.page)) ?? 1),
     // Four is the most a comparison table can show without becoming unreadable.
     compare: textList(params.compare, COMPARE_LIMIT),
+    cols: first(params.cols) === "3" ? 3 : 4,
   };
 }
 
@@ -196,6 +200,7 @@ export function buildQueryString(filters: Partial<ParsedFilters>): string {
   if (filters.sort && filters.sort !== "featured") params.set("sort", filters.sort);
   if (filters.page && filters.page > 1) params.set("page", String(filters.page));
   if (filters.compare?.length) params.set("compare", filters.compare.join(","));
+  if (filters.cols === 3) params.set("cols", "3");
   const query = params.toString();
   return query ? `?${query}` : "";
 }

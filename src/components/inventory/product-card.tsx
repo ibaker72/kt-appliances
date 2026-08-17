@@ -103,7 +103,7 @@ export function ProductCard({
         ) : null}
       </div>
 
-      <div className={cn("flex flex-1 flex-col", compact ? "p-2.5" : "p-3 sm:p-4")}>
+      <div className={cn("flex flex-1 flex-col", compact ? "p-2.5" : "p-2.5 sm:p-4")}>
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
           {appliance.brand}
         </p>
@@ -120,8 +120,10 @@ export function ProductCard({
           </Link>
         </h3>
 
+        {/* Model/type line is the first thing to go on a 2-up phone grid, where
+            the card is ~170px wide and the price matters more. */}
         {!compact ? (
-          <p className="mt-1 text-ui text-ink-500">
+          <p className="mt-1 hidden text-ui text-ink-500 sm:block">
             {appliance.modelNumber ? (
               <>
                 <span className="tnum">{appliance.modelNumber}</span>
@@ -160,7 +162,7 @@ export function ProductCard({
         ) : null}
 
         {!compact ? (
-          <p className="mt-auto flex items-center gap-1.5 pt-3 text-ui text-ink-600">
+          <p className="mt-auto hidden items-center gap-1.5 pt-3 text-ui text-ink-600 sm:flex">
             {available ? (
               <>
                 <MapPin aria-hidden className="size-3.5 shrink-0 text-ink-400" strokeWidth={2.5} />

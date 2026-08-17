@@ -140,7 +140,27 @@ export interface HomeMerchandising {
   facets: InventoryFacets;
 }
 
+/**
+ * Per-value result counts for the filter sidebar.
+ *
+ * Each group is counted with every *other* active filter applied but its own
+ * excluded — the standard faceting rule, and the only one that does not lie: a
+ * brand row reading "3" means ticking it yields three results given what is
+ * already selected, and multi-select within a group stays additive.
+ */
+export interface FacetCounts {
+  brands: Record<string, number>;
+  subcategories: Record<string, number>;
+  colors: Record<string, number>;
+  conditions: Record<string, number>;
+  fuelTypes: Record<string, number>;
+  warranty: number;
+  deals: number;
+}
+
 export interface InventoryFacets {
+  /** Keyed lower-case, since the free-text values are matched case-insensitively. */
+  counts: FacetCounts;
   brands: string[];
   categories: ApplianceCategory[];
   /** Distinct `subcategory` values present in scope, e.g. ["French Door", "Side-by-Side"]. */
