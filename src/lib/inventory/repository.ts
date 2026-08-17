@@ -4,7 +4,9 @@ import { getSupabaseReadClient, isSupabaseConfigured } from "@/lib/supabase/clie
 import { DEMO_APPLIANCES } from "./demo-data";
 import type {
   CategoryMenu,
+  HomeMerchandising,
   InventoryFacets,
+  MenuLink,
   InventoryQuery,
   InventoryResult,
   InventorySort,
@@ -546,6 +548,19 @@ function menuHref(path: string, params: Record<string, string | number | undefin
  * on an empty grid. Categories with nothing in them come back with empty columns
  * and the header renders them as a plain link instead of a panel.
  */
+/** Price bands over a set of rows, dropping any band with nothing priced inside it. */
+function derivePriceBands(rows: NavRow[], path: string): MenuLink[] {
+  return PRICE_BANDS.map((band) => {
+    const count = rows.filter(
+      (row) =>
+        row.price > 0 &&
+        (band.min == null || row.price >= band.min) &&
+        (band.max == null || row.price <= band.max),
+    ).length;
+    return { label: band.label, count, href: menuHref(path, { min: band.min, max: band.max }) };
+  }).filter((band) => band.count > 0);
+}
+
 function deriveNavigationMenu(rows: NavRow[]): CategoryMenu[] {
   return CATEGORY_ORDER.map((slug) => {
     const definition = CATEGORIES[slug];
@@ -563,21 +578,26 @@ function deriveNavigationMenu(rows: NavRow[]): CategoryMenu[] {
       brands: groupByValue(inCategory, (row) => row.brand)
         .slice(0, MENU_COLUMN_LIMIT)
         .map(({ label, count }) => ({ label, count, href: menuHref(path, { brand: label }) })),
-      priceBands: PRICE_BANDS.map((band) => {
-        const count = inCategory.filter(
-          (row) =>
-            row.price > 0 &&
-            (band.min == null || row.price >= band.min) &&
-            (band.max == null || row.price <= band.max),
-        ).length;
-        return {
-          label: band.label,
-          count,
-          href: menuHref(path, { min: band.min, max: band.max }),
-        };
-      }).filter((band) => band.count > 0),
+      priceBands: derivePriceBands(inCategory, path),
     };
   });
+}
+
+function buildNavigation(rows: NavRow[], facets: InventoryFacets): NavigationMenu {
+  return {
+    categories: deriveNavigationMenu(rows),
+    priceBands: derivePriceBands(rows, "/inventory"),
+    brands: groupByValue(rows, (row) => row.brand).map(({ label, count }) => ({
+      label,
+      count,
+      href: menuHref("/inventory", { brand: label }),
+    })),
+    facets,
+  };
+}
+
+function emptyNavigation(facets: InventoryFacets): NavigationMenu {
+  return buildNavigation([], facets);
 }
 
 /**
@@ -593,7 +613,7 @@ export async function getNavigationMenu(): Promise<NavigationMenu> {
   const facets = await getInventoryFacets();
 
   if (!client) {
-    if (!isDemoInventory()) return { categories: deriveNavigationMenu([]), facets };
+    if (!isDemoInventory()) return emptyNavigation(facets);
     const rows: NavRow[] = DEMO_APPLIANCES.filter(
       (item) => item.published && item.status === "available",
     ).map((item) => ({
@@ -602,7 +622,7 @@ export async function getNavigationMenu(): Promise<NavigationMenu> {
       subcategory: item.subcategory,
       price: item.price,
     }));
-    return { categories: deriveNavigationMenu(rows), facets };
+    return buildNavigation(rows, facets);
   }
 
   const { data, error } = await client
@@ -614,7 +634,7 @@ export async function getNavigationMenu(): Promise<NavigationMenu> {
 
   if (error) {
     console.error("[inventory] navigation menu failed:", error.message);
-    return { categories: deriveNavigationMenu([]), facets };
+    return emptyNavigation(facets);
   }
 
   const rows: NavRow[] = (data ?? []).map((row) => {
@@ -627,7 +647,7 @@ export async function getNavigationMenu(): Promise<NavigationMenu> {
     };
   });
 
-  return { categories: deriveNavigationMenu(rows), facets };
+  return buildNavigation(rows, facets);
 }
 
 /** Recently sold units — real turnover, used as honest social proof. */
@@ -654,6 +674,98 @@ export async function getRecentlySold(limit = 6): Promise<Appliance[]> {
     return [];
   }
   return (data ?? []).map((row) => mapRow(row as Row));
+}
+
+/* -------------------------------------------------------------------------- */
+/* Homepage merchandising                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Below this many available units, the homepage stops using rails.
+ *
+ * Big-box homepages run five or six product rails because they are drawing from
+ * a catalogue of tens of thousands. A scratch & dent warehouse floor is a couple
+ * of dozen one-of-a-kind units, and slicing that across "deals", "just arrived"
+ * and "under $500" puts the same refrigerator in three rails — which reads as an
+ * empty store dressed up, not a full one. At this size a single dense grid of
+ * everything on the floor is both more honest and more useful.
+ */
+const COMPACT_CATALOGUE_MAX = 40;
+
+/** Items pulled per rail. */
+const HOME_RAIL_SIZE = 12;
+
+/** A rail with fewer than this looks broken, so it does not render at all. */
+const MIN_RAIL_ITEMS = 4;
+
+/**
+ * Allocates inventory across the homepage so no unit appears in two modules.
+ *
+ * Rails are filled in priority order against a shared `seen` set: deals first
+ * (they carry a verified comparison price, so they are the strongest thing on
+ * the page), then new arrivals from whatever is left. A rail that cannot reach
+ * `MIN_RAIL_ITEMS` yields its units back rather than rendering half-empty —
+ * the same self-hiding guard the deals section already used, generalised.
+ */
+export async function merchandiseHome(): Promise<HomeMerchandising> {
+  const [counts, facets, recentlySold] = await Promise.all([
+    getCategoryCounts(),
+    getInventoryFacets(),
+    getRecentlySold(8),
+  ]);
+
+  const totalAvailable = Object.values(counts).reduce((sum, count) => sum + count, 0);
+
+  // Small floor: one grid of everything, no rails to duplicate across.
+  if (totalAvailable <= COMPACT_CATALOGUE_MAX) {
+    const all = await queryInventory({
+      statuses: ["available"],
+      limit: COMPACT_CATALOGUE_MAX,
+      sort: "featured",
+    });
+    return {
+      totalAvailable,
+      compact: true,
+      everything: all.items,
+      deals: [],
+      newArrivals: [],
+      recentlySold,
+      counts,
+      facets,
+    };
+  }
+
+  const [dealsResult, freshResult] = await Promise.all([
+    queryInventory({
+      dealsOnly: true,
+      statuses: ["available"],
+      limit: HOME_RAIL_SIZE,
+      sort: "savings",
+    }),
+    // Over-fetched so the rail can still fill after deals are removed from it.
+    queryInventory({
+      statuses: ["available"],
+      limit: HOME_RAIL_SIZE * 2,
+      sort: "newest",
+    }),
+  ]);
+
+  const deals = dealsResult.items.length >= MIN_RAIL_ITEMS ? dealsResult.items : [];
+  const seen = new Set(deals.map((item) => item.id));
+  const newArrivals = freshResult.items
+    .filter((item) => !seen.has(item.id))
+    .slice(0, HOME_RAIL_SIZE);
+
+  return {
+    totalAvailable,
+    compact: false,
+    everything: [],
+    deals,
+    newArrivals: newArrivals.length >= MIN_RAIL_ITEMS ? newArrivals : [],
+    recentlySold,
+    counts,
+    facets,
+  };
 }
 
 /**

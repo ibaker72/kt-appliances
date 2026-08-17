@@ -92,3 +92,74 @@ export const CAMPAIGNS: Campaign[] = [
 export function getCampaign(slug: string): Campaign | null {
   return CAMPAIGNS.find((campaign) => campaign.slug === slug) ?? null;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Homepage promo carousel                                                     */
+/* -------------------------------------------------------------------------- */
+
+export interface HeroSlide {
+  id: string;
+  headline: string;
+  subhead: string;
+  href: string;
+  ctaLabel: string;
+  /** Background treatment. */
+  tone: "ink" | "brand" | "bone";
+  /** Hidden unless some unit carries a verified comparison price. */
+  requiresDeals?: boolean;
+}
+
+/**
+ * Slides for the homepage promo carousel.
+ *
+ * Every slide states something the business actually does and that a shopper can
+ * check on the page it links to. There are no countdowns, no "X people viewing",
+ * no percentage-off claims and no invented urgency — a scratch & dent warehouse
+ * does not run timed sales, and a discount claim would need a comparison price
+ * behind every unit to be true. The deals slide is gated on `facets.hasDeals`
+ * for exactly that reason, the same way `quickLinksFor` gates its chips.
+ */
+export const heroSlides: HeroSlide[] = [
+  {
+    id: "warehouse",
+    headline: "Name-brand appliances at warehouse prices",
+    subhead:
+      "Scratch & dent refrigerators, washers, dryers, ranges and dishwashers — tested, working, and priced below traditional retail.",
+    href: "/inventory",
+    ctaLabel: "Shop all inventory",
+    tone: "ink",
+  },
+  {
+    id: "deals",
+    headline: "Marked down from a verified retail price",
+    subhead:
+      "These units have a comparison price on record, so the saving shown is the real difference — not an estimate.",
+    href: "/inventory?deals=1&sort=savings",
+    ctaLabel: "Shop all deals",
+    tone: "brand",
+    requiresDeals: true,
+  },
+  {
+    id: "delivery",
+    headline: "Delivery, installation and haul-away",
+    subhead:
+      "We deliver across the Poconos and beyond, install the new unit, and take the old one away. Quoted with the appliance, not bolted on at the end.",
+    href: "/delivery-installation",
+    ctaLabel: "See delivery options",
+    tone: "bone",
+  },
+  {
+    id: "financing",
+    headline: "Financing available on your purchase",
+    subhead:
+      "Buy now, pay later options are available. Terms depend on the provider and your application — ask us what applies.",
+    href: "/financing",
+    ctaLabel: "Ask about financing",
+    tone: "ink",
+  },
+];
+
+/** Drops slides the current catalogue cannot honestly support. */
+export function heroSlidesFor({ hasDeals }: { hasDeals: boolean }): HeroSlide[] {
+  return heroSlides.filter((slide) => !slide.requiresDeals || hasDeals);
+}

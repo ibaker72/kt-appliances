@@ -5,11 +5,13 @@ import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
 import { WarehousePanel } from "@/components/shared/warehouse-panel";
+import { WhyKt } from "@/components/home/why-kt";
 import { CallLink } from "@/components/contact/contact-links";
 import { Container } from "@/components/ui/container";
 import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { CORE_FAQS } from "@/lib/content/faq";
+import { getCachedNavigationMenu } from "@/lib/inventory/navigation-cache";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site-config";
 
@@ -52,7 +54,10 @@ const PRINCIPLES = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  // Already cached for the header, so this costs nothing extra.
+  const { facets } = await getCachedNavigationMenu();
+
   return (
     <>
       <PageHeader
@@ -125,6 +130,15 @@ export default function AboutPage() {
               </div>
             ))}
           </div>
+        </Container>
+      </Section>
+
+      {/* Moved off the homepage, where it was copy standing between a shopper and
+          the products. On the about page it is what the reader came for. */}
+      <Section tone="white" size="md">
+        <Container>
+          <ModuleHeader title="Why shop KT Appliances?" href="/inventory" hrefLabel="Shop inventory" />
+          <WhyKt brands={facets.brands} />
         </Container>
       </Section>
 

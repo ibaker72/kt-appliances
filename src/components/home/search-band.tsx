@@ -2,19 +2,20 @@ import { SearchBar } from "@/components/inventory/search-bar";
 import { Container } from "@/components/ui/container";
 
 /**
- * Search band directly under the navigation.
+ * Mobile search band.
  *
- * A shopper who already knows what they want — a brand, a model number,
- * "french door" — should not have to scroll past merchandising to type it.
+ * Hidden from `lg` up, where the header's own search field is the widest thing
+ * in the main bar and a second one here would just be a duplicate pushing
+ * products below the fold. Below `lg` the header search collapses to a toggle,
+ * so this keeps a real field on the screen a shopper actually lands on.
  *
  * The popular-search rail that used to sit here now lives in the header, under
- * the category bar, which is where retail puts it and where it stays reachable
- * from category pages too.
+ * the category bar, where it also serves the category pages.
  */
 export function SearchBand({ availableCount }: { availableCount: number }) {
   return (
-    <section aria-labelledby="search-heading" className="border-b border-line bg-bone-100">
-      <Container className="py-6 sm:py-7">
+    <section aria-labelledby="search-heading" className="border-b border-line bg-bone-100 lg:hidden">
+      <Container className="py-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
           <div className="min-w-0 lg:max-w-xl lg:flex-1">
             <h2 id="search-heading" className="text-[18px] font-semibold text-ink-950 sm:text-[20px]">

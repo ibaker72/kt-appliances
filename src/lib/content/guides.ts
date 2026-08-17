@@ -71,6 +71,20 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
+        heading: "What happens to a unit before it reaches the floor",
+        paragraphs: [
+          "A marked appliance arriving at the warehouse is not put straight out for sale. It is checked for function first — a washer is run through a cycle, a dryer is checked for heat and tumble, a refrigerator is checked for cooling and for its ice and water function, a dishwasher is checked for fill and drain. What was tested goes on the listing.",
+          "Then the damage is written down: not just that there is some, but where it is, because that is what decides whether you will look at it every day or never see it again once the unit is installed. The mark comes off the price, not off the performance — which is the whole reason the appliance is cheaper than the identical unmarked one.",
+        ],
+        listTitle: "What a listing should tell you",
+        list: [
+          "Where the cosmetic damage is, specifically enough that you can picture it in your kitchen.",
+          "Which functions were tested, rather than a blanket claim that the unit works.",
+          "Whether a warranty option is available on that particular unit.",
+          "The price, and a comparison price only where a verified retail price for the same model is on record.",
+        ],
+      },
+      {
         heading: "Scratch & dent is not the same as used or refurbished",
         paragraphs: [
           "A used appliance has been installed and run in someone's home, sometimes for years. A refurbished appliance has been repaired — something failed and was fixed. A scratch & dent unit generally has neither history: it is a new or barely handled appliance that got marked in transit or on a floor.",

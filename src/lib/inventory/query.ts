@@ -81,9 +81,10 @@ export interface InventoryResult {
  * see `getNavigationMenu`.
  */
 export const PRICE_BANDS = [
-  { label: "Under $500", min: undefined, max: 500 },
-  { label: "$500 – $1,000", min: 500, max: 1000 },
-  { label: "$1,000 & up", min: 1000, max: undefined },
+  { label: "Under $500", min: undefined, max: 499 },
+  { label: "$500 – $999", min: 500, max: 999 },
+  { label: "$1,000 – $1,499", min: 1000, max: 1499 },
+  { label: "$1,500 & up", min: 1500, max: undefined },
 ] as const satisfies ReadonlyArray<{
   label: string;
   min: number | undefined;
@@ -111,6 +112,31 @@ export interface CategoryMenu {
 
 export interface NavigationMenu {
   categories: CategoryMenu[];
+  /** Site-wide price bands that contain stock, pointing at `/inventory`. */
+  priceBands: MenuLink[];
+  /** Site-wide brands that have stock, pointing at `/inventory`. */
+  brands: MenuLink[];
+  facets: InventoryFacets;
+}
+
+/**
+ * Everything the homepage merchandises, allocated so no unit appears twice.
+ *
+ * See `merchandiseHome`. The shape deliberately makes the small-catalogue case
+ * explicit rather than leaving the page to guess: a warehouse with 20 units on
+ * the floor cannot fill five rails without showing the same refrigerator in
+ * three of them, so it gets one dense grid instead.
+ */
+export interface HomeMerchandising {
+  totalAvailable: number;
+  /** True when the catalogue is small enough that rails would repeat units. */
+  compact: boolean;
+  /** The whole floor, populated only in compact mode. */
+  everything: Appliance[];
+  deals: Appliance[];
+  newArrivals: Appliance[];
+  recentlySold: Appliance[];
+  counts: Record<string, number>;
   facets: InventoryFacets;
 }
 
