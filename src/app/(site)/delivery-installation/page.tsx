@@ -75,7 +75,6 @@ export default function DeliveryInstallationPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Getting it home"
         title={
           <>
             Delivery, installation
@@ -141,7 +140,7 @@ export default function DeliveryInstallationPage() {
               </p>
 
               <div className="mt-8 border border-line bg-white p-6">
-                <p className="eyebrow text-ink-500">Prefer to just ask?</p>
+                <p className="text-ui font-semibold uppercase tracking-wide text-ink-500">Prefer to just ask?</p>
                 <div className="mt-4 flex flex-col gap-2.5 sm:flex-row lg:flex-col xl:flex-row">
                   <TextLink
                     context="delivery-quote"

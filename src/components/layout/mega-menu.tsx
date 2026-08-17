@@ -198,7 +198,7 @@ function MenuColumn({ title, links }: { title: string; links: MenuLink[] }) {
               className="flex items-baseline justify-between gap-3 py-1 text-[14px] text-ink-800 transition-colors hover:text-brand-500"
             >
               <span className="min-w-0 truncate">{link.label}</span>
-              <span className="shrink-0 text-ui text-ink-400 tnum">{link.count}</span>
+              <span className="shrink-0 text-ui text-ink-500 tnum">{link.count}</span>
             </Link>
           </li>
         ))}

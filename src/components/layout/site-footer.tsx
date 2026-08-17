@@ -11,12 +11,13 @@ import {
   FOOTER_SERVICE_NAV,
   FOOTER_SHOP_NAV,
 } from "@/lib/navigation";
+import { SERVICE_LOCATIONS } from "@/lib/content/locations";
 import { siteConfig } from "@/lib/site-config";
 
 function LinkColumn({ title, items }: { title: string; items: { label: string; href: string }[] }) {
   return (
     <div>
-      <h3 className="eyebrow text-white/55">{title}</h3>
+      <h3 className="text-ui font-semibold uppercase tracking-wide text-white/55">{title}</h3>
       <ul className="mt-4 space-y-2.5">
         {items.map((item) => (
           <li key={`${title}-${item.href}`}>
@@ -86,7 +87,7 @@ export function SiteFooter() {
             <TextLink
               context="footer"
               message={`Hi ${siteConfig.name}, I have a question about your appliances.`}
-              className="mt-3 inline-flex items-center gap-2 border border-white/30 px-4 py-2.5 font-display text-[12px] font-bold uppercase tracking-[0.06em] transition-colors hover:bg-white hover:text-ink-950"
+              className="mt-3 inline-flex items-center gap-2 rounded-sm border border-white/30 px-4 py-2.5 text-[14px] font-semibold transition-colors hover:bg-white hover:text-ink-950"
             >
               Text {siteConfig.phone.display}
             </TextLink>
@@ -103,7 +104,7 @@ export function SiteFooter() {
           <div className="min-w-0 lg:col-span-3">
             <StoreHours tone="light" />
             <div className="mt-8 border-t border-white/10 pt-6">
-              <h3 className="eyebrow text-white/55">Service area</h3>
+              <h3 className="text-ui font-semibold uppercase tracking-wide text-white/55">Service area</h3>
               <p className="mt-3 text-[14.5px] leading-relaxed text-white/70">
                 Warehouse pickup in East Stroudsburg, PA. Delivery available across the Poconos and
                 into {siteConfig.serviceStates.slice(1).join(" and ")} — delivery fees depend on
@@ -119,6 +120,29 @@ export function SiteFooter() {
           </div>
         </div>
       </Container>
+
+      {/* Towns we actually serve, linked individually. These pages exist and were
+          reachable only via /service-areas — this is real internal linking the
+          site was leaving unused. */}
+      <div className="border-t border-white/10">
+        <Container className="py-6">
+          <h3 className="text-ui font-semibold uppercase tracking-wide text-white/55">
+            Appliance delivery near you
+          </h3>
+          <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+            {SERVICE_LOCATIONS.map((location) => (
+              <li key={location.slug}>
+                <Link
+                  href={`/appliances/${location.slug}`}
+                  className="text-[14px] text-white/70 transition-colors hover:text-white"
+                >
+                  {location.name}, {location.state}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Container>
+      </div>
 
       <div className="border-t border-white/10">
         <Container className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">

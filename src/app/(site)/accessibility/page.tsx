@@ -16,7 +16,6 @@ export default function AccessibilityPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Legal"
         title="Accessibility"
         description="What we have done to make this site usable for everyone, and how to tell us when we have missed something."
         crumbs={[{ name: "Accessibility", path: "/accessibility" }]}

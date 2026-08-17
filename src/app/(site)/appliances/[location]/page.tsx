@@ -63,7 +63,6 @@ export default async function LocationPage({
   return (
     <>
       <PageHeader
-        eyebrow={`${location.county} · ${location.state}`}
         title={
           <>
             Appliances in
@@ -71,7 +70,7 @@ export default async function LocationPage({
             {location.name}, {location.state}
           </>
         }
-        description={location.intro}
+        description={`${location.county}, ${location.state}. ${location.intro}`}
         crumbs={[
           { name: "Service Areas", path: "/service-areas" },
           { name: `${location.name}, ${location.state}`, path: `/appliances/${location.slug}` },
@@ -98,7 +97,7 @@ export default async function LocationPage({
         <Container>
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
-              <p className="eyebrow flex items-center gap-2 text-brand-500">
+              <p className="text-ui font-semibold uppercase tracking-wide flex items-center gap-2 text-brand-500">
                 <Truck aria-hidden className="size-3.5" strokeWidth={2.5} />
                 Delivery &amp; pickup
               </p>
@@ -116,7 +115,7 @@ export default async function LocationPage({
             </div>
 
             <div>
-              <p className="eyebrow flex items-center gap-2 text-brand-500">
+              <p className="text-ui font-semibold uppercase tracking-wide flex items-center gap-2 text-brand-500">
                 <MapPin aria-hidden className="size-3.5" strokeWidth={2.5} />
                 Worth knowing locally
               </p>
@@ -143,7 +142,7 @@ export default async function LocationPage({
               ["Warehouse hours", `Daily ${siteConfig.hours.regular.label}`],
             ].map(([label, value]) => (
               <div key={label} className="bg-white p-5">
-                <dt className="eyebrow text-ink-500">{label}</dt>
+                <dt className="text-ui font-semibold uppercase tracking-wide text-ink-500">{label}</dt>
                 <dd className="mt-2 font-display text-[15px] font-bold leading-snug text-ink-950">
                   {value}
                 </dd>

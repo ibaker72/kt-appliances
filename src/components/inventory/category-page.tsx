@@ -259,7 +259,7 @@ export async function CategoryPage({
       {/* Cross-category navigation */}
       <Section tone="white" size="sm">
         <Container>
-          <h2 className="eyebrow text-ink-500">Shop other categories</h2>
+          <h2 className="text-ui font-semibold uppercase tracking-wide text-ink-500">Shop other categories</h2>
           <ul className="mt-5 flex flex-wrap gap-2.5">
             {CATEGORY_LIST.filter((entry) => entry.slug !== slug).map((entry) => (
               <li key={entry.slug}>

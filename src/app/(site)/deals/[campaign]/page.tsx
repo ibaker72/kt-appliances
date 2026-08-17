@@ -91,11 +91,11 @@ export default async function CampaignPage({
 
           <div className="mt-6 grid gap-8 lg:grid-cols-12 lg:items-center lg:gap-12">
             <div className="min-w-0 lg:col-span-7">
-              <p className="eyebrow text-brand-400">
+              <p className="text-ui font-semibold uppercase tracking-wide text-brand-400">
                 {siteConfig.address.city}, {siteConfig.address.state} warehouse ·{" "}
                 {siteConfig.serviceStatesShort.join(" · ")}
               </p>
-              <h1 className="mt-4 font-display text-[2.35rem] font-extrabold leading-[0.94] tracking-[-0.035em] sm:text-5xl lg:text-[3.9rem]">
+              <h1 className="mt-4 font-display text-[2.1rem] font-extrabold leading-[1.02] tracking-[-0.02em] sm:text-[2.6rem] lg:text-[3rem]">
                 {campaign.headline}
                 <span className="mt-1 block text-brand-500">{campaign.headlineAccent}</span>
               </h1>

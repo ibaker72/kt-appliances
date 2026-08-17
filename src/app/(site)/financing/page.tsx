@@ -32,7 +32,6 @@ export default function FinancingPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Payment options"
         title={
           <>
             Buy now,

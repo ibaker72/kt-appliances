@@ -23,7 +23,6 @@ export default function ServiceAreasPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Where we deliver"
         title="Service areas"
         description={`The warehouse is at ${siteConfig.address.oneLine}. Delivery is most straightforward across Monroe County and the surrounding Poconos, and we deliver into ${siteConfig.serviceStates.slice(1).join(" and ")} depending on distance and the order. Warehouse pickup is available to everyone, any day.`}
         crumbs={[{ name: "Service Areas", path: "/service-areas" }]}
@@ -58,7 +57,7 @@ export default function ServiceAreasPage() {
                   href={`/appliances/${location.slug}`}
                   className="group flex h-full flex-col p-6 transition-colors hover:bg-bone-50 sm:p-7"
                 >
-                  <p className="eyebrow flex items-center gap-2 text-brand-500">
+                  <p className="text-ui font-semibold uppercase tracking-wide flex items-center gap-2 text-brand-500">
                     <MapPin aria-hidden className="size-3.5" strokeWidth={2.5} />
                     {location.county}
                   </p>

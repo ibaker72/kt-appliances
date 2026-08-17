@@ -24,7 +24,7 @@ export function StoreHours({
           strokeWidth={2.5}
         />
         <div>
-          <p className={cn("eyebrow", light ? "text-white/55" : "text-ink-500")}>Warehouse hours</p>
+          <p className={cn("text-ui font-semibold uppercase tracking-wide", light ? "text-white/55" : "text-ink-500")}>Warehouse hours</p>
           <p
             className={cn(
               "mt-1.5 font-display text-lg font-bold tnum",
@@ -46,7 +46,7 @@ export function StoreHours({
           strokeWidth={2.5}
         />
         <div>
-          <p className={cn("eyebrow", light ? "text-white/55" : "text-ink-500")}>After-hours</p>
+          <p className={cn("text-ui font-semibold uppercase tracking-wide", light ? "text-white/55" : "text-ink-500")}>After-hours</p>
           <p
             className={cn(
               "mt-1.5 font-display text-lg font-bold tnum",

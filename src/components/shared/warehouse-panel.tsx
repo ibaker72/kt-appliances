@@ -22,7 +22,7 @@ export function WarehousePanel({
   return (
     <div className={cn("grid gap-px border border-line bg-line lg:grid-cols-2", className)}>
       <div className="bg-white p-6 sm:p-8">
-        <p className="eyebrow text-brand-500">Warehouse</p>
+        <p className="text-ui font-semibold uppercase tracking-wide text-brand-500">Warehouse</p>
         <h3 className="mt-3 font-display text-2xl font-extrabold tracking-[-0.025em] text-ink-950 sm:text-3xl">
           {siteConfig.address.street}
         </h3>

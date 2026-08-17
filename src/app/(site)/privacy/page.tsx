@@ -27,7 +27,6 @@ export default function PrivacyPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Legal"
         title="Privacy Policy"
         description={`How we handle the information you give us through this website. Effective ${EFFECTIVE}.`}
         crumbs={[{ name: "Privacy Policy", path: "/privacy" }]}

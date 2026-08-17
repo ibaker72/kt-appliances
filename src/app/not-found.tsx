@@ -31,7 +31,7 @@ export default async function NotFound() {
       <main id="main" className="flex-1">
         <section className="on-dark bg-ink-950 text-white">
           <Container className="py-16 sm:py-24">
-            <p className="eyebrow text-brand-400">404 — Page not found</p>
+            <p className="text-ui font-semibold uppercase tracking-wide text-brand-400">404 — Page not found</p>
             <h1 className="mt-5 max-w-3xl font-display text-[2.25rem] font-extrabold leading-[0.98] tracking-[-0.035em] sm:text-5xl lg:text-6xl">
               Looks like this appliance moved out of the warehouse.
             </h1>
@@ -62,7 +62,7 @@ export default async function NotFound() {
 
         <section className="bg-white py-14 sm:py-16">
           <Container>
-            <h2 className="eyebrow text-ink-500">Shop by category</h2>
+            <h2 className="text-ui font-semibold uppercase tracking-wide text-ink-500">Shop by category</h2>
             <ul className="mt-5 flex flex-wrap gap-2.5">
               {CATEGORY_LIST.map((category) => (
                 <li key={category.slug}>
@@ -76,7 +76,7 @@ export default async function NotFound() {
               ))}
             </ul>
 
-            <h2 className="eyebrow mt-12 text-ink-500">Or head to</h2>
+            <h2 className="text-ui font-semibold uppercase tracking-wide mt-12 text-ink-500">Or head to</h2>
             <ul className="mt-5 flex flex-wrap gap-2.5">
               {[
                 { label: "Delivery & Installation", href: "/delivery-installation" },

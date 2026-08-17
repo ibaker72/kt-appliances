@@ -1,10 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { MessageSquareText, Phone, Warehouse } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { MessageSquareText, Phone, Scale, Warehouse } from "lucide-react";
 
 import { CallLink, TextLink } from "@/components/contact/contact-links";
+import { COMPARE_LIMIT } from "@/lib/inventory/search-params";
 import { siteConfig } from "@/lib/site-config";
 
 /**
@@ -19,7 +21,7 @@ export function MobileBottomActions() {
   if (pathname.startsWith("/admin")) return null;
 
   const itemClass =
-    "flex flex-1 flex-col items-center justify-center gap-1 py-2.5 font-display text-[11px] font-bold uppercase tracking-[0.08em] text-white transition-colors active:bg-ink-800";
+    "relative flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-semibold text-white transition-colors active:bg-ink-800";
 
   return (
     <>
@@ -47,6 +49,12 @@ export function MobileBottomActions() {
             <MessageSquareText aria-hidden className="size-[19px] text-brand-400" strokeWidth={2.5} />
             Text
           </TextLink>
+          {/* Isolated behind Suspense: `useSearchParams` opts its whole subtree
+              out of prerendering, and without this boundary every static page in
+              the site would bail to client rendering just to draw a badge. */}
+          <Suspense fallback={null}>
+            <CompareTab className={itemClass} />
+          </Suspense>
           <Link href="/inventory" className={itemClass}>
             <Warehouse aria-hidden className="size-[19px] text-brand-400" strokeWidth={2.5} />
             Inventory
@@ -54,5 +62,26 @@ export function MobileBottomActions() {
         </div>
       </nav>
     </>
+  );
+}
+
+/** Appears only while units are selected for comparison. */
+function CompareTab({ className }: { className: string }) {
+  const params = useSearchParams();
+  const raw = params.get("compare") ?? "";
+  const count = raw.split(",").filter(Boolean).slice(0, COMPARE_LIMIT).length;
+
+  if (count === 0) return null;
+
+  return (
+    <Link href={`/inventory/compare?ids=${encodeURIComponent(raw)}`} className={className}>
+      <span className="relative">
+        <Scale aria-hidden className="size-[19px] text-brand-400" strokeWidth={2.5} />
+        <span className="absolute -right-2.5 -top-1.5 grid min-w-[16px] place-items-center rounded-pill bg-brand-500 px-1 text-[10px] font-bold leading-4 text-white tnum">
+          {count}
+        </span>
+      </span>
+      Compare
+    </Link>
   );
 }

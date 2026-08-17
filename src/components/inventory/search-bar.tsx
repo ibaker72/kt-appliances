@@ -45,7 +45,7 @@ export function SearchBar({
       {label ? (
         <label
           htmlFor={id}
-          className="eyebrow mb-2.5 block text-ink-500"
+          className="text-ui font-semibold uppercase tracking-wide mb-2.5 block text-ink-500"
         >
           {label}
         </label>

@@ -163,7 +163,7 @@ export default async function ComparePage({
                       </th>
                       {values.map((value, index) => (
                         <td key={items[index].id} className="break-words p-3 align-top text-ink-900">
-                          {value ?? <span className="text-ink-400">Not listed</span>}
+                          {value ?? <span className="text-ink-500">Not listed</span>}
                         </td>
                       ))}
                     </tr>

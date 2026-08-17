@@ -20,7 +20,6 @@ export default function GuidesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Buying guides"
         title="Know what you're buying"
         description="Six guides covering the questions we get asked most at the warehouse — written to be genuinely useful whether or not you buy from us."
         crumbs={[{ name: "Guides", path: "/guides" }]}
@@ -35,7 +34,7 @@ export default function GuidesPage() {
                   href={`/guides/${guide.slug}`}
                   className="group flex h-full flex-col p-6 transition-colors hover:bg-bone-50 sm:p-7"
                 >
-                  <p className="eyebrow flex items-center gap-2 text-brand-500">
+                  <p className="text-ui font-semibold uppercase tracking-wide flex items-center gap-2 text-brand-500">
                     {guide.category ? CATEGORIES[guide.category].name : "General"}
                     <span aria-hidden className="text-ink-300">/</span>
                     <span className="flex items-center gap-1 text-ink-500">

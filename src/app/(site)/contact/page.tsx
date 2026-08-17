@@ -25,13 +25,12 @@ export default function ContactPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Contact"
         title="Call, text, or come see it"
         description={`Texting is usually the fastest way to get an answer on a specific unit — we can send photos of the actual appliance, confirm dimensions, and quote delivery to your ZIP. The warehouse is at ${siteConfig.address.oneLine}.`}
         crumbs={[{ name: "Contact", path: "/contact" }]}
         aside={
           <div className="border border-white/15 bg-white/[0.04] p-6 sm:p-7">
-            <p className="eyebrow text-white/55">Call or text</p>
+            <p className="text-ui font-semibold uppercase tracking-wide text-white/55">Call or text</p>
             <CallLink
               context="contact-header"
               className="mt-3 block font-display text-[2.25rem] font-extrabold leading-none tracking-[-0.03em] text-white transition-colors hover:text-brand-400 sm:text-[2.75rem] tnum"

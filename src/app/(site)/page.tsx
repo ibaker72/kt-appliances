@@ -178,7 +178,7 @@ export default async function HomePage() {
                     <span className="font-display text-[15px] font-bold uppercase tracking-[0.02em] text-ink-900">
                       {brand.label}
                     </span>
-                    <span className="text-ui text-ink-400 tnum">{brand.count}</span>
+                    <span className="text-ui text-ink-500 tnum">{brand.count}</span>
                   </Link>
                 </li>
               ))}

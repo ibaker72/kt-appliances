@@ -147,7 +147,7 @@ export function ProductCard({
             {Math.round(appliance.price).toLocaleString("en-US")}
           </span>
           {savings != null ? (
-            <span className="text-ui text-ink-400 line-through tnum">
+            <span className="text-ui text-ink-500 line-through tnum">
               {formatPrice(appliance.compareAtPrice!)}
             </span>
           ) : null}
@@ -267,7 +267,7 @@ export function SoldProductCard({
           </Link>
         </h3>
         <p className="mt-1.5 flex items-baseline gap-2">
-          <span className="font-display text-[15px] font-bold text-ink-400 line-through tnum">
+          <span className="font-display text-[15px] font-bold text-ink-500 line-through tnum">
             {formatPrice(appliance.price)}
           </span>
           {sold ? <span className="text-ui text-ink-500">{sold}</span> : null}

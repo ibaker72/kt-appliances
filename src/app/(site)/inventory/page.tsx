@@ -32,7 +32,6 @@ export default async function InventoryPage({
   return (
     <>
       <PageHeader
-        eyebrow="Warehouse inventory"
         title="Shop all appliances"
         description={`Each listing shows the brand, model number, cosmetic condition and price. Comparison prices appear only where we have a verified retail price for the same model. Warehouse pickup in ${siteConfig.address.city}, delivery available across ${siteConfig.serviceStatesShort.join(", ")}.`}
         crumbs={[{ name: "Inventory", path: "/inventory" }]}
@@ -41,7 +40,7 @@ export default async function InventoryPage({
       {quickLinks.length > 0 ? (
         <div className="border-b border-line bg-bone-50">
           <Container className="py-4">
-            <h2 className="eyebrow mb-3 text-ink-500">Popular searches</h2>
+            <h2 className="text-ui font-semibold uppercase tracking-wide mb-3 text-ink-500">Popular searches</h2>
             <QuickCategoryNav links={quickLinks} />
           </Container>
         </div>

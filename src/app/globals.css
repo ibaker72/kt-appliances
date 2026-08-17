@@ -26,7 +26,9 @@
   /* Retail red — CTAs and active states. Reserved for "do this", never for data. */
   --color-brand-600: #a3141d;
   --color-brand-500: #c8202b;
-  --color-brand-400: #e02734;
+  /* On-dark accent only. #e02734 was 4.23:1 on ink-950, which fails for the
+     small text in the utility strip, the footer links and the 404. 4.94:1. */
+  --color-brand-400: #e8404b;
   --color-brand-50: #fdf2f2;
 
   /* Savings — data, not action. Split from brand so a price and a button cannot
@@ -157,19 +159,6 @@
 }
 
 @layer components {
-  /* LEGACY — being retired. The kicker above every section heading was the
-     loudest template tell on the site; `ModuleHeader` replaces that job. Still
-     defined because interior pages and a few chrome components apply the class
-     directly; those are migrated in Phase 7, after which this block is deleted. */
-  .eyebrow {
-    font-family: var(--font-display);
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    line-height: 1;
-  }
-
   /* Prices and any figure that should line up in a column. */
   .tnum {
     font-variant-numeric: tabular-nums;

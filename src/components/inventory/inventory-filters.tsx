@@ -682,7 +682,7 @@ function OptionList({
                 className={cn(
                   "flex min-h-9 items-center gap-2.5 py-0.5 text-[14px]",
                   empty
-                    ? "cursor-not-allowed text-ink-400"
+                    ? "cursor-not-allowed text-ink-500"
                     : "cursor-pointer text-ink-800 hover:text-ink-950",
                 )}
               >
@@ -699,7 +699,7 @@ function OptionList({
                   {option.label}
                 </span>
                 {count != null ? (
-                  <span className="shrink-0 text-ui text-ink-400 tnum">{count}</span>
+                  <span className="shrink-0 text-ui text-ink-500 tnum">{count}</span>
                 ) : null}
               </label>
             </li>
@@ -753,7 +753,7 @@ function CheckRow({
           <span className={checked ? "font-semibold text-ink-950" : ""}>{label}</span>
           {hint ? <span className="mt-0.5 block text-[12.5px] text-ink-500">{hint}</span> : null}
         </span>
-        {count != null ? <span className="shrink-0 text-ui text-ink-400 tnum">{count}</span> : null}
+        {count != null ? <span className="shrink-0 text-ui text-ink-500 tnum">{count}</span> : null}
       </label>
     </li>
   );

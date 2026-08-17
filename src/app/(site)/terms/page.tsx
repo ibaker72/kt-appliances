@@ -18,7 +18,6 @@ export default function TermsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Legal"
         title="Terms of Sale & Website Use"
         description={`The basics of how buying from us works and what this website does and does not promise. Effective ${EFFECTIVE}.`}
         crumbs={[{ name: "Terms", path: "/terms" }]}

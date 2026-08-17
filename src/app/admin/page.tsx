@@ -64,7 +64,7 @@ export default async function AdminDashboard() {
         {tiles.map((tile) => (
           <li key={tile.label} className="bg-white">
             <Link href={tile.href} className="block p-4 transition-colors hover:bg-bone-50 sm:p-5">
-              <p className="eyebrow text-ink-500">{tile.label}</p>
+              <p className="text-ui font-semibold uppercase tracking-wide text-ink-500">{tile.label}</p>
               <p
                 className={
                   tile.accent && tile.value > 0

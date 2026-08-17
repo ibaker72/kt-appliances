@@ -72,7 +72,6 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <JsonLd data={articleSchema} />
 
       <PageHeader
-        eyebrow={guide.category ? CATEGORIES[guide.category].name : "Buying guide"}
         title={guide.title}
         description={guide.intro}
         crumbs={[
@@ -113,7 +112,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
                   {section.list ? (
                     <div className="mt-6 border border-line bg-bone-50 p-5 sm:p-6">
                       {section.listTitle ? (
-                        <h3 className="eyebrow text-ink-500">{section.listTitle}</h3>
+                        <h3 className="text-ui font-semibold uppercase tracking-wide text-ink-500">{section.listTitle}</h3>
                       ) : null}
                       <ul className="mt-4 space-y-3">
                         {section.list.map((item) => (
@@ -144,7 +143,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
             <aside className="min-w-0 lg:col-span-4">
               <div className="sticky top-32 space-y-6">
                 <div className="border border-line bg-ink-950 p-6 text-white on-dark">
-                  <p className="eyebrow text-white/55">Ask the warehouse</p>
+                  <p className="text-ui font-semibold uppercase tracking-wide text-white/55">Ask the warehouse</p>
                   <p className="mt-3 text-[15px] leading-relaxed text-white/75">
                     Text us your measurements or your hookup type and we&apos;ll tell you what fits
                     before you buy anything.
@@ -159,7 +158,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
 
                 {others.length > 0 ? (
                   <div className="border border-line p-6">
-                    <p className="eyebrow text-ink-500">More guides</p>
+                    <p className="text-ui font-semibold uppercase tracking-wide text-ink-500">More guides</p>
                     <ul className="mt-4 divide-y divide-line">
                       {others.map((entry) => (
                         <li key={entry.slug}>

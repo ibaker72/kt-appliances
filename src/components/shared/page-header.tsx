@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
  * Dark by default so every interior page opens with the same brand weight.
  */
 export function PageHeader({
-  eyebrow,
   title,
   description,
   crumbs,
@@ -19,7 +18,6 @@ export function PageHeader({
   tone = "ink",
   className,
 }: {
-  eyebrow?: string;
   title: ReactNode;
   description?: ReactNode;
   crumbs: Crumb[];
@@ -43,14 +41,9 @@ export function PageHeader({
 
         <div className={cn("mt-6 gap-10", aside ? "lg:grid lg:grid-cols-12" : "")}>
           <div className={aside ? "lg:col-span-7" : "max-w-3xl"}>
-            {eyebrow ? (
-              <p className={cn("eyebrow mb-3", dark ? "text-brand-400" : "text-brand-500")}>
-                {eyebrow}
-              </p>
-            ) : null}
             <h1
               className={cn(
-                "font-display text-[2.1rem] font-extrabold leading-[0.98] tracking-[-0.03em] sm:text-5xl lg:text-[3.4rem]",
+                "font-display text-[2rem] font-extrabold leading-[1.02] tracking-[-0.02em] sm:text-[2.6rem] lg:text-[3rem]",
                 dark ? "text-white" : "text-ink-950",
               )}
             >

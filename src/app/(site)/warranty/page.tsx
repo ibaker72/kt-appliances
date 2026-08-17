@@ -32,7 +32,6 @@ export default function WarrantyPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Coverage"
         title="1-year warranty options"
         description="Warranty options are available on qualifying appliances. Coverage is not automatic on every unit and terms vary, so ask about warranty for the specific appliance you are buying — before the sale, not after."
         crumbs={[{ name: "Warranty", path: "/warranty" }]}
