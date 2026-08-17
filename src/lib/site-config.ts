@@ -72,12 +72,29 @@ export const siteConfig = {
 
   brand: {
     /**
-     * Mark referenced by the LocalBusiness schema and the app icons.
+     * THE ONE LINE TO CHANGE WHEN YOU ADD THE REAL LOGO.
      *
-     * Points at the KT monogram, which is a real asset in this repo. When the
-     * full company logo is supplied as a file, drop it in `public/img/brand/`
-     * and change this one path — nothing else reads the logo directly.
+     * Put the file in `public/img/brand/` and set this to its path, e.g.
+     *   logoFile: "/img/brand/kt-appliances-logo.png"
+     *
+     * The moment this is set, the typographic "KT APPLIANCES" lockup stops
+     * rendering anywhere — header, footer and admin all switch to the real
+     * artwork, and the LocalBusiness schema points at it too. Leave it null and
+     * the typographic lockup stands in. See public/img/brand/README.md.
      */
+    logoFile: null as string | null,
+
+    /**
+     * Whether the logo needs a white plate on dark surfaces.
+     *
+     * The company logo has a dark brown frame and black lettering, both of which
+     * vanish against the near-black footer. True puts it on a white card there,
+     * which is what the mark was drawn for. Set false only if you supply a
+     * light-on-dark version.
+     */
+    logoNeedsLightPlate: true,
+
+    /** Fallback mark for schema and app icons while no logo file is set. */
     mark: "/icon.svg",
     /** Straplines carried on the company logo. */
     strapline: "True Family Deal",

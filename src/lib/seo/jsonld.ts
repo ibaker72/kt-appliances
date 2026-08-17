@@ -65,8 +65,8 @@ export function localBusinessSchema(): Json {
     name: siteConfig.name,
     legalName: siteConfig.legalName,
     url: SITE_URL,
-    logo: absoluteUrl(siteConfig.brand.mark),
-    image: absoluteUrl(siteConfig.brand.mark),
+    logo: absoluteUrl(siteConfig.brand.logoFile ?? siteConfig.brand.mark),
+    image: absoluteUrl(siteConfig.brand.logoFile ?? siteConfig.brand.mark),
     // Supplied by the company logo, so it can be stated rather than estimated.
     foundingDate: String(siteConfig.foundedYear),
     description: siteConfig.description,

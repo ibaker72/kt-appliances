@@ -1,20 +1,33 @@
+import Image from "next/image";
+
+import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 /**
- * Typographic KT Appliances lockup.
+ * The KT Appliances lockup.
  *
- * Used in place of a raster logo: a red "KT" tile paired with the full name.
- * When a proper vector logo asset is supplied, swap the internals of this one
- * component and every placement across the site updates.
+ * Renders the real logo file when `siteConfig.brand.logoFile` is set, and the
+ * typographic stand-in until then. It is a swap, not a layering: once the file
+ * is in place the stand-in stops rendering anywhere on the site.
+ *
+ * Every placement goes through this one component, so adding the artwork is a
+ * single change rather than a hunt through the header, footer and admin shell.
  */
 interface WordmarkProps {
   /** `light` renders for dark backgrounds. */
   tone?: "dark" | "light";
   size?: "sm" | "md" | "lg";
-  /** Shows the descriptor line under the name. */
+  /** Shows the descriptor line under the name. Ignored once a logo file is set. */
   withTagline?: boolean;
   className?: string;
 }
+
+/** Display heights for the supplied artwork. Width follows the file's own ratio. */
+const LOGO_HEIGHTS = {
+  sm: "h-8",
+  md: "h-11 sm:h-[52px]",
+  lg: "h-16 sm:h-20",
+} as const;
 
 const sizes = {
   sm: { tile: "h-8 w-8 text-[15px]", name: "text-[15px]", tag: "text-[8px]" },
@@ -23,8 +36,37 @@ const sizes = {
 } as const;
 
 export function Wordmark({ tone = "dark", size = "md", withTagline = true, className }: WordmarkProps) {
-  const s = sizes[size];
   const light = tone === "light";
+  const { logoFile, logoNeedsLightPlate } = siteConfig.brand;
+
+  if (logoFile) {
+    // The supplied mark is drawn for white. On a dark surface it gets the white
+    // card it was designed against rather than being recoloured or knocked out.
+    const plated = light && logoNeedsLightPlate;
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center",
+          plated ? "rounded-sm bg-white px-2.5 py-1.5" : "",
+          className,
+        )}
+      >
+        <Image
+          src={logoFile}
+          alt={siteConfig.legalName}
+          // Nominal intrinsic size; CSS below sets the real display height and
+          // lets width follow whatever aspect ratio the supplied file has.
+          width={640}
+          height={260}
+          priority
+          unoptimized={logoFile.endsWith(".svg")}
+          className={cn("w-auto object-contain", LOGO_HEIGHTS[size])}
+        />
+      </span>
+    );
+  }
+
+  const s = sizes[size];
 
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
