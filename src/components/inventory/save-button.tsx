@@ -25,7 +25,14 @@ function getSnapshot(): string[] {
   const raw = document.cookie;
   if (raw !== cachedRaw) {
     cachedRaw = raw;
-    cachedValue = parseSaved(decodeURIComponent(readCookie() ?? ""));
+    // decodeURIComponent throws a URIError on a stray "%", and a cookie is
+    // attacker- and accident-writable. A malformed one means "nothing saved",
+    // not a crashed page.
+    try {
+      cachedValue = parseSaved(decodeURIComponent(readCookie() ?? ""));
+    } catch {
+      cachedValue = EMPTY;
+    }
   }
   return cachedValue;
 }
