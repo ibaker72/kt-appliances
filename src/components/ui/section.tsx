@@ -1,73 +1,61 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+
+import { buttonStyles } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/**
- * Section headings share one structure everywhere: a small red-ruled eyebrow,
- * a heavy display title, and optional supporting copy plus a trailing action.
- */
-interface SectionHeadingProps {
-  eyebrow?: string;
-  title: ReactNode;
-  description?: ReactNode;
-  action?: ReactNode;
-  /** `light` for dark backgrounds. */
-  tone?: "dark" | "light";
-  as?: "h1" | "h2" | "h3";
+interface ModuleHeaderProps {
+  title: string;
+  /** "Shop all ›" destination. Omitted renders the title alone. */
+  href?: string;
+  /** Defaults to "Shop all". */
+  hrefLabel?: string;
+  /** A real facet or result count. Never a decorative figure. */
+  count?: number;
+  /** Heading level, for the document outline. */
+  as?: "h2" | "h3";
+  id?: string;
   className?: string;
 }
 
-export function SectionHeading({
-  eyebrow,
+/**
+ * The heading above a merchandising module: one line, title left, link right.
+ *
+ * Replaces `SectionHeading`, which stacked a red-ruled kicker, a display-weight
+ * title and a descriptive paragraph on every section of every page. That combo
+ * was the most repetitive thing on the site — it announced each module instead
+ * of getting out of the way of the products underneath it. Nothing here is
+ * optional-but-encouraged: there is no eyebrow, no description and no tone,
+ * because a module that needs a paragraph to explain itself is not merchandising.
+ */
+export function ModuleHeader({
   title,
-  description,
-  action,
-  tone = "dark",
+  href,
+  hrefLabel = "Shop all",
+  count,
   as: Tag = "h2",
+  id,
   className,
-}: SectionHeadingProps) {
-  const light = tone === "light";
+}: ModuleHeaderProps) {
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-5 md:flex-row md:items-end md:justify-between md:gap-10",
-        className,
-      )}
-    >
-      <div className="max-w-2xl">
-        {eyebrow ? (
-          <p
-            className={cn(
-              "eyebrow mb-3 flex items-center gap-2.5",
-              light ? "text-white/70" : "text-ink-500",
-            )}
-          >
-            <span aria-hidden className="inline-block h-[3px] w-7 bg-brand-500" />
-            {eyebrow}
-          </p>
+    <div className={cn("flex items-baseline justify-between gap-4 pb-3", className)}>
+      <Tag
+        id={id}
+        className="min-w-0 font-sans text-[18px] font-semibold leading-tight tracking-normal text-ink-950 sm:text-[20px]"
+      >
+        {title}
+        {count != null ? (
+          <span className="ml-2 text-ui font-normal text-ink-500 tnum">({count})</span>
         ) : null}
-        <Tag
-          className={cn(
-            "font-display font-extrabold leading-[0.98] tracking-[-0.025em]",
-            Tag === "h1"
-              ? "text-4xl sm:text-5xl lg:text-[3.6rem]"
-              : "text-[1.75rem] sm:text-4xl lg:text-[2.75rem]",
-            light ? "text-white" : "text-ink-950",
-          )}
-        >
-          {title}
-        </Tag>
-        {description ? (
-          <div
-            className={cn(
-              "mt-4 text-[15px] leading-relaxed sm:text-base",
-              light ? "text-white/75" : "text-ink-600",
-            )}
-          >
-            {description}
-          </div>
-        ) : null}
-      </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      </Tag>
+
+      {href ? (
+        <Link href={href} className={buttonStyles("link", "sm", "shrink-0")}>
+          {hrefLabel}
+          <ChevronRight aria-hidden className="size-4" strokeWidth={2.5} />
+        </Link>
+      ) : null}
     </div>
   );
 }
@@ -75,28 +63,36 @@ export function SectionHeading({
 interface SectionProps {
   children: ReactNode;
   className?: string;
-  /** Background band. Sections alternate to create contrast down the page. */
-  tone?: "white" | "bone" | "ink";
+  /**
+   * Background band. `flat` is the merchandising default — a continuous scroll
+   * separated by a hairline. `bone` and `ink` are contrast bands, used at most
+   * once per page now that modules no longer alternate down the whole page.
+   */
+  tone?: "white" | "bone" | "ink" | "flat";
   id?: string;
-  /** Vertical rhythm. */
-  size?: "sm" | "md" | "lg";
+  /** Vertical rhythm. Defaults to `module` under `flat`, `md` otherwise. */
+  size?: "module" | "sm" | "md" | "lg";
 }
 
 const tones = {
   white: "bg-white",
   bone: "bg-bone-100",
   ink: "bg-ink-950 on-dark",
+  flat: "bg-white border-b border-line",
 } as const;
 
 const paddings = {
+  module: "py-8 sm:py-10",
   sm: "py-12 sm:py-14",
   md: "py-14 sm:py-20",
   lg: "py-16 sm:py-24",
 } as const;
 
-export function Section({ children, className, tone = "white", size = "md", id }: SectionProps) {
+export function Section({ children, className, tone = "white", size, id }: SectionProps) {
+  const padding = paddings[size ?? (tone === "flat" ? "module" : "md")];
+
   return (
-    <section id={id} className={cn(tones[tone], paddings[size], className)}>
+    <section id={id} className={cn(tones[tone], padding, className)}>
       {children}
     </section>
   );

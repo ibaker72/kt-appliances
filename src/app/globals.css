@@ -14,17 +14,27 @@
   --color-ink-800: #23272c;
   --color-ink-700: #333940;
   --color-ink-600: #4b525a;
-  --color-ink-500: #6b737d;
+  /* Was #6b737d — 4.30:1 on bone-100, under the 4.5:1 bar. This is the colour
+     card metadata and spec rows use, so it has to clear it: 4.62:1 on bone-100,
+     5.16:1 on white. */
+  --color-ink-500: #666e78;
   --color-ink-400: #929aa3;
   --color-ink-300: #b9bfc6;
   --color-ink-200: #d5d9de;
   --color-ink-100: #e8eaed;
 
-  /* Retail red — prices, primary CTAs, sale and active states. Used sparingly. */
+  /* Retail red — CTAs and active states. Reserved for "do this", never for data. */
   --color-brand-600: #a3141d;
   --color-brand-500: #c8202b;
   --color-brand-400: #e02734;
   --color-brand-50: #fdf2f2;
+
+  /* Savings — data, not action. Split from brand so a price and a button cannot
+     shout at the same volume: red means "act", green means "you keep this".
+     4.66:1 on bone-100. */
+  --color-save-700: #155f39;
+  --color-save-600: #1c7c4a;
+  --color-save-50: #eef8f2;
 
   /* Warm neutrals — section backgrounds and hairlines */
   --color-bone-50: #faf9f7;
@@ -41,11 +51,38 @@
   --font-sans: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Arial, sans-serif;
 
-  --radius-card: 3px;
+  /* Radius scale. Uniformly square chrome was a tell of its own; these are the
+     three levels the UI actually needs. `sm` matches Tailwind's default but is
+     pinned explicitly so an upstream change cannot move our chrome. */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-pill: 999px;
 
-  --shadow-card: 0 1px 2px rgb(10 11 13 / 0.05);
+  /* Card metadata, filter labels, spec rows. Deliberately not applied to
+     input/select/textarea — those stay at 16px to stop iOS zoom-on-focus. */
+  --text-ui: 13.5px;
+
+  /* Gap between merchandising modules. Named in the `--spacing-*` namespace so
+     it generates real py-module / gap-module / mt-module utilities. Scaled up at
+     `sm` by the unlayered override below. */
+  --spacing-module: 2.5rem;
+
+  /* Elevation: a real rest state and a real lift, so hover is a change in depth
+     rather than only a border-colour swap. */
+  --shadow-card: 0 1px 2px rgb(10 11 13 / 0.06), 0 1px 1px rgb(10 11 13 / 0.04);
+  --shadow-hover: 0 10px 24px -8px rgb(10 11 13 / 0.22), 0 2px 6px -2px rgb(10 11 13 / 0.1);
   --shadow-lift: 0 12px 30px -12px rgb(10 11 13 / 0.28);
   --shadow-header: 0 1px 0 rgb(10 11 13 / 0.08);
+}
+
+/* Unlayered on purpose: `@theme` emits its variables inside `@layer theme`, and
+   unlayered declarations outrank any layer regardless of source order. The
+   generated utilities all resolve `var(--spacing-module)`, so re-pointing the
+   variable here re-scales every module gap at once. */
+@media (min-width: 40rem) {
+  :root {
+    --spacing-module: 3rem;
+  }
 }
 
 /* ==========================================================================
@@ -120,7 +157,10 @@
 }
 
 @layer components {
-  /* Small uppercase label used above section headings and on spec rows. */
+  /* LEGACY — being retired. The kicker above every section heading was the
+     loudest template tell on the site; `ModuleHeader` replaces that job. Still
+     defined because interior pages and a few chrome components apply the class
+     directly; those are migrated in Phase 7, after which this block is deleted. */
   .eyebrow {
     font-family: var(--font-display);
     font-size: 0.6875rem;

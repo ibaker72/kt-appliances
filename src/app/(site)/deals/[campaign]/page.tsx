@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Check, MessageSquareText, Phone } from "lucide-react";
+import { Check, MessageSquareText, Phone } from "lucide-react";
 
 import { InventoryEmptyState, InventoryGrid } from "@/components/inventory/inventory-grid";
 import { ListViewTracker } from "@/components/inventory/product-view-tracker";
@@ -14,7 +13,7 @@ import { ServiceCards } from "@/components/shared/service-cards";
 import { StoreHours } from "@/components/layout/store-hours";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { CAMPAIGNS, getCampaign } from "@/lib/content/campaigns";
 import { HOME_FAQS } from "@/lib/content/faq";
@@ -158,18 +157,12 @@ export default async function CampaignPage({
       {/* Inventory */}
       <Section tone="white" size="md" id="inventory">
         <Container>
-          <SectionHeading
-            eyebrow="Available now"
+          <ModuleHeader
             title={campaign.gridHeading}
-            description="Prices shown are what you pay. A comparison price appears only where we have a verified retail price for the same model."
-            action={
-              <Link href={browseHref} className={buttonStyles("outline", "md")}>
-                Browse everything
-                <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
-              </Link>
-            }
+            href={browseHref}
+            hrefLabel="Browse everything"
           />
-          <div className="mt-10">
+          <div>
             {items.length > 0 ? (
               <>
                 <JsonLd data={itemListSchema(items, campaign.metaTitle)} />
@@ -188,15 +181,12 @@ export default async function CampaignPage({
       {/* Services */}
       <Section tone="ink" size="md">
         <Container>
-          <SectionHeading
-            tone="light"
-            eyebrow="Included in the conversation"
-            title="Delivery, installation, financing, warranty"
-            description="Ask about any of these when you call — they are quoted with the appliance, not bolted on at the end."
-          />
-          <div className="mt-10">
-            <ServiceCards />
-          </div>
+          {/* Local markup: this is a dark band, and `ModuleHeader` is a single
+              dark-on-light line by design. */}
+          <h2 className="pb-8 font-display text-[1.75rem] font-extrabold leading-[0.98] text-white sm:text-4xl">
+            Delivery, installation, financing, warranty
+          </h2>
+          <ServiceCards />
         </Container>
       </Section>
 
@@ -205,7 +195,7 @@ export default async function CampaignPage({
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-4">
-              <SectionHeading eyebrow="Before you come out" title="Good to know" />
+              <ModuleHeader title="Good to know" />
               <div className="mt-8 border border-line bg-white p-6">
                 <StoreHours />
                 <p className="mt-6 border-t border-line pt-5 text-[14px] leading-relaxed text-ink-600">

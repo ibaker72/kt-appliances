@@ -28,7 +28,7 @@ import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { ContactCta } from "@/components/shared/contact-cta";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { getApplianceBySlug, getRelatedAppliances, getPublishedSlugs } from "@/lib/inventory/repository";
 import {
@@ -354,22 +354,12 @@ export default async function AppliancePage({ params }: { params: Promise<{ slug
       {related.length > 0 ? (
         <Section tone="white" size="md">
           <Container>
-            <SectionHeading
-              eyebrow={sold ? "Still available" : "You might also like"}
+            <ModuleHeader
               title={sold ? "Similar appliances on the floor" : `More ${category.name.toLowerCase()}`}
-              description={
-                sold
-                  ? "This unit is gone, but these are available right now."
-                  : undefined
-              }
-              action={
-                <Link href={category.path} className={buttonStyles("outline", "md")}>
-                  All {category.name}
-                  <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
-                </Link>
-              }
+              href={category.path}
+              hrefLabel={`All ${category.name}`}
             />
-            <div className="mt-9">
+            <div>
               <InventoryGrid appliances={related} columns={4} />
             </div>
           </Container>

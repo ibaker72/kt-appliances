@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { WarehousePanel } from "@/components/shared/warehouse-panel";
 import { CallLink } from "@/components/contact/contact-links";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { CORE_FAQS } from "@/lib/content/faq";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -82,10 +82,7 @@ export default function AboutPage() {
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
-              <SectionHeading
-                eyebrow="Why we exist"
-                title="Appliances are expensive. Dents are not."
-              />
+              <ModuleHeader title="Appliances are expensive. Dents are not." />
             </div>
             <div className="min-w-0 lg:col-span-7">
               <div className="space-y-5 text-[16px] leading-relaxed text-ink-700">
@@ -116,12 +113,8 @@ export default function AboutPage() {
 
       <Section tone="bone" size="md">
         <Container>
-          <SectionHeading
-            eyebrow="How we work"
-            title="What you can expect"
-            description="Four things that are true on every unit we sell."
-          />
-          <div className="mt-10 grid gap-px bg-line sm:grid-cols-2">
+          <ModuleHeader title="What you can expect" />
+          <div className="grid gap-px bg-line sm:grid-cols-2">
             {PRINCIPLES.map(({ icon: Icon, title, body }) => (
               <div key={title} className="bg-white p-6 sm:p-8">
                 <Icon aria-hidden className="size-7 text-brand-500" strokeWidth={1.9} />
@@ -137,14 +130,12 @@ export default function AboutPage() {
 
       <Section tone="white" size="md">
         <Container>
-          <SectionHeading
-            eyebrow="Visit"
-            title="Come look at it in person"
-            description={`We are open every day, and after 5 PM by appointment. If you are driving out for a specific unit, call or text first so we can have it pulled and ready.`}
-          />
-          <div className="mt-10">
-            <WarehousePanel />
-          </div>
+          <ModuleHeader title="Come look at it in person" />
+          <p className="mb-8 max-w-2xl text-[15px] leading-relaxed text-ink-600">
+            We are open every day, and after 5 PM by appointment. If you are driving out for a
+            specific unit, call or text first so we can have it pulled and ready.
+          </p>
+          <WarehousePanel />
         </Container>
       </Section>
 
@@ -152,11 +143,10 @@ export default function AboutPage() {
         <Container>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-4">
-              <SectionHeading
-                eyebrow="Everything else"
-                title="Questions, answered"
-                description="Condition, testing, warranty, delivery, financing, hours and coverage area."
-              />
+              <ModuleHeader title="Questions, answered" />
+              <p className="text-[15px] leading-relaxed text-ink-600">
+                Condition, testing, warranty, delivery, financing, hours and coverage area.
+              </p>
             </div>
             <div className="min-w-0 lg:col-span-8">
               <FaqSection entries={CORE_FAQS} />

@@ -13,7 +13,7 @@ import { FaqSection } from "@/components/shared/faq-section";
 import { ServiceCards } from "@/components/shared/service-cards";
 import { WarehousePanel } from "@/components/shared/warehouse-panel";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { HOME_FAQS } from "@/lib/content/faq";
 import {
@@ -24,7 +24,6 @@ import {
 } from "@/lib/inventory/repository";
 import { quickLinksFor } from "@/lib/navigation";
 import { pageMetadata } from "@/lib/seo/metadata";
-import { siteConfig } from "@/lib/site-config";
 
 export const revalidate = 300;
 
@@ -61,39 +60,17 @@ export default async function HomePage() {
       {/* Category merchandising */}
       <Section tone="bone" size="md">
         <Container>
-          <SectionHeading
-            eyebrow="Shop by category"
-            title="Find the appliance you need"
-            description="Pick a category to see what's currently available in the warehouse, with the condition and price on every listing."
-            action={
-              <Link href="/inventory" className={buttonStyles("outline", "md")}>
-                View All Inventory
-                <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
-              </Link>
-            }
-          />
-          <div className="mt-10">
-            <CategoryGrid counts={counts} />
-          </div>
+          <ModuleHeader title="Shop by category" href="/inventory" hrefLabel="View all inventory" />
+          <CategoryGrid counts={counts} />
         </Container>
       </Section>
 
       {/* Live inventory — the centrepiece of the page */}
       <Section tone="white" size="md" id="inventory">
         <Container>
-          <SectionHeading
-            eyebrow="Live inventory"
-            title="What's on the warehouse floor"
-            description="Refrigerators, laundry, cooking and dishwashers from name brands. Every listing shows the condition, what was tested, and the current price."
-            action={
-              <Link href="/inventory" className={buttonStyles("primary", "md")}>
-                View All Inventory
-                <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
-              </Link>
-            }
-          />
+          <ModuleHeader title="What's on the warehouse floor" href="/inventory" />
 
-          <div className="mt-10">
+          <div>
             {latest.items.length > 0 ? (
               <InventoryGrid appliances={latest.items} columns={4} priorityCount={4} />
             ) : (
@@ -111,20 +88,12 @@ export default async function HomePage() {
       {deals.items.length > 0 ? (
         <Section tone="bone" size="md" id="deals">
           <Container>
-            <SectionHeading
-              eyebrow="Today's warehouse deals"
-              title="Big brands. Real savings."
-              description="Limited warehouse inventory. These units have a verified retail price on record, so the saving shown is the difference against that price — not an estimate."
-              action={
-                <Link href="/inventory?deals=1&sort=savings" className={buttonStyles("primary", "md")}>
-                  Shop All Deals
-                  <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
-                </Link>
-              }
+            <ModuleHeader
+              title="Today's warehouse deals"
+              href="/inventory?deals=1&sort=savings"
+              hrefLabel="Shop all deals"
             />
-            <div className="mt-10">
-              <InventoryGrid appliances={deals.items} columns={4} />
-            </div>
+            <InventoryGrid appliances={deals.items} columns={4} />
           </Container>
         </Section>
       ) : null}
@@ -134,18 +103,19 @@ export default async function HomePage() {
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
-              <SectionHeading
-                tone="light"
-                eyebrow="Why it costs less"
-                title={
-                  <>
-                    Cosmetic damage.
-                    <br />
-                    Not broken appliances.
-                  </>
-                }
-                description="A scratch & dent appliance is a working unit with a mark on it — usually from shipping, a warehouse, or a showroom floor. The retailer can't sell it at full price. You get the same machine for less."
-              />
+              {/* Kept as local markup rather than a shared heading component:
+                  `ModuleHeader` is deliberately one dark-on-light line, and this
+                  block moves off the homepage to /about in Phase 3 regardless. */}
+              <h2 className="font-display text-[1.75rem] font-extrabold leading-[0.98] text-white sm:text-4xl lg:text-[2.75rem]">
+                Cosmetic damage.
+                <br />
+                Not broken appliances.
+              </h2>
+              <p className="mt-4 text-[15px] leading-relaxed text-white/75 sm:text-base">
+                A scratch &amp; dent appliance is a working unit with a mark on it — usually from
+                shipping, a warehouse, or a showroom floor. The retailer can&apos;t sell it at full
+                price. You get the same machine for less.
+              </p>
               <Link href="/guides/what-does-scratch-and-dent-mean" className={buttonStyles("white", "md", "mt-8")}>
                 Read the full explanation
                 <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
@@ -196,54 +166,42 @@ export default async function HomePage() {
       {/* Services */}
       <Section tone="ink" size="md">
         <Container>
-          <SectionHeading
-            tone="light"
-            eyebrow="After the sale"
-            title="More than just the appliance"
-            description="Buying the appliance is one part of it. Here's how the rest works."
-            action={
-              <Link href="/delivery-installation" className={buttonStyles("white", "md")}>
-                Ask About Delivery
-                <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
-              </Link>
-            }
-          />
-          <div className="mt-10">
-            <ServiceCards />
+          {/* Local markup for the same reason as the block above: this is a dark
+              band, and it condenses into the services strip in Phase 3. */}
+          <div className="flex flex-col gap-5 pb-8 md:flex-row md:items-end md:justify-between">
+            <h2 className="font-display text-[1.75rem] font-extrabold leading-[0.98] text-white sm:text-4xl">
+              More than just the appliance
+            </h2>
+            <Link
+              href="/delivery-installation"
+              className={buttonStyles("white", "md", "shrink-0 self-start md:self-auto")}
+            >
+              Ask about delivery
+              <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
+            </Link>
           </div>
+          <ServiceCards />
         </Container>
       </Section>
 
       {/* Why KT */}
       <Section tone="white" size="md">
         <Container>
-          <SectionHeading
-            eyebrow="Why shop KT Appliances?"
-            title="A warehouse you can walk into"
-            description={`Independent, local, and specific about what we sell. Serving ${siteConfig.serviceStates.join(", ")} from one warehouse in ${siteConfig.address.city}.`}
-          />
-          <div className="mt-10">
-            <WhyKt brands={facets.brands} />
-          </div>
+          <ModuleHeader title="Why shop KT Appliances?" />
+          <WhyKt brands={facets.brands} />
         </Container>
       </Section>
 
       {/* Location + FAQ */}
       <Section tone="bone" size="md">
         <Container>
-          <SectionHeading
-            eyebrow="Your local appliance warehouse"
-            title="109 Burson St, East Stroudsburg"
-            description={`Walk in during regular hours or book an after-hours appointment. We're a short drive from Stroudsburg, Bartonsville and Mount Pocono, and we serve ${siteConfig.serviceStates.join(", ")}.`}
-          />
-          <div className="mt-10">
-            <WarehousePanel />
-          </div>
+          <ModuleHeader title="109 Burson St, East Stroudsburg" href="/contact" hrefLabel="Hours & directions" />
+          <WarehousePanel />
 
           <div className="mt-16 grid gap-10 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-4">
-              <SectionHeading eyebrow="Common questions" title="Before you buy" />
-              <p className="mt-5 text-[15px] leading-relaxed text-ink-600">
+              <ModuleHeader title="Before you buy" />
+              <p className="text-[15px] leading-relaxed text-ink-600">
                 Straight answers about condition, testing, warranty, delivery and financing.
               </p>
               <Link href="/about#faq" className={buttonStyles("outline", "md", "mt-6")}>

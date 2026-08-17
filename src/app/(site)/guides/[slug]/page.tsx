@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 
 import { InventoryGrid } from "@/components/inventory/inventory-grid";
 import { ContactCta } from "@/components/shared/contact-cta";
@@ -9,7 +9,7 @@ import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { GUIDES, getGuide } from "@/lib/content/guides";
 import { queryInventory } from "@/lib/inventory/repository";
@@ -183,17 +183,12 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       {related && related.items.length > 0 && guide.category ? (
         <Section tone="bone" size="md">
           <Container>
-            <SectionHeading
-              eyebrow="Available now"
+            <ModuleHeader
               title={`${CATEGORIES[guide.category].name} on the floor`}
-              action={
-                <Link href={CATEGORIES[guide.category].path} className={buttonStyles("outline", "md")}>
-                  All {CATEGORIES[guide.category].name}
-                  <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
-                </Link>
-              }
+              href={CATEGORIES[guide.category].path}
+              hrefLabel={`All ${CATEGORIES[guide.category].name}`}
             />
-            <div className="mt-9">
+            <div>
               <InventoryGrid appliances={related.items} columns={4} />
             </div>
           </Container>

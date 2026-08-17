@@ -9,7 +9,7 @@ import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { CallLink, TextLink } from "@/components/contact/contact-links";
 import { getCategoryCounts } from "@/lib/inventory/repository";
@@ -169,7 +169,7 @@ export async function CategoryPage({
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
-              <SectionHeading eyebrow="Buying guidance" title={notes.title} />
+              <ModuleHeader title={notes.title} />
               <p className="mt-5 text-[15px] leading-relaxed text-ink-600">
                 Measuring wrong is the most common reason an appliance goes back. If you are not
                 sure, text us the dimensions of your space and we will check them against the unit
@@ -200,7 +200,7 @@ export async function CategoryPage({
 
           <div className="mt-16 grid gap-10 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-4">
-              <SectionHeading eyebrow="Questions" title={`${category.name} FAQs`} />
+              <ModuleHeader title={`${category.name} FAQs`} />
             </div>
             <div className="min-w-0 lg:col-span-8">
               <FaqSection entries={faqs} />

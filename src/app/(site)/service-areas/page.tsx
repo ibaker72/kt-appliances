@@ -6,7 +6,7 @@ import { ContactCta } from "@/components/shared/contact-cta";
 import { PageHeader } from "@/components/shared/page-header";
 import { WarehousePanel } from "@/components/shared/warehouse-panel";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { SERVICE_LOCATIONS } from "@/lib/content/locations";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -45,13 +45,13 @@ export default function ServiceAreasPage() {
 
       <Section tone="white" size="md">
         <Container>
-          <SectionHeading
-            eyebrow="Local delivery"
-            title="Towns we deliver to regularly"
-            description="These are the areas we run most often. Each page covers what delivery looks like from the warehouse to that town, and what tends to matter locally."
-          />
+          <ModuleHeader title="Towns we deliver to regularly" />
+          <p className="max-w-2xl text-[15px] leading-relaxed text-ink-600">
+            These are the areas we run most often. Each page covers what delivery looks like from
+            the warehouse to that town, and what tends to matter locally.
+          </p>
 
-          <ul className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-8 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
             {SERVICE_LOCATIONS.map((location) => (
               <li key={location.slug} className="bg-white">
                 <Link
@@ -112,14 +112,8 @@ export default function ServiceAreasPage() {
 
       <Section tone="bone" size="md">
         <Container>
-          <SectionHeading
-            eyebrow="Warehouse pickup"
-            title="Open to everyone, every day"
-            description="However far out you are, pickup is always an option — and it is the cheapest way to buy."
-          />
-          <div className="mt-10">
-            <WarehousePanel />
-          </div>
+          <ModuleHeader title="Open to everyone, every day" />
+          <WarehousePanel />
         </Container>
       </Section>
 

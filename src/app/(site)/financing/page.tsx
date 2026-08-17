@@ -6,7 +6,7 @@ import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { FINANCING_FAQS } from "@/lib/content/faq";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -58,11 +58,12 @@ export default function FinancingPage() {
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-7">
-              <SectionHeading
-                eyebrow="How it works here"
-                title="Straightforward, and no surprises"
-                description="Financing is one of the reasons a warehouse price makes sense — you are already paying less than retail, and paying over time makes a full kitchen or laundry replacement manageable."
-              />
+              <ModuleHeader title="Straightforward, and no surprises" />
+              <p className="text-[15px] leading-relaxed text-ink-600">
+                Financing is one of the reasons a warehouse price makes sense — you are already
+                paying less than retail, and paying over time makes a full kitchen or laundry
+                replacement manageable.
+              </p>
 
               <ol className="mt-9 border-t border-line">
                 {[
@@ -164,11 +165,11 @@ export default function FinancingPage() {
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
-              <SectionHeading
-                eyebrow="Financing inquiry"
-                title="Ask about financing"
-                description="Send this and we'll follow up with the options available for what you're buying. Submitting this form is not an application and does not affect your credit."
-              />
+              <ModuleHeader title="Ask about financing" />
+              <p className="text-[15px] leading-relaxed text-ink-600">
+                Send this and we&apos;ll follow up with the options available for what you&apos;re
+                buying. Submitting this form is not an application and does not affect your credit.
+              </p>
               <div className="mt-8">
                 <FaqSection entries={FINANCING_FAQS} />
               </div>

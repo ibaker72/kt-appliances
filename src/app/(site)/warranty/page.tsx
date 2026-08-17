@@ -6,7 +6,7 @@ import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { WARRANTY_FAQS } from "@/lib/content/faq";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -88,11 +88,11 @@ export default function WarrantyPage() {
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
-              <SectionHeading
-                eyebrow="What to ask"
-                title="Before you pay, ask these"
-                description="A warranty is only useful if you know what it covers. These are the questions worth asking on any scratch & dent purchase — here or anywhere else."
-              />
+              <ModuleHeader title="Before you pay, ask these" />
+              <p className="text-[15px] leading-relaxed text-ink-600">
+                A warranty is only useful if you know what it covers. These are the questions worth
+                asking on any scratch &amp; dent purchase — here or anywhere else.
+              </p>
               <TextLink
                 context="warranty-questions"
                 message={`Hi ${siteConfig.name}, can you tell me what warranty option is available on a specific appliance?`}
@@ -128,7 +128,7 @@ export default function WarrantyPage() {
       {/* Placeholder for real terms, clearly marked rather than invented */}
       <Section tone="white" size="md">
         <Container width="narrow">
-          <SectionHeading eyebrow="Coverage terms" title="Getting the specifics" as="h2" />
+          <ModuleHeader title="Getting the specifics" />
           <p className="mt-5 text-[15.5px] leading-relaxed text-ink-600">
             Written warranty terms are provided with the appliance at the time of purchase. Because
             coverage varies by unit and by the option selected, we do not publish a single set of
@@ -154,7 +154,7 @@ export default function WarrantyPage() {
         <Container>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-4">
-              <SectionHeading eyebrow="Questions" title="Warranty FAQs" />
+              <ModuleHeader title="Warranty FAQs" />
             </div>
             <div className="min-w-0 lg:col-span-8">
               <FaqSection entries={WARRANTY_FAQS} />

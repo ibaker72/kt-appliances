@@ -8,7 +8,7 @@ import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
 import { StoreHours } from "@/components/layout/store-hours";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { DELIVERY_FAQS } from "@/lib/content/faq";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -134,11 +134,11 @@ export default function DeliveryInstallationPage() {
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
-              <SectionHeading
-                eyebrow="Delivery quote"
-                title="Check delivery to your ZIP"
-                description="Send your ZIP code and what you're looking at. We'll come back with what delivery costs to you, whether same-day is possible, and what installation would add."
-              />
+              <ModuleHeader title="Check delivery to your ZIP" />
+              <p className="text-[15px] leading-relaxed text-ink-600">
+                Send your ZIP code and what you&apos;re looking at. We&apos;ll come back with what
+                delivery costs to you, whether same-day is possible, and what installation would add.
+              </p>
 
               <div className="mt-8 border border-line bg-white p-6">
                 <p className="eyebrow text-ink-500">Prefer to just ask?</p>
@@ -183,11 +183,13 @@ export default function DeliveryInstallationPage() {
         <Container>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
-              <SectionHeading
-                eyebrow="Where we deliver"
-                title="From East Stroudsburg outward"
-                description={`The warehouse is at ${siteConfig.address.oneLine}. Delivery is most straightforward across Monroe County and the surrounding Poconos, and we deliver into ${siteConfig.serviceStates.slice(1).join(" and ")} depending on the distance and the order.`}
-              />
+              <ModuleHeader title="From East Stroudsburg outward" />
+              <p className="text-[15px] leading-relaxed text-ink-600">
+                The warehouse is at {siteConfig.address.oneLine}. Delivery is most straightforward
+                across Monroe County and the surrounding Poconos, and we deliver into{" "}
+                {siteConfig.serviceStates.slice(1).join(" and ")} depending on the distance and the
+                order.
+              </p>
               <Link href="/service-areas" className={buttonStyles("outline", "md", "mt-7")}>
                 <MapPin aria-hidden className="size-4" strokeWidth={2.5} />
                 See service areas

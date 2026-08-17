@@ -6,7 +6,7 @@ import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
 import { WarehousePanel } from "@/components/shared/warehouse-panel";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { CORE_FAQS } from "@/lib/content/faq";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -110,11 +110,12 @@ export default function ContactPage() {
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
-              <SectionHeading
-                eyebrow="Send a message"
-                title="Tell us what you need"
-                description="If you'd rather write it out than call, send this and we'll get back to you. Include the appliance, brand or size you're after — and your ZIP code if you'll need delivery."
-              />
+              <ModuleHeader title="Tell us what you need" />
+              <p className="text-[15px] leading-relaxed text-ink-600">
+                If you&apos;d rather write it out than call, send this and we&apos;ll get back to
+                you. Include the appliance, brand or size you&apos;re after — and your ZIP code if
+                you&apos;ll need delivery.
+              </p>
               <div className="mt-8">
                 <FaqSection entries={CONTACT_FAQS} />
               </div>

@@ -10,7 +10,7 @@ import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
 import { Container } from "@/components/ui/container";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { getCategoryCounts, queryInventory } from "@/lib/inventory/repository";
 import { CATEGORY_LIST } from "@/lib/inventory/types";
@@ -156,18 +156,12 @@ export default async function LocationPage({
       {/* Categories available */}
       <Section tone="bone" size="md">
         <Container>
-          <SectionHeading
-            eyebrow="Available to you"
+          <ModuleHeader
             title={`What ${location.name} customers can buy`}
-            description={`The entire warehouse inventory is available for delivery to ${location.name} or for pickup in ${siteConfig.address.city}.`}
-            action={
-              <Link href="/inventory" className={buttonStyles("outline", "md")}>
-                All inventory
-                <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
-              </Link>
-            }
+            href="/inventory"
+            hrefLabel="All inventory"
           />
-          <ul className="mt-9 flex flex-wrap gap-2.5">
+          <ul className="flex flex-wrap gap-2.5">
             {CATEGORY_LIST.map((category) => (
               <li key={category.slug}>
                 <Link
@@ -201,11 +195,11 @@ export default async function LocationPage({
         <Container>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
-              <SectionHeading
-                eyebrow={`${location.name} delivery`}
-                title="Get a delivery price"
-                description={`Send your ZIP code and what you're looking for. We'll come back with delivery cost to ${location.name} and whether same-day is realistic.`}
-              />
+              <ModuleHeader title="Get a delivery price" />
+              <p className="text-[15px] leading-relaxed text-ink-600">
+                Send your ZIP code and what you&apos;re looking for. We&apos;ll come back with
+                delivery cost to {location.name} and whether same-day is realistic.
+              </p>
               <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
                 <CallLink
                   context={`location-${location.slug}`}
