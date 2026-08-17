@@ -30,14 +30,14 @@ export function CategoryRail({ counts = {} }: { counts?: Record<string, number> 
                 src={category.artwork}
                 alt=""
                 fill
-                sizes="130px"
+                sizes="(min-width: 640px) 130px, 104px"
                 className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
               />
             </div>
-            <h3 className="mt-2 text-ui font-semibold leading-tight text-ink-950 group-hover:text-brand-500">
+            <h3 className="mt-1.5 text-[12px] font-semibold leading-tight text-ink-950 group-hover:text-brand-500 sm:mt-2 sm:text-ui">
               {category.name}
             </h3>
-            <p className="mt-1 text-ui text-ink-500 tnum">
+            <p className="mt-0.5 text-[11.5px] text-ink-500 tnum sm:mt-1 sm:text-ui">
               {count > 0 ? `${count} available` : "Ask what's in"}
             </p>
           </Link>

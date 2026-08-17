@@ -15,25 +15,25 @@ import { Container } from "@/components/ui/container";
 export function SearchBand({ availableCount }: { availableCount: number }) {
   return (
     <section aria-labelledby="search-heading" className="border-b border-line bg-bone-100 lg:hidden">
-      <Container className="py-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+      <Container className="py-3">
+        <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
           <div className="min-w-0 lg:max-w-xl lg:flex-1">
-            <h2 id="search-heading" className="text-[18px] font-semibold text-ink-950 sm:text-[20px]">
+            <h2 id="search-heading" className="sr-only sm:not-sr-only sm:text-[20px] sm:font-semibold sm:text-ink-950">
               What are you looking for?
             </h2>
             <SearchBar
               id="home-search"
               size="lg"
-              className="mt-3"
+              className="sm:mt-3"
               placeholder="Samsung, RF28, french door, washer…"
             />
           </div>
 
           {availableCount > 0 ? (
             <p className="shrink-0 text-ui text-ink-600 lg:pb-1 lg:text-right">
-              <span className="block font-display text-3xl font-extrabold text-ink-950 tnum">
+              <span className="font-display text-[17px] font-extrabold text-ink-950 tnum sm:block sm:text-3xl">
                 {availableCount}
-              </span>
+              </span>{" "}
               appliance{availableCount === 1 ? "" : "s"} on the floor right now
             </p>
           ) : null}

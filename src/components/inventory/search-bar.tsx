@@ -75,16 +75,16 @@ export function SearchBar({
             enterKeyHint="search"
             autoComplete="off"
             className={cn(
-              "w-full min-w-0 border border-r-0 border-ink-200 bg-white text-ink-950 placeholder:text-ink-400 focus:border-ink-900",
-              large ? "h-14 pl-11 pr-3 text-[16px]" : "h-11 pl-10 pr-3 text-[15px]",
+              "w-full min-w-0 rounded-l-sm border border-r-0 border-ink-200 bg-white text-ink-950 placeholder:text-ink-500 focus:border-ink-900",
+              large ? "h-12 pl-11 pr-3 text-[16px] sm:h-14" : "h-11 pl-10 pr-3 text-[15px]",
             )}
           />
         </div>
         <button
           type="submit"
           className={cn(
-            "shrink-0 border border-brand-500 bg-brand-500 font-display font-bold uppercase tracking-[0.06em] text-white transition-colors hover:border-brand-600 hover:bg-brand-600",
-            large ? "h-14 px-6 text-[13px]" : "h-11 px-4 text-[12px]",
+            "shrink-0 rounded-r-sm border border-brand-500 bg-brand-500 font-semibold text-white transition-colors hover:border-brand-600 hover:bg-brand-600",
+            large ? "h-12 px-5 text-[13px] sm:h-14 sm:px-6" : "h-11 px-4 text-[12px]",
           )}
         >
           <span className={large ? "" : "sr-only sm:not-sr-only"}>Search</span>

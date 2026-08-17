@@ -82,7 +82,7 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
     <section
       aria-label="Promotions"
       aria-roledescription="carousel"
-      className="relative"
+      className="relative min-w-0"
       onMouseEnter={() => setInteracting(true)}
       onMouseLeave={() => setInteracting(false)}
       onFocusCapture={() => setInteracting(true)}
@@ -91,7 +91,7 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
       <div
         ref={trackRef}
         onScroll={onScroll}
-        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
+        className="no-scrollbar flex w-full snap-x snap-mandatory overflow-x-auto"
       >
         {slides.map((slide, position) => {
           const tone = TONES[slide.tone];
@@ -102,21 +102,21 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
               aria-roledescription="slide"
               aria-label={`${position + 1} of ${slides.length}`}
               aria-hidden={position !== index}
-              className={cn("w-full shrink-0 snap-start", tone.panel)}
+              className={cn("w-full min-w-0 shrink-0 basis-full snap-start", tone.panel)}
             >
-              <div className="mx-auto flex min-h-[300px] w-full max-w-[1320px] flex-col justify-center px-5 py-10 sm:px-6 lg:min-h-[340px] lg:px-10">
+              <div className="mx-auto flex min-h-[190px] w-full max-w-[1320px] flex-col justify-center px-5 pb-11 pt-6 sm:min-h-[260px] sm:px-6 sm:pb-14 sm:pt-9 lg:min-h-[330px] lg:px-10">
                 <h2
                   className={cn(
-                    "max-w-2xl font-display text-[1.9rem] font-extrabold leading-[1.02] sm:text-[2.4rem] lg:text-[2.9rem]",
+                    "max-w-2xl font-display text-[1.4rem] font-extrabold leading-[1.08] sm:text-[2.1rem] sm:leading-[1.02] lg:text-[2.8rem]",
                     tone.head,
                   )}
                 >
                   {slide.headline}
                 </h2>
-                <p className={cn("mt-4 max-w-xl text-[15px] leading-relaxed sm:text-base", tone.body)}>
+                <p className={cn("clamp-2 mt-2 max-w-xl text-[13.5px] leading-snug sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-relaxed", tone.body)}>
                   {slide.subhead}
                 </p>
-                <div className="mt-7">
+                <div className="mt-4 sm:mt-7">
                   {/* Inert for the off-screen slides so they are not tab stops. */}
                   <Link
                     href={slide.href}
@@ -134,7 +134,7 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
       </div>
 
       {slides.length > 1 ? (
-        <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-3">
+        <div className="absolute inset-x-0 bottom-2.5 flex items-center justify-center gap-3 sm:bottom-4">
           <div className="flex items-center gap-2 rounded-pill bg-ink-950/55 px-3 py-2 backdrop-blur-sm">
             <button
               type="button"

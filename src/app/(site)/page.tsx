@@ -43,9 +43,9 @@ export default async function HomePage() {
     <>
       {/* 1 — Promo slot, with the two standing offers beside it on desktop. */}
       <section className="border-b border-line">
-        <div className="grid lg:grid-cols-[2fr_1fr]">
+        <div className="grid min-w-0 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <PromoCarousel slides={slides} />
-          <div className="grid grid-cols-2 lg:grid-cols-1">
+          <div className="grid min-w-0 grid-cols-2 lg:grid-cols-1">
             <PromoTile
               href="/inventory?deals=1&sort=savings"
               title="Today's deals"
@@ -221,12 +221,12 @@ function PromoTile({ href, title, detail }: { href: string; title: string; detai
   return (
     <Link
       href={href}
-      className="group flex flex-col justify-center gap-1 border-t border-line bg-white p-5 first:border-t-0 lg:border-l"
+      className="group flex flex-col justify-center gap-0.5 border-t border-line bg-white p-3.5 first:border-t-0 sm:gap-1 sm:p-5 lg:border-l"
     >
-      <span className="font-display text-[19px] font-bold leading-tight text-ink-950 group-hover:text-brand-500">
+      <span className="font-display text-[15px] font-bold leading-tight text-ink-950 group-hover:text-brand-500 sm:text-[19px]">
         {title}
       </span>
-      <span className="text-ui leading-snug text-ink-600">{detail}</span>
+      <span className="hidden text-ui leading-snug text-ink-600 sm:block">{detail}</span>
       <span className={buttonStyles("link", "sm", "mt-1 justify-start p-0")}>Shop now ›</span>
     </Link>
   );

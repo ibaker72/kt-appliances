@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 /** Fixed track widths. Rail items must not flex, or snap points drift. */
 const ITEM_WIDTHS = {
   card: "[&>*]:w-[240px]",
-  category: "[&>*]:w-[130px]",
+  category: "[&>*]:w-[104px] sm:[&>*]:w-[130px]",
   tile: "[&>*]:w-[160px]",
   chip: "",
 } as const;
