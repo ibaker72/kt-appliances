@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, Clock, Menu, MapPin, Phone, Search, Tag, X } from "lucide-react";
+import { ChevronRight, Clock, Heart, Menu, MapPin, Phone, Search, Tag, X } from "lucide-react";
 
 import { Wordmark } from "@/components/brand/wordmark";
 import { CallLink, TextLink } from "@/components/contact/contact-links";
@@ -91,6 +91,12 @@ export function SiteHeader({ categories, quickLinks }: SiteHeaderProps) {
             >
               Text us
             </TextLink>
+            <span aria-hidden className="text-white/25">|</span>
+            {/* No count here on purpose: the saved list is a cookie, and reading
+                it in the layout would make every static page dynamic. */}
+            <Link href="/inventory/saved" className="font-semibold text-white hover:text-brand-400">
+              Saved
+            </Link>
           </p>
         </Container>
       </div>
@@ -269,6 +275,18 @@ function MobileMenu({
             <span className="font-semibold text-brand-600">Today&apos;s warehouse deals</span>
           </span>
           <ChevronRight aria-hidden className="size-5 shrink-0 text-brand-500" />
+        </Link>
+
+        <Link
+          href="/inventory/saved"
+          onClick={onClose}
+          className="mt-3 flex items-center justify-between gap-3 rounded-sm border border-line px-4 py-3.5"
+        >
+          <span className="flex items-center gap-2.5">
+            <Heart aria-hidden className="size-[18px] text-brand-500" strokeWidth={2.5} />
+            <span className="font-semibold text-ink-950">Saved appliances</span>
+          </span>
+          <ChevronRight aria-hidden className="size-5 shrink-0 text-ink-400" />
         </Link>
 
         <h2 className="mt-8 mb-2 text-ui font-semibold uppercase tracking-wide text-ink-500">

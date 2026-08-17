@@ -385,6 +385,42 @@ export async function getApplianceBySlug(slug: string): Promise<Appliance | null
   return data ? mapRow(data as Row) : null;
 }
 
+/**
+ * Looks up listings by slug, preserving the order asked for.
+ *
+ * Used by the saved list, which stores slugs only: re-reading the catalogue on
+ * every render means a saved unit always shows its current price and current
+ * status, and a slug that no longer exists simply drops out instead of
+ * rendering from a stale snapshot.
+ */
+export async function getAppliancesBySlugs(slugs: string[]): Promise<Appliance[]> {
+  if (slugs.length === 0) return [];
+  const client = getSupabaseReadClient();
+
+  const order = (items: Appliance[]): Appliance[] =>
+    slugs
+      .map((slug) => items.find((item) => item.slug === slug))
+      .filter((item): item is Appliance => Boolean(item));
+
+  if (!client) {
+    if (!isDemoInventory()) return [];
+    return order(DEMO_APPLIANCES.filter((item) => item.published));
+  }
+
+  const { data, error } = await client
+    .from("appliances")
+    .select(SELECT)
+    .in("slug", slugs)
+    .eq("published", true)
+    .neq("status", "draft");
+
+  if (error) {
+    console.error("[inventory] slug batch lookup failed:", error.message);
+    return [];
+  }
+  return order((data ?? []).map((row) => mapRow(row as Row)));
+}
+
 /** Slugs for the sitemap and for static params. */
 export async function getPublishedSlugs(): Promise<Array<{ slug: string; updatedAt: string }>> {
   const client = getSupabaseReadClient();

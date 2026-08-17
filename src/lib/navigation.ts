@@ -130,6 +130,7 @@ export const FOOTER_SERVICE_NAV: NavItem[] = [
 ];
 
 export const FOOTER_COMPANY_NAV: NavItem[] = [
+  { label: "Saved Appliances", href: "/inventory/saved" },
   { label: "About KT Appliances", href: "/about" },
   { label: "Contact & Warehouse Hours", href: "/contact" },
   { label: "Recently Sold", href: "/inventory?status=sold" },

@@ -4,6 +4,7 @@ import { Check, MapPin, Truck } from "lucide-react";
 import { ConditionBadge } from "@/components/inventory/availability-badge";
 import { DealBadges } from "@/components/inventory/deal-badge";
 import { ProductImage } from "@/components/inventory/product-image";
+import { SaveButton } from "@/components/inventory/save-button";
 import { CATEGORIES, formatPrice, isPurchasable, savingsFor, type Appliance } from "@/lib/inventory/types";
 import { siteConfig } from "@/lib/site-config";
 import { cn, relativeTime } from "@/lib/utils";
@@ -48,8 +49,9 @@ const DEFAULT_SIZES: Record<ProductCardVariant, string> = {
  * should announce, and it leaves room for the compare control to sit above the
  * overlay without nesting interactive elements.
  *
- * Stays a server component. The one piece of interactivity, comparison, is a
- * link that edits the URL, so it needs no JavaScript and survives a share.
+ * Stays a server component. Comparison is a link that edits the URL, so it needs
+ * no JavaScript and survives a share; only the save heart is a client island,
+ * because a personal list has no server-rendered state to begin with.
  */
 export function ProductCard({
   appliance,
@@ -91,8 +93,13 @@ export function ProductCard({
           </span>
         ) : null}
 
-        {compareHref && available && !compact ? (
-          <CompareToggle href={compareHref} checked={compareChecked} title={appliance.title} />
+        {!compact ? (
+          <div className="absolute right-2 top-2 flex items-center gap-1.5">
+            {compareHref && available ? (
+              <CompareToggle href={compareHref} checked={compareChecked} title={appliance.title} />
+            ) : null}
+            <SaveButton slug={appliance.slug} title={appliance.title} />
+          </div>
         ) : null}
       </div>
 
@@ -198,7 +205,7 @@ function CompareToggle({
       scroll={false}
       aria-pressed={checked}
       className={cn(
-        "absolute right-2 top-2 z-10 flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[11px] font-semibold transition",
+        "z-10 flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[11px] font-semibold transition",
         // Once checked it must stay visible, or a shopper cannot see what they picked.
         checked
           ? "border-ink-950 bg-ink-950 text-white"
