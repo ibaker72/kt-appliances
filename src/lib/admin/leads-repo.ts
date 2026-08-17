@@ -1,6 +1,7 @@
 import "server-only";
 
-import { getSupabaseAdminClient } from "@/lib/supabase/client";
+import { adminClientConfigProblem, getSupabaseAdminClient } from "@/lib/supabase/client";
+import { adminQueryError } from "@/lib/admin/inventory-repo";
 import type { InquiryType, LeadStatus } from "@/lib/leads/schema";
 
 export interface AdminLead {
@@ -60,7 +61,9 @@ function mapLead(row: Row): AdminLead {
 /** Leads are only ever read through the service role — RLS blocks anon entirely. */
 export async function listLeads(options: { status?: LeadStatus | "all"; limit?: number } = {}) {
   const supabase = getSupabaseAdminClient();
-  if (!supabase) return { items: [] as AdminLead[], total: 0, configured: false };
+  if (!supabase) {
+    return { items: [] as AdminLead[], total: 0, configured: false, problem: adminClientConfigProblem() };
+  }
 
   let builder = supabase
     .from("leads")
@@ -73,16 +76,24 @@ export async function listLeads(options: { status?: LeadStatus | "all"; limit?: 
   const { data, error, count } = await builder;
   if (error) {
     console.error("[admin] lead list failed:", error.message);
-    return { items: [] as AdminLead[], total: 0, configured: true };
+    // Reported rather than shown as an empty inbox: "no leads yet" and "the
+    // database refused the query" look identical otherwise, and one of them
+    // silently loses customer enquiries.
+    return {
+      items: [] as AdminLead[],
+      total: 0,
+      configured: true,
+      problem: adminQueryError(error).message,
+    };
   }
 
   const items = (data ?? []).map((row) => mapLead(row as Row));
-  return { items, total: count ?? items.length, configured: true };
+  return { items, total: count ?? items.length, configured: true, problem: null };
 }
 
 export async function setLeadStatus(id: string, status: LeadStatus): Promise<void> {
   const supabase = getSupabaseAdminClient();
-  if (!supabase) throw new Error("Supabase service-role credentials are not configured.");
+  if (!supabase) throw new Error(adminClientConfigProblem() ?? "Supabase service-role credentials are not configured.");
   const { error } = await supabase.from("leads").update({ status }).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
 }

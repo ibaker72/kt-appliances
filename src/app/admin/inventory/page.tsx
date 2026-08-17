@@ -2,9 +2,10 @@ import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 
 import { AdminInventoryTable } from "@/components/admin/admin-inventory-table";
+import { AdminConfigNotice } from "@/components/admin/admin-config-notice";
 import { buttonStyles } from "@/components/ui/button";
 import { requireAdmin } from "@/lib/admin/auth";
-import { AdminNotConfiguredError, listAppliancesForAdmin } from "@/lib/admin/inventory-repo";
+import { AdminNotConfiguredError, AdminPermissionError, listAppliancesForAdmin } from "@/lib/admin/inventory-repo";
 import { APPLIANCE_STATUSES, CATEGORY_LIST, STATUS_LABELS } from "@/lib/inventory/types";
 import type { ApplianceStatus } from "@/lib/inventory/types";
 
@@ -35,6 +36,7 @@ export default async function AdminInventoryPage({
   let items: Awaited<ReturnType<typeof listAppliancesForAdmin>>["items"] = [];
   let total = 0;
   let notConfigured = false;
+  let problem: string | null = null;
 
   try {
     const result = await listAppliancesForAdmin({
@@ -48,8 +50,12 @@ export default async function AdminInventoryPage({
     items = result.items;
     total = result.total;
   } catch (error) {
-    if (error instanceof AdminNotConfiguredError) notConfigured = true;
-    else throw error;
+    // A refused query is a configuration fault, not a crash: say which, rather
+    // than handing the browser an opaque 500 digest.
+    if (error instanceof AdminNotConfiguredError || error instanceof AdminPermissionError) {
+      notConfigured = true;
+      problem = error.message;
+    } else throw error;
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -74,11 +80,7 @@ export default async function AdminInventoryPage({
       </div>
 
       {notConfigured ? (
-        <p className="border border-line bg-white px-5 py-10 text-center text-[14.5px] text-ink-600">
-          No database connected. Set the Supabase environment variables described in{" "}
-          <code className="font-mono text-[13px]">.env.example</code> and run the migration in{" "}
-          <code className="font-mono text-[13px]">supabase/migrations/</code>.
-        </p>
+        <AdminConfigNotice problem={problem} />
       ) : (
         <>
           {/* Filters — a plain GET form, so results are linkable and shareable. */}

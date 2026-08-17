@@ -1,6 +1,10 @@
 import "server-only";
 
-import { getSupabaseAdminClient, supabaseStorageBucket } from "@/lib/supabase/client";
+import {
+  adminClientConfigProblem,
+  getSupabaseAdminClient,
+  supabaseStorageBucket,
+} from "@/lib/supabase/client";
 import type { Appliance, ApplianceStatus } from "@/lib/inventory/types";
 import { slugify } from "@/lib/utils";
 import type { ApplianceFormData } from "./appliance-schema";
@@ -77,15 +81,41 @@ function mapRow(row: Row): Appliance {
 const SELECT = "*, appliance_images(*)";
 
 export class AdminNotConfiguredError extends Error {
-  constructor() {
-    super("Supabase service-role credentials are not configured.");
+  constructor(detail?: string) {
+    super(detail ?? "Supabase service-role credentials are not configured.");
     this.name = "AdminNotConfiguredError";
   }
 }
 
+/**
+ * PostgreSQL refused the query before RLS was consulted.
+ *
+ * Raised as its own type because "permission denied for table appliances" reads
+ * like a schema fault and is not one: either the API roles were never granted
+ * table privileges, or the key in SUPABASE_SERVICE_ROLE_KEY does not resolve to
+ * `service_role`. Both are fixable in a minute once named; unwrapped, it reaches
+ * the browser as an opaque 500 digest.
+ */
+export class AdminPermissionError extends Error {
+  constructor(public readonly table: string) {
+    super(
+      `The database refused access to "${table}". Run supabase/migrations/0002_api_role_grants.sql, ` +
+        "and confirm SUPABASE_SERVICE_ROLE_KEY holds the project's service-role secret rather than the anon key.",
+    );
+    this.name = "AdminPermissionError";
+  }
+}
+
+/** Converts a PostgREST error into the clearest thing we can say about it. */
+export function adminQueryError(error: { message: string }): Error {
+  const denied = /permission denied for (?:table|relation|schema) ([\w.]+)/i.exec(error.message);
+  if (denied) return new AdminPermissionError(denied[1]);
+  return new Error(error.message);
+}
+
 function client() {
   const supabase = getSupabaseAdminClient();
-  if (!supabase) throw new AdminNotConfiguredError();
+  if (!supabase) throw new AdminNotConfiguredError(adminClientConfigProblem() ?? undefined);
   return supabase;
 }
 
@@ -135,7 +165,7 @@ export async function listAppliancesForAdmin(
   builder = builder.range(offset, offset + limit - 1);
 
   const { data, error, count } = await builder;
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
 
   const items = (data ?? []).map((row) => mapRow(row as Row));
   return { items, total: count ?? items.length };
@@ -144,7 +174,7 @@ export async function listAppliancesForAdmin(
 export async function getApplianceForAdmin(id: string): Promise<Appliance | null> {
   const supabase = client();
   const { data, error } = await supabase.from("appliances").select(SELECT).eq("id", id).maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
   return data ? mapRow(data as Row) : null;
 }
 
@@ -195,7 +225,7 @@ export async function generateUniqueSlug(
     let builder = supabase.from("appliances").select("id").eq("slug", candidate).limit(1);
     if (excludeId) builder = builder.neq("id", excludeId);
     const { data: existing, error } = await builder;
-    if (error) throw new Error(error.message);
+    if (error) throw adminQueryError(error);
     if (!existing || existing.length === 0) return candidate;
   }
 
@@ -247,7 +277,7 @@ export async function createAppliance(data: ApplianceFormData): Promise<string> 
     .select("id")
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
   return created.id as string;
 }
 
@@ -256,7 +286,7 @@ export async function updateAppliance(id: string, data: ApplianceFormData): Prom
   const slug = data.slug ? slugify(data.slug) : await generateUniqueSlug(data, id);
 
   const { error } = await supabase.from("appliances").update(toRow(data, slug)).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
 }
 
 /** Copies an appliance (and its image references) as an unpublished draft. */
@@ -304,7 +334,7 @@ export async function duplicateAppliance(id: string): Promise<string> {
     .select("id")
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
   const newId = created.id as string;
 
   if (source.images.length > 0) {
@@ -328,19 +358,19 @@ export async function setApplianceStatus(id: string, status: ApplianceStatus): P
   // `sold_at` is maintained by a database trigger, so status is the only field
   // that has to change here.
   const { error } = await supabase.from("appliances").update({ status }).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
 }
 
 export async function setAppliancePublished(id: string, published: boolean): Promise<void> {
   const supabase = client();
   const { error } = await supabase.from("appliances").update({ published }).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
 }
 
 export async function setApplianceFeatured(id: string, featured: boolean): Promise<void> {
   const supabase = client();
   const { error } = await supabase.from("appliances").update({ featured }).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
 }
 
 export async function deleteAppliance(id: string): Promise<void> {
@@ -359,7 +389,7 @@ export async function deleteAppliance(id: string): Promise<void> {
   }
 
   const { error } = await supabase.from("appliances").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -427,7 +457,7 @@ export async function deleteApplianceImage(imageId: string): Promise<void> {
     .select("id, appliance_id, image_url, is_primary")
     .eq("id", imageId)
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
   if (!data) return;
 
   const { error: deleteError } = await supabase.from("appliance_images").delete().eq("id", imageId);
@@ -459,7 +489,7 @@ export async function setPrimaryImage(applianceId: string, imageId: string): Pro
     .from("appliance_images")
     .update({ is_primary: true })
     .eq("id", imageId);
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
 }
 
 export async function reorderImage(
@@ -473,7 +503,7 @@ export async function reorderImage(
     .select("id, sort_order")
     .eq("appliance_id", applianceId)
     .order("sort_order", { ascending: true });
-  if (error) throw new Error(error.message);
+  if (error) throw adminQueryError(error);
 
   const images = (data ?? []) as Array<{ id: string; sort_order: number }>;
   const index = images.findIndex((image) => image.id === imageId);

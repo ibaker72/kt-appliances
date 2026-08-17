@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowRight, Plus } from "lucide-react";
 import { requireAdmin } from "@/lib/admin/auth";
 import {
   AdminNotConfiguredError,
+  AdminPermissionError,
   getInventoryStats,
   listAppliancesForAdmin,
 } from "@/lib/admin/inventory-repo";
@@ -135,7 +136,7 @@ async function loadDashboard() {
     ]);
     return { stats, recent: recent.items, leads: leads.items };
   } catch (error) {
-    if (error instanceof AdminNotConfiguredError) return null;
+    if (error instanceof AdminNotConfiguredError || error instanceof AdminPermissionError) return null;
     throw error;
   }
 }

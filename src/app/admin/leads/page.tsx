@@ -4,6 +4,7 @@ import { LeadRow } from "@/components/admin/lead-row";
 import { buttonStyles } from "@/components/ui/button";
 import { requireAdmin } from "@/lib/admin/auth";
 import { listLeads } from "@/lib/admin/leads-repo";
+import { AdminConfigNotice } from "@/components/admin/admin-config-notice";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/leads/schema";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,7 @@ export default async function AdminLeadsPage({
     ? (status as LeadStatus)
     : "all";
 
-  const { items, total, configured } = await listLeads({ status: active, limit: 100 });
+  const { items, total, configured, problem } = await listLeads({ status: active, limit: 100 });
 
   return (
     <div className="space-y-6">
@@ -48,6 +49,8 @@ export default async function AdminLeadsPage({
             : "Connect Supabase to store and review leads."}
         </p>
       </div>
+
+      {problem ? <AdminConfigNotice problem={problem} /> : null}
 
       {configured ? (
         <>

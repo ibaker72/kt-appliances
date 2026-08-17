@@ -7,7 +7,8 @@ import { ApplianceForm } from "@/components/admin/appliance-form";
 import { ImageManager } from "@/components/admin/image-manager";
 import { buttonStyles } from "@/components/ui/button";
 import { requireAdmin } from "@/lib/admin/auth";
-import { AdminNotConfiguredError, getApplianceForAdmin } from "@/lib/admin/inventory-repo";
+import { AdminNotConfiguredError,
+  AdminPermissionError, getApplianceForAdmin } from "@/lib/admin/inventory-repo";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export default async function EditAppliancePage({
   try {
     appliance = await getApplianceForAdmin(id);
   } catch (error) {
-    if (error instanceof AdminNotConfiguredError) {
+    if (error instanceof AdminNotConfiguredError || error instanceof AdminPermissionError) {
       return (
         <p className="border border-line bg-white px-5 py-10 text-center text-[14.5px] text-ink-600">
           No database connected. Set the Supabase environment variables to manage inventory.
