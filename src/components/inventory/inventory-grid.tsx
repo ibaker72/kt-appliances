@@ -17,6 +17,10 @@ interface InventoryGridProps {
   className?: string;
 }
 
+/**
+ * Product grid. Two columns on phones — a single-column stack pushes inventory
+ * too far below the fold on the screen most shoppers arrive on.
+ */
 export function InventoryGrid({
   appliances,
   columns = 4,
@@ -25,14 +29,14 @@ export function InventoryGrid({
 }: InventoryGridProps) {
   const sizes =
     columns === 4
-      ? "(min-width: 1280px) 300px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw"
-      : "(min-width: 1024px) 400px, (min-width: 640px) 45vw, 92vw";
+      ? "(min-width: 1280px) 300px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 47vw"
+      : "(min-width: 1280px) 330px, (min-width: 1024px) 45vw, (min-width: 640px) 45vw, 47vw";
 
   return (
     <div
       className={cn(
-        "grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3",
-        columns === 4 ? "xl:grid-cols-4" : "",
+        "grid grid-cols-2 gap-px bg-line lg:grid-cols-3",
+        columns === 4 ? "xl:grid-cols-4" : "lg:grid-cols-2 xl:grid-cols-3",
         className,
       )}
     >
@@ -116,8 +120,8 @@ export function InventoryGridSkeleton({ count = 8, columns = 4 }: { count?: numb
   return (
     <div
       className={cn(
-        "grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3",
-        columns === 4 ? "xl:grid-cols-4" : "",
+        "grid grid-cols-2 gap-px bg-line lg:grid-cols-3",
+        columns === 4 ? "xl:grid-cols-4" : "lg:grid-cols-2 xl:grid-cols-3",
       )}
     >
       {Array.from({ length: count }).map((_, index) => (

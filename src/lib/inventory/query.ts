@@ -14,19 +14,41 @@ import type {
  * Supabase clients). Everything in this file is pure data and safe on both sides.
  */
 
-export const INVENTORY_SORTS = ["newest", "price-asc", "price-desc", "brand"] as const;
+export const INVENTORY_SORTS = [
+  "featured",
+  "newest",
+  "price-asc",
+  "price-desc",
+  "savings",
+  "brand",
+] as const;
 export type InventorySort = (typeof INVENTORY_SORTS)[number];
 
 export const SORT_LABELS: Record<InventorySort, string> = {
+  featured: "Featured",
   newest: "Newest arrivals",
   "price-asc": "Price: low to high",
   "price-desc": "Price: high to low",
+  savings: "Biggest savings",
   brand: "Brand A–Z",
 };
+
+/**
+ * "Biggest savings" is only meaningful for units carrying a verified comparison
+ * price, so choosing it also narrows the result set to those units. Callers that
+ * need to explain that to a shopper can check this rather than re-deriving it.
+ */
+export function sortImpliesSavings(sort: InventorySort): boolean {
+  return sort === "savings";
+}
 
 export interface InventoryQuery {
   category?: ApplianceCategory;
   brands?: string[];
+  /** Free-text `subcategory` values, e.g. "French Door" — the appliance-type filter. */
+  subcategories?: string[];
+  /** Free-text `color` values, e.g. "Stainless Steel". */
+  colors?: string[];
   minPrice?: number;
   maxPrice?: number;
   conditions?: ApplianceCondition[];
@@ -36,6 +58,10 @@ export interface InventoryQuery {
   search?: string;
   sort?: InventorySort;
   featuredOnly?: boolean;
+  /** Restricts to units flagged as warranty-eligible. */
+  warrantyOnly?: boolean;
+  /** Restricts to units carrying a verified comparison price (i.e. real markdowns). */
+  dealsOnly?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -50,6 +76,16 @@ export interface InventoryResult {
 export interface InventoryFacets {
   brands: string[];
   categories: ApplianceCategory[];
+  /** Distinct `subcategory` values present in scope, e.g. ["French Door", "Side-by-Side"]. */
+  subcategories: string[];
+  /** Distinct `color` values present in scope. */
+  colors: string[];
+  /** Fuel types present in scope — drives the gas/electric controls on cooking and laundry. */
+  fuelTypes: FuelType[];
   minPrice: number;
   maxPrice: number;
+  /** True when at least one unit in scope has a verified comparison price. */
+  hasDeals: boolean;
+  /** True when at least one unit in scope is warranty-eligible. */
+  hasWarranty: boolean;
 }

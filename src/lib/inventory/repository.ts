@@ -2,10 +2,17 @@ import "server-only";
 
 import { getSupabaseReadClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { DEMO_APPLIANCES } from "./demo-data";
-import type { InventoryFacets, InventoryQuery, InventoryResult } from "./query";
+import type {
+  InventoryFacets,
+  InventoryQuery,
+  InventoryResult,
+  InventorySort,
+} from "./query";
 export * from "./query";
 
 import {
+  FUEL_TYPES,
+  savingsFor,
   type Appliance,
   type ApplianceCategory,
   type ApplianceCondition,
@@ -13,6 +20,30 @@ import {
   type FuelType,
   isApplianceCategory,
 } from "./types";
+
+/**
+ * Ceiling on rows pulled for the "biggest savings" sort.
+ *
+ * Savings is `compare_at_price - price`, a computed value PostgREST cannot sort
+ * on, so that one sort ranks in memory instead. The query is still narrowed
+ * database-side to units that actually carry a comparison price, which is a
+ * small slice of the catalogue — this cap exists so a pathological catalogue
+ * can't pull unbounded rows, not because we expect to reach it.
+ */
+const SAVINGS_SORT_CAP = 480;
+
+/** Returned whenever there is nothing to derive facets from, so filter UI hides itself. */
+const EMPTY_FACETS: InventoryFacets = {
+  brands: [],
+  categories: [],
+  subcategories: [],
+  colors: [],
+  fuelTypes: [],
+  minPrice: 0,
+  maxPrice: 0,
+  hasDeals: false,
+  hasWarranty: false,
+};
 
 /**
  * Sample data is only served when there is no database to read from, and even
@@ -108,9 +139,54 @@ function sanitizeSearch(term: string): string {
   return term.replace(/[(),*%\\]/g, " ").trim();
 }
 
+/**
+ * Case-insensitive equality across a set of free-text values.
+ *
+ * `subcategory` and `color` are typed by hand in the admin, so "French Door" and
+ * "French door" both occur in practice — and campaign URLs are written by hand
+ * too. Matching case-insensitively means a link keeps working either way, where
+ * `in()` would silently return nothing. Values are double-quoted because they
+ * contain spaces, and sanitised because `or()` is comma/paren delimited.
+ */
+function ilikeAnyFilter(column: string, values: string[]): string | null {
+  const clauses = values
+    .map((value) => sanitizeSearch(value))
+    .filter((value) => value.length > 0)
+    .map((value) => `${column}.ilike."${value}"`);
+  return clauses.length > 0 ? clauses.join(",") : null;
+}
+
 /* -------------------------------------------------------------------------- */
 /* In-memory filtering (sample data path)                                      */
 /* -------------------------------------------------------------------------- */
+
+/** Case-insensitive membership test for the free-text facets. */
+function matchesAny(value: string | null, allowed: string[]): boolean {
+  if (value == null) return false;
+  const needle = value.toLowerCase();
+  return allowed.some((entry) => entry.toLowerCase() === needle);
+}
+
+/** Shared ranking so the sample-data path and the savings sort order identically. */
+function compareBySort(a: Appliance, b: Appliance, sort: InventorySort): number {
+  switch (sort) {
+    case "price-asc":
+      return a.price - b.price;
+    case "price-desc":
+      return b.price - a.price;
+    case "savings":
+      return (savingsFor(b) ?? 0) - (savingsFor(a) ?? 0);
+    case "brand":
+      return a.brand.localeCompare(b.brand) || a.title.localeCompare(b.title);
+    case "featured":
+      return (
+        Number(b.featured) - Number(a.featured) ||
+        Date.parse(b.createdAt) - Date.parse(a.createdAt)
+      );
+    default:
+      return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+  }
+}
 
 function applyFiltersInMemory(source: Appliance[], query: InventoryQuery): Appliance[] {
   const statuses = query.statuses ?? (["available", "reserved"] as ApplianceStatus[]);
@@ -120,8 +196,13 @@ function applyFiltersInMemory(source: Appliance[], query: InventoryQuery): Appli
 
   if (query.category) items = items.filter((item) => item.category === query.category);
   if (query.brands?.length) {
-    const set = new Set(query.brands.map((brand) => brand.toLowerCase()));
-    items = items.filter((item) => set.has(item.brand.toLowerCase()));
+    items = items.filter((item) => matchesAny(item.brand, query.brands!));
+  }
+  if (query.subcategories?.length) {
+    items = items.filter((item) => matchesAny(item.subcategory, query.subcategories!));
+  }
+  if (query.colors?.length) {
+    items = items.filter((item) => matchesAny(item.color, query.colors!));
   }
   if (query.conditions?.length) {
     items = items.filter((item) => query.conditions!.includes(item.condition));
@@ -132,6 +213,10 @@ function applyFiltersInMemory(source: Appliance[], query: InventoryQuery): Appli
   if (query.minPrice != null) items = items.filter((item) => item.price >= query.minPrice!);
   if (query.maxPrice != null) items = items.filter((item) => item.price <= query.maxPrice!);
   if (query.featuredOnly) items = items.filter((item) => item.featured);
+  if (query.warrantyOnly) items = items.filter((item) => item.warrantyAvailable);
+  if (query.dealsOnly || query.sort === "savings") {
+    items = items.filter((item) => savingsFor(item) != null);
+  }
   if (search) {
     items = items.filter((item) =>
       [item.title, item.brand, item.modelNumber, item.subcategory, item.sku, item.description]
@@ -142,21 +227,8 @@ function applyFiltersInMemory(source: Appliance[], query: InventoryQuery): Appli
     );
   }
 
-  const sort = query.sort ?? "newest";
-  items = [...items].sort((a, b) => {
-    switch (sort) {
-      case "price-asc":
-        return a.price - b.price;
-      case "price-desc":
-        return b.price - a.price;
-      case "brand":
-        return a.brand.localeCompare(b.brand) || a.title.localeCompare(b.title);
-      default:
-        return Date.parse(b.createdAt) - Date.parse(a.createdAt);
-    }
-  });
-
-  return items;
+  const sort = query.sort ?? "featured";
+  return [...items].sort((a, b) => compareBySort(a, b, sort));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -175,6 +247,11 @@ export async function queryInventory(query: InventoryQuery = {}): Promise<Invent
   }
 
   const statuses = query.statuses ?? (["available", "reserved"] as ApplianceStatus[]);
+  const sort: InventorySort = query.sort ?? "featured";
+  // Savings is a computed column PostgREST cannot order on, so that sort ranks in
+  // memory over the (database-narrowed) set of units that carry a comparison price.
+  const rankInMemory = sort === "savings";
+
   let builder = client
     .from("appliances")
     .select(SELECT, { count: "exact" })
@@ -182,12 +259,31 @@ export async function queryInventory(query: InventoryQuery = {}): Promise<Invent
     .in("status", statuses);
 
   if (query.category) builder = builder.eq("category", query.category);
-  if (query.brands?.length) builder = builder.in("brand", query.brands);
+  // Matched case-insensitively to stay consistent with the sample-data path and
+  // to survive a hand-written `?brand=samsung`.
+  if (query.brands?.length) {
+    const filter = ilikeAnyFilter("brand", query.brands);
+    if (filter) builder = builder.or(filter);
+  }
+  if (query.subcategories?.length) {
+    const filter = ilikeAnyFilter("subcategory", query.subcategories);
+    if (filter) builder = builder.or(filter);
+  }
+  if (query.colors?.length) {
+    const filter = ilikeAnyFilter("color", query.colors);
+    if (filter) builder = builder.or(filter);
+  }
   if (query.conditions?.length) builder = builder.in("condition", query.conditions);
   if (query.fuelTypes?.length) builder = builder.in("fuel_type", query.fuelTypes);
   if (query.minPrice != null) builder = builder.gte("price", query.minPrice);
   if (query.maxPrice != null) builder = builder.lte("price", query.maxPrice);
   if (query.featuredOnly) builder = builder.eq("featured", true);
+  if (query.warrantyOnly) builder = builder.eq("warranty_available", true);
+  // A verified comparison price is what makes a markdown real, so both the deals
+  // filter and the savings sort require one to be on record.
+  if (query.dealsOnly || rankInMemory) {
+    builder = builder.not("compare_at_price", "is", null);
+  }
 
   const search = query.search ? sanitizeSearch(query.search) : "";
   if (search) {
@@ -203,7 +299,7 @@ export async function queryInventory(query: InventoryQuery = {}): Promise<Invent
     );
   }
 
-  switch (query.sort ?? "newest") {
+  switch (sort) {
     case "price-asc":
       builder = builder.order("price", { ascending: true });
       break;
@@ -213,11 +309,23 @@ export async function queryInventory(query: InventoryQuery = {}): Promise<Invent
     case "brand":
       builder = builder.order("brand", { ascending: true }).order("title", { ascending: true });
       break;
+    case "featured":
+      builder = builder
+        .order("featured", { ascending: false })
+        .order("created_at", { ascending: false });
+      break;
+    case "savings":
+      // Deepest discounts tend to sit on the highest-ticket units, so this keeps
+      // the capped window close to the true top of the ranking.
+      builder = builder.order("compare_at_price", { ascending: false });
+      break;
     default:
       builder = builder.order("created_at", { ascending: false });
   }
 
-  if (query.limit != null) {
+  if (rankInMemory) {
+    builder = builder.range(0, SAVINGS_SORT_CAP - 1);
+  } else if (query.limit != null) {
     const offset = query.offset ?? 0;
     builder = builder.range(offset, offset + query.limit - 1);
   }
@@ -230,6 +338,20 @@ export async function queryInventory(query: InventoryQuery = {}): Promise<Invent
   }
 
   const items = (data ?? []).map((row) => mapRow(row as Row));
+
+  if (rankInMemory) {
+    const ranked = [...items].sort((a, b) => compareBySort(a, b, sort));
+    const offset = query.offset ?? 0;
+    const limit = query.limit ?? ranked.length;
+    return {
+      items: ranked.slice(offset, offset + limit),
+      // Paging is bounded by what was actually ranked, so the count reflects what
+      // a shopper can reach rather than a total they cannot page to.
+      total: Math.min(count ?? ranked.length, ranked.length),
+      isDemo: false,
+    };
+  }
+
   return { items, total: count ?? items.length, isDemo: false };
 }
 
@@ -287,20 +409,28 @@ export async function getPublishedSlugs(): Promise<Array<{ slug: string; updated
 export async function getInventoryFacets(category?: ApplianceCategory): Promise<InventoryFacets> {
   const client = getSupabaseReadClient();
 
+  const sortedUnique = (values: Array<string | null>): string[] =>
+    [...new Set(values.filter((value): value is string => Boolean(value)))].sort((a, b) =>
+      a.localeCompare(b),
+    );
+
   const derive = (items: Appliance[]): InventoryFacets => {
     const prices = items.map((item) => item.price).filter((price) => price > 0);
     return {
-      brands: [...new Set(items.map((item) => item.brand).filter(Boolean))].sort((a, b) =>
-        a.localeCompare(b),
-      ),
+      brands: sortedUnique(items.map((item) => item.brand)),
       categories: [...new Set(items.map((item) => item.category))],
+      subcategories: sortedUnique(items.map((item) => item.subcategory)),
+      colors: sortedUnique(items.map((item) => item.color)),
+      fuelTypes: FUEL_TYPES.filter((fuel) => items.some((item) => item.fuelType === fuel)),
       minPrice: prices.length ? Math.floor(Math.min(...prices)) : 0,
       maxPrice: prices.length ? Math.ceil(Math.max(...prices)) : 0,
+      hasDeals: items.some((item) => savingsFor(item) != null),
+      hasWarranty: items.some((item) => item.warrantyAvailable),
     };
   };
 
   if (!client) {
-    if (!isDemoInventory()) return { brands: [], categories: [], minPrice: 0, maxPrice: 0 };
+    if (!isDemoInventory()) return EMPTY_FACETS;
     const items = DEMO_APPLIANCES.filter(
       (item) =>
         item.published &&
@@ -313,7 +443,9 @@ export async function getInventoryFacets(category?: ApplianceCategory): Promise<
 
   let builder = client
     .from("appliances")
-    .select("brand, category, price")
+    .select(
+      "brand, category, subcategory, color, fuel_type, price, compare_at_price, warranty_available",
+    )
     .eq("published", true)
     .in("status", ["available", "reserved"]);
   if (category) builder = builder.eq("category", category);
@@ -321,20 +453,28 @@ export async function getInventoryFacets(category?: ApplianceCategory): Promise<
   const { data, error } = await builder.limit(5000);
   if (error) {
     console.error("[inventory] facet query failed:", error.message);
-    return { brands: [], categories: [], minPrice: 0, maxPrice: 0 };
+    return EMPTY_FACETS;
   }
 
   const rows = (data ?? []) as Row[];
   const prices = rows.map((row) => num(row.price)).filter((price) => price > 0);
   return {
-    brands: [...new Set(rows.map((row) => str(row.brand)).filter(Boolean))].sort((a, b) =>
-      a.localeCompare(b),
-    ),
+    brands: sortedUnique(rows.map((row) => str(row.brand))),
     categories: [
       ...new Set(rows.map((row) => str(row.category)).filter(isApplianceCategory)),
     ] as ApplianceCategory[],
+    subcategories: sortedUnique(rows.map((row) => nullableStr(row.subcategory))),
+    colors: sortedUnique(rows.map((row) => nullableStr(row.color))),
+    fuelTypes: FUEL_TYPES.filter((fuel) =>
+      rows.some((row) => nullableStr(row.fuel_type) === fuel),
+    ),
     minPrice: prices.length ? Math.floor(Math.min(...prices)) : 0,
     maxPrice: prices.length ? Math.ceil(Math.max(...prices)) : 0,
+    hasDeals: rows.some((row) => {
+      const compare = nullableNum(row.compare_at_price);
+      return compare != null && compare > num(row.price);
+    }),
+    hasWarranty: rows.some((row) => Boolean(row.warranty_available)),
   };
 }
 

@@ -4,7 +4,9 @@ import { ArrowRight, ClipboardCheck, Tag, Warehouse } from "lucide-react";
 import { CategoryGrid } from "@/components/home/category-grid";
 import { HeroRetail } from "@/components/home/hero-retail";
 import { RecentlySold } from "@/components/home/recently-sold";
+import { SearchBand } from "@/components/home/search-band";
 import { TrustStrip } from "@/components/home/trust-strip";
+import { WhyKt } from "@/components/home/why-kt";
 import { InventoryEmptyState, InventoryGrid } from "@/components/inventory/inventory-grid";
 import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
@@ -16,9 +18,11 @@ import { buttonStyles } from "@/components/ui/button";
 import { HOME_FAQS } from "@/lib/content/faq";
 import {
   getCategoryCounts,
+  getInventoryFacets,
   getRecentlySold,
   queryInventory,
 } from "@/lib/inventory/repository";
+import { quickLinksFor } from "@/lib/navigation";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site-config";
 
@@ -33,21 +37,24 @@ export const metadata = pageMetadata({
 
 export default async function HomePage() {
   // One pass over the catalogue for everything the homepage merchandises.
-  const [featured, latest, sold, counts] = await Promise.all([
-    queryInventory({ featuredOnly: true, statuses: ["available"], limit: 8, sort: "newest" }),
-    queryInventory({ statuses: ["available"], limit: 8, sort: "newest" }),
+  const [featured, latest, deals, sold, counts, facets] = await Promise.all([
+    queryInventory({ featuredOnly: true, statuses: ["available"], limit: 1, sort: "newest" }),
+    queryInventory({ statuses: ["available"], limit: 8, sort: "featured" }),
+    // Genuine markdowns only: `dealsOnly` requires a verified comparison price, so
+    // this section is empty rather than padded with undiscounted stock.
+    queryInventory({ dealsOnly: true, statuses: ["available"], limit: 4, sort: "savings" }),
     getRecentlySold(6),
     getCategoryCounts(),
+    getInventoryFacets(),
   ]);
 
-  // Prefer featured units for the deals rail; fall back to newest arrivals so the
-  // section is never empty just because nobody has flagged anything as featured.
-  const deals = featured.items.length >= 4 ? featured.items : latest.items;
   const heroUnit = featured.items[0] ?? latest.items[0] ?? null;
   const totalAvailable = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  const quickLinks = quickLinksFor(facets);
 
   return (
     <>
+      <SearchBand quickLinks={quickLinks} availableCount={totalAvailable} />
       <HeroRetail featured={heroUnit} />
       <TrustStrip />
 
@@ -56,8 +63,8 @@ export default async function HomePage() {
         <Container>
           <SectionHeading
             eyebrow="Shop by category"
-            title="What's on the warehouse floor"
-            description="Refrigerators, laundry, cooking and dishwashers from name brands. Every listing shows the cosmetic damage, what was tested, and the price."
+            title="Find the appliance you need"
+            description="Pick a category to see what's currently available in the warehouse, with the condition and price on every listing."
             action={
               <Link href="/inventory" className={buttonStyles("outline", "md")}>
                 View All Inventory
@@ -71,28 +78,24 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* Warehouse deals */}
-      <Section tone="white" size="md" id="deals">
+      {/* Live inventory — the centrepiece of the page */}
+      <Section tone="white" size="md" id="inventory">
         <Container>
           <SectionHeading
-            eyebrow="Warehouse deals"
-            title="Priced below traditional retail"
-            description={
-              totalAvailable > 0
-                ? `${totalAvailable} appliance${totalAvailable === 1 ? "" : "s"} available right now. Comparison prices are shown only where we have a verified retail price for the same model.`
-                : "Comparison prices are shown only where we have a verified retail price for the same model — no invented markdowns."
-            }
+            eyebrow="Live inventory"
+            title="What's on the warehouse floor"
+            description="Refrigerators, laundry, cooking and dishwashers from name brands. Every listing shows the condition, what was tested, and the current price."
             action={
               <Link href="/inventory" className={buttonStyles("primary", "md")}>
-                Shop All Deals
+                View All Inventory
                 <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
               </Link>
             }
           />
 
           <div className="mt-10">
-            {deals.length > 0 ? (
-              <InventoryGrid appliances={deals.slice(0, 8)} columns={4} priorityCount={2} />
+            {latest.items.length > 0 ? (
+              <InventoryGrid appliances={latest.items} columns={4} priorityCount={4} />
             ) : (
               <InventoryEmptyState
                 title="New inventory arrives regularly"
@@ -102,6 +105,29 @@ export default async function HomePage() {
           </div>
         </Container>
       </Section>
+
+      {/* Warehouse deals. Rendered only when real markdowns exist — a "deals"
+          section stocked with full-price units would be a lie. */}
+      {deals.items.length > 0 ? (
+        <Section tone="bone" size="md" id="deals">
+          <Container>
+            <SectionHeading
+              eyebrow="Today's warehouse deals"
+              title="Big brands. Real savings."
+              description="Limited warehouse inventory. These units have a verified retail price on record, so the saving shown is the difference against that price — not an estimate."
+              action={
+                <Link href="/inventory?deals=1&sort=savings" className={buttonStyles("primary", "md")}>
+                  Shop All Deals
+                  <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
+                </Link>
+              }
+            />
+            <div className="mt-10">
+              <InventoryGrid appliances={deals.items} columns={4} />
+            </div>
+          </Container>
+        </Section>
+      ) : null}
 
       {/* Why scratch & dent — the objection that decides the sale */}
       <Section tone="ink" size="md">
@@ -173,8 +199,14 @@ export default async function HomePage() {
           <SectionHeading
             tone="light"
             eyebrow="After the sale"
-            title="Getting it home, installed and covered"
+            title="More than just the appliance"
             description="Buying the appliance is one part of it. Here's how the rest works."
+            action={
+              <Link href="/delivery-installation" className={buttonStyles("white", "md")}>
+                Ask About Delivery
+                <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
+              </Link>
+            }
           />
           <div className="mt-10">
             <ServiceCards />
@@ -182,11 +214,25 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* Warehouse + FAQ */}
+      {/* Why KT */}
+      <Section tone="white" size="md">
+        <Container>
+          <SectionHeading
+            eyebrow="Why shop KT Appliances?"
+            title="A warehouse you can walk into"
+            description={`Independent, local, and specific about what we sell. Serving ${siteConfig.serviceStates.join(", ")} from one warehouse in ${siteConfig.address.city}.`}
+          />
+          <div className="mt-10">
+            <WhyKt brands={facets.brands} />
+          </div>
+        </Container>
+      </Section>
+
+      {/* Location + FAQ */}
       <Section tone="bone" size="md">
         <Container>
           <SectionHeading
-            eyebrow="Visit the warehouse"
+            eyebrow="Your local appliance warehouse"
             title="109 Burson St, East Stroudsburg"
             description={`Walk in during regular hours or book an after-hours appointment. We're a short drive from Stroudsburg, Bartonsville and Mount Pocono, and we serve ${siteConfig.serviceStates.join(", ")}.`}
           />

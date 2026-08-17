@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, MessageSquareText, Truck, ShieldCheck } from "lucide-react";
 
 import { AvailabilityBadge, ConditionBadge } from "@/components/inventory/availability-badge";
+import { DealBadges } from "@/components/inventory/deal-badge";
 import { ProductImage } from "@/components/inventory/product-image";
 import { ProductPrice } from "@/components/inventory/product-price";
 import { TextLink } from "@/components/contact/contact-links";
@@ -44,13 +45,16 @@ export function ProductCard({
           keyboard path to the same page. */}
       <Link href={href} className="zoom-frame relative block overflow-hidden" tabIndex={-1}>
         <ProductImage appliance={appliance} sizes={sizes} priority={priority} />
-        <span className="absolute left-0 top-0 flex flex-col items-start gap-1 p-2.5">
+        {/* Promotional flags sit top-left; the factual condition chip sits bottom-left
+            so a shopper reads "why it's cheap" separately from "what the deal is". */}
+        <DealBadges appliance={appliance} className="absolute left-0 top-0 max-w-[85%] p-2.5" />
+        <span className="absolute bottom-0 left-0 p-2.5">
           <ConditionBadge condition={appliance.condition} />
         </span>
       </Link>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-1 flex-col p-3 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
           <p className="eyebrow text-brand-500">{appliance.brand}</p>
           <AvailabilityBadge appliance={appliance} />
         </div>
@@ -97,10 +101,12 @@ export function ProductCard({
             <div className="grid w-full grid-cols-[1fr_auto] gap-2">
               <Link
                 href={href}
-                className="flex h-11 items-center justify-center gap-2 border border-ink-900 bg-white font-display text-[11.5px] font-bold uppercase tracking-[0.06em] text-ink-900 transition-colors hover:bg-ink-950 hover:text-white"
+                className="flex h-11 items-center justify-center gap-2 whitespace-nowrap border border-ink-900 bg-white px-2 font-display text-[11.5px] font-bold uppercase tracking-[0.06em] text-ink-900 transition-colors hover:bg-ink-950 hover:text-white"
               >
-                View Appliance
-                <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
+                {/* Shortened on the narrowest cards, where the full label wraps. */}
+                <span className="sm:hidden">View</span>
+                <span className="hidden sm:inline">View Appliance</span>
+                <ArrowRight aria-hidden className="size-3.5 shrink-0" strokeWidth={2.5} />
               </Link>
               <TextLink
                 context="product-card"
@@ -114,10 +120,11 @@ export function ProductCard({
           ) : (
             <Link
               href={href}
-              className="flex h-11 w-full items-center justify-center gap-2 border border-line bg-bone-50 font-display text-[11.5px] font-bold uppercase tracking-[0.06em] text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-950"
+              className="flex h-11 w-full items-center justify-center gap-2 whitespace-nowrap border border-line bg-bone-50 px-2 font-display text-[11.5px] font-bold uppercase tracking-[0.06em] text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-950"
             >
-              See Similar Appliances
-              <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
+              <span className="sm:hidden">See Similar</span>
+              <span className="hidden sm:inline">See Similar Appliances</span>
+              <ArrowRight aria-hidden className="size-3.5 shrink-0" strokeWidth={2.5} />
             </Link>
           )}
         </div>

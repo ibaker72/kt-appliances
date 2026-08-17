@@ -1,21 +1,22 @@
 import Link from "next/link";
+import { X } from "lucide-react";
 
-import { InventoryFilters } from "@/components/inventory/inventory-filters";
+import { FilterSidebar, InventoryToolbar } from "@/components/inventory/inventory-filters";
 import { InventoryEmptyState, InventoryGrid } from "@/components/inventory/inventory-grid";
 import { SoldProductCard } from "@/components/inventory/product-card";
+import { SearchBar } from "@/components/inventory/search-bar";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container } from "@/components/ui/container";
 import { itemListSchema } from "@/lib/seo/jsonld";
-import {
-  getInventoryFacets,
-  queryInventory,
-} from "@/lib/inventory/repository";
+import { getInventoryFacets, queryInventory } from "@/lib/inventory/repository";
+import { CONDITION_LABELS, FUEL_LABELS, CATEGORIES } from "@/lib/inventory/types";
 import {
   PAGE_SIZE,
   activeFilterCount,
   buildQueryString,
   parseFilters,
   toInventoryQuery,
+  type ParsedFilters,
   type RawSearchParams,
 } from "@/lib/inventory/search-params";
 import type { ApplianceCategory } from "@/lib/inventory/types";
@@ -36,6 +37,9 @@ interface InventoryBrowserProps {
  * Shared filter + results surface used by `/inventory` and every category page.
  * Rendered on the server so the first paint of an ad landing already contains
  * products — no client-side fetch waterfall before anyone sees a price.
+ *
+ * Desktop puts filters in a sticky sidebar beside the grid; phones get the same
+ * controls behind a filter button, with the grid taking the full width.
  */
 export async function InventoryBrowser({
   searchParams,
@@ -59,87 +63,227 @@ export async function InventoryBrowser({
   const showingFrom = result.total === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const showingTo = Math.min(currentPage * PAGE_SIZE, result.total);
 
-  return (
-    <>
-      <Container>
-        <InventoryFilters
-          filters={scoped}
-          brands={facets.brands}
-          priceBounds={{ min: facets.minPrice, max: facets.maxPrice }}
-          basePath={basePath}
-          lockCategory={Boolean(category)}
-          resultCount={result.total}
-        />
-      </Container>
+  const summary =
+    result.total > 0 ? (
+      <p className="min-w-0">
+        Showing{" "}
+        <span className="font-semibold text-ink-950 tnum">
+          {showingFrom}–{showingTo}
+        </span>{" "}
+        of <span className="font-semibold text-ink-950 tnum">{result.total}</span>{" "}
+        {filters.showSold ? "recently sold" : "available"}{" "}
+        {result.total === 1 ? "appliance" : "appliances"}
+      </p>
+    ) : (
+      <p className="min-w-0">No appliances match</p>
+    );
 
-      <Container className="py-8 sm:py-10">
-        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-          <p className="text-[14px] text-ink-600">
-            {result.total > 0 ? (
-              <>
-                Showing{" "}
-                <span className="font-semibold text-ink-950 tnum">
-                  {showingFrom}–{showingTo}
-                </span>{" "}
-                of <span className="font-semibold text-ink-950 tnum">{result.total}</span>{" "}
-                {filters.showSold ? "recently sold" : "available"}{" "}
-                {result.total === 1 ? "appliance" : "appliances"}
-              </>
-            ) : null}
-          </p>
-          {activeCount > 0 ? (
-            <Link
-              href={basePath}
-              className="inline-flex min-h-[34px] items-center text-[13px] font-semibold text-ink-600 underline underline-offset-4 hover:text-brand-500"
-            >
-              Clear {activeCount} filter{activeCount === 1 ? "" : "s"}
-            </Link>
-          ) : null}
+  return (
+    <Container className="py-6 sm:py-8">
+      <div className="grid gap-8 lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[268px_minmax(0,1fr)]">
+        {/* Desktop sidebar. Sticky below the header so filters stay reachable in a
+            long grid; `max-h`/`overflow` keep a tall filter set scrollable. */}
+        <div className="hidden lg:block">
+          <div className="sticky top-[136px] max-h-[calc(100vh-160px)] overflow-y-auto pr-1">
+            <FilterSidebar
+              filters={scoped}
+              facets={facets}
+              basePath={basePath}
+              lockCategory={Boolean(category)}
+            />
+          </div>
         </div>
 
-        {result.items.length > 0 ? (
-          <>
-            <JsonLd data={itemListSchema(result.items, listName)} />
-            {filters.showSold ? (
-              <ul className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
-                {result.items.map((appliance) => (
-                  <li key={appliance.id}>
-                    <SoldProductCard appliance={appliance} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <InventoryGrid appliances={result.items} columns={4} priorityCount={4} />
-            )}
-
-            {totalPages > 1 ? (
-              <Pagination
-                basePath={basePath}
-                filters={scoped}
-                currentPage={currentPage}
-                totalPages={totalPages}
-              />
-            ) : null}
-          </>
-        ) : (
-          <InventoryEmptyState
-            title={
-              activeCount > 0
-                ? "No appliances match these filters right now"
-                : (emptyTitle ?? "No appliances listed right now")
-            }
-            description={
-              activeCount > 0
-                ? "Try widening the price range or clearing a filter. Warehouse stock changes daily — call or text us and we'll tell you what just came in."
-                : (emptyDescription ??
-                  "New inventory arrives regularly. Call or text us to ask what's currently available.")
-            }
-            showReset={activeCount > 0}
-            resetHref={basePath}
+        <div className="min-w-0">
+          {/* Search scopes to this route, so searching inside a category stays in it. */}
+          <SearchBar
+            action={basePath}
+            defaultValue={filters.q}
+            id="browse-search"
+            placeholder="Search by brand, model number or appliance…"
+            className="mb-5"
           />
-        )}
-      </Container>
-    </>
+
+          <div className="border-y border-line py-3.5">
+            <InventoryToolbar
+              filters={scoped}
+              facets={facets}
+              basePath={basePath}
+              lockCategory={Boolean(category)}
+              resultCount={result.total}
+              summary={summary}
+            />
+          </div>
+
+          {activeCount > 0 ? (
+            <ActiveFilterChips filters={scoped} basePath={basePath} lockCategory={Boolean(category)} />
+          ) : null}
+
+          <div className="mt-6">
+            {result.items.length > 0 ? (
+              <>
+                <JsonLd data={itemListSchema(result.items, listName)} />
+                {filters.showSold ? (
+                  <ul className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+                    {result.items.map((appliance) => (
+                      <li key={appliance.id}>
+                        <SoldProductCard appliance={appliance} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <InventoryGrid appliances={result.items} columns={3} priorityCount={3} />
+                )}
+
+                {totalPages > 1 ? (
+                  <Pagination
+                    basePath={basePath}
+                    filters={scoped}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <InventoryEmptyState
+                title={
+                  activeCount > 0
+                    ? "No appliances match these filters right now"
+                    : (emptyTitle ?? "No appliances listed right now")
+                }
+                description={
+                  activeCount > 0
+                    ? "Try widening the price range or clearing a filter. Warehouse stock changes daily — call or text us and we'll tell you what just came in."
+                    : (emptyDescription ??
+                      "New inventory arrives regularly. Call or text us to ask what's currently available.")
+                }
+                showReset={activeCount > 0}
+                resetHref={basePath}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </Container>
+  );
+}
+
+/**
+ * Applied filters as removable chips.
+ *
+ * Plain links rather than buttons: each one is just "the current URL minus this
+ * value", so removing a filter costs no client JavaScript and works before
+ * hydration.
+ */
+function ActiveFilterChips({
+  filters,
+  basePath,
+  lockCategory,
+}: {
+  filters: ParsedFilters;
+  basePath: string;
+  lockCategory: boolean;
+}) {
+  const href = (patch: Partial<ParsedFilters>) =>
+    `${basePath}${buildQueryString({ ...filters, ...patch, page: 1 })}`;
+
+  const chips: Array<{ key: string; label: string; href: string }> = [];
+
+  if (filters.q) {
+    chips.push({ key: "q", label: `“${filters.q}”`, href: href({ q: "" }) });
+  }
+  // A category page owns its category, so that chip would be a dead end there.
+  if (filters.category && !lockCategory) {
+    chips.push({
+      key: "category",
+      label: CATEGORIES[filters.category].name,
+      href: href({ category: undefined }),
+    });
+  }
+  for (const brand of filters.brands) {
+    chips.push({
+      key: `brand-${brand}`,
+      label: brand,
+      href: href({ brands: filters.brands.filter((entry) => entry !== brand) }),
+    });
+  }
+  for (const type of filters.types) {
+    chips.push({
+      key: `type-${type}`,
+      label: type,
+      href: href({ types: filters.types.filter((entry) => entry !== type) }),
+    });
+  }
+  for (const color of filters.colors) {
+    chips.push({
+      key: `color-${color}`,
+      label: color,
+      href: href({ colors: filters.colors.filter((entry) => entry !== color) }),
+    });
+  }
+  for (const condition of filters.conditions) {
+    chips.push({
+      key: `condition-${condition}`,
+      label: CONDITION_LABELS[condition],
+      href: href({ conditions: filters.conditions.filter((entry) => entry !== condition) }),
+    });
+  }
+  for (const fuel of filters.fuelTypes) {
+    chips.push({
+      key: `fuel-${fuel}`,
+      label: FUEL_LABELS[fuel],
+      href: href({ fuelTypes: filters.fuelTypes.filter((entry) => entry !== fuel) }),
+    });
+  }
+  if (filters.min != null || filters.max != null) {
+    const min = filters.min != null ? `$${filters.min.toLocaleString("en-US")}` : "Any";
+    const max = filters.max != null ? `$${filters.max.toLocaleString("en-US")}` : "Any";
+    chips.push({
+      key: "price",
+      label: `${min} – ${max}`,
+      href: href({ min: undefined, max: undefined }),
+    });
+  }
+  if (filters.warrantyOnly) {
+    chips.push({
+      key: "warranty",
+      label: "Warranty available",
+      href: href({ warrantyOnly: false }),
+    });
+  }
+  if (filters.dealsOnly) {
+    chips.push({ key: "deals", label: "Marked down", href: href({ dealsOnly: false }) });
+  }
+  if (filters.showSold) {
+    chips.push({ key: "sold", label: "Recently sold", href: href({ showSold: false }) });
+  }
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2">
+      <h2 className="eyebrow mr-1 text-ink-500">Applied</h2>
+      <ul className="flex flex-wrap items-center gap-2">
+        {chips.map((chip) => (
+          <li key={chip.key}>
+            <Link
+              href={chip.href}
+              className="inline-flex min-h-9 items-center gap-1.5 border border-ink-200 bg-bone-50 px-2.5 py-1 text-[13px] font-medium text-ink-800 transition-colors hover:border-brand-500 hover:text-brand-500"
+            >
+              {chip.label}
+              <X aria-hidden className="size-3.5" strokeWidth={2.5} />
+              <span className="sr-only">Remove filter</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <Link
+        href={basePath}
+        className="ml-1 inline-flex min-h-9 items-center text-[13px] font-semibold text-ink-600 underline underline-offset-4 hover:text-brand-500"
+      >
+        Clear all
+      </Link>
+    </div>
   );
 }
 
@@ -150,7 +294,7 @@ function Pagination({
   totalPages,
 }: {
   basePath: string;
-  filters: ReturnType<typeof parseFilters>;
+  filters: ParsedFilters;
   currentPage: number;
   totalPages: number;
 }) {
@@ -161,7 +305,7 @@ function Pagination({
   const visible = [...pages].filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b);
 
   return (
-    <nav aria-label="Inventory pages" className="mt-10 flex items-center justify-center gap-1.5">
+    <nav aria-label="Inventory pages" className="mt-10 flex flex-wrap items-center justify-center gap-1.5">
       {currentPage > 1 ? (
         <Link
           href={href(currentPage - 1)}

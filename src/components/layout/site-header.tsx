@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, Menu, MapPin, Phone, Search, X } from "lucide-react";
+import { ChevronRight, Menu, MapPin, Phone, Search, Tag, X } from "lucide-react";
 
 import { Wordmark } from "@/components/brand/wordmark";
 import { CallLink, TextLink } from "@/components/contact/contact-links";
+import { SearchBar } from "@/components/inventory/search-bar";
 import { Container } from "@/components/ui/container";
 import { buttonStyles } from "@/components/ui/button";
 import { CATEGORY_NAV, PRIMARY_NAV } from "@/lib/navigation";
@@ -16,14 +17,16 @@ import { cn } from "@/lib/utils";
 export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [openedAt, setOpenedAt] = useState(pathname);
 
-  // Close the drawer when the route changes. Adjusting state during render is
+  // Close the drawers when the route changes. Adjusting state during render is
   // React's recommended pattern for deriving from a prop — an effect here would
   // render the stale open menu for a frame first.
   if (openedAt !== pathname) {
     setOpenedAt(pathname);
     if (menuOpen) setMenuOpen(false);
+    if (searchOpen) setSearchOpen(false);
   }
 
   // Lock body scroll while the drawer is open.
@@ -85,58 +88,85 @@ export function SiteHeader() {
           <Wordmark size="md" />
         </Link>
 
-        {/* "Appliances" is omitted here on purpose — the category bar below and the
-            Shop Inventory CTA both lead to the same place, and dropping it keeps
-            every remaining label on one line at 1280px. */}
-        <nav aria-label="Primary" className="hidden xl:block">
-          <ul className="flex items-center gap-1">
+        {/*
+          Inline search owns the middle of the bar from `lg` up — it is the fastest
+          route into inventory, so it gets the space before the informational links
+          do. Those links live in the drawer until `xl`, and use condensed labels
+          between `xl` and `2xl`, so the search field never gets squeezed to nothing.
+        */}
+        <SearchBar
+          id="header-search"
+          size="sm"
+          placeholder="Search brand, model or appliance…"
+          className="hidden min-w-[200px] max-w-lg flex-1 lg:block"
+        />
+
+        <nav aria-label="Primary" className="hidden shrink-0 xl:block">
+          <ul className="flex items-center gap-0.5">
+            {/* "Appliances" is omitted here on purpose — the category bar below and
+                the Shop Inventory CTA both lead to the same place. */}
             {PRIMARY_NAV.filter((item) => item.href !== "/inventory").map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   aria-current={isActive(item.href) ? "page" : undefined}
                   className={cn(
-                    "relative flex h-[76px] items-center whitespace-nowrap px-2.5 font-display text-[12.5px] font-bold uppercase tracking-[0.04em] transition-colors",
+                    "relative flex h-[76px] items-center whitespace-nowrap px-2 font-display text-[12px] font-bold uppercase tracking-[0.03em] transition-colors",
                     isActive(item.href)
-                      ? "text-ink-950 after:absolute after:inset-x-2.5 after:bottom-0 after:h-[3px] after:bg-brand-500"
+                      ? "text-ink-950 after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:bg-brand-500"
                       : "text-ink-600 hover:text-ink-950",
                   )}
                 >
-                  {item.label}
+                  {/* Condensed here at every width; the drawer and footer carry the
+                      full wording. Restoring it at 2xl squeezed the search field. */}
+                  {item.shortLabel ?? item.label}
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden items-center gap-2 md:flex">
-            {/* Only shown when there is genuinely room for it: below 2xl the
-                utility strip above already exposes a tappable phone number, and
-                on mobile the fixed bottom bar does. */}
-            <CallLink
-              context="header"
-              className={buttonStyles("outline", "md", "hidden 2xl:inline-flex")}
-              aria-label={`Call ${siteConfig.phone.display}`}
-            >
-              <Phone aria-hidden className="size-4" strokeWidth={2.5} />
-              {siteConfig.phone.display}
-            </CallLink>
-            <TextLink
-              context="header"
-              message={`Hi ${siteConfig.name}, I have a question about your appliances.`}
-              className={buttonStyles("outline", "md", "xl:hidden")}
-            >
-              Text Us
-            </TextLink>
-            <Link href="/inventory" className={buttonStyles("primary", "md")}>
-              Shop Inventory
-            </Link>
-          </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <TextLink
+            context="header"
+            message={`Hi ${siteConfig.name}, I have a question about your appliances.`}
+            className={buttonStyles("outline", "md", "hidden md:inline-flex lg:hidden")}
+          >
+            Text Us
+          </TextLink>
+          <Link
+            href="/inventory"
+            className={buttonStyles("primary", "md", "hidden whitespace-nowrap md:inline-flex")}
+          >
+            Shop Inventory
+          </Link>
 
+          {/* Search toggle below `lg`, where the inline field is hidden. */}
           <button
             type="button"
-            onClick={() => setMenuOpen((open) => !open)}
+            onClick={() => {
+              setSearchOpen((open) => !open);
+              setMenuOpen(false);
+            }}
+            aria-expanded={searchOpen}
+            aria-controls="mobile-search"
+            aria-label={searchOpen ? "Close search" : "Search inventory"}
+            className="grid size-11 place-items-center border border-line text-ink-900 transition-colors hover:bg-bone-100 lg:hidden"
+          >
+            {searchOpen ? (
+              <X aria-hidden className="size-5" strokeWidth={2.5} />
+            ) : (
+              <Search aria-hidden className="size-5" strokeWidth={2.5} />
+            )}
+          </button>
+
+          {/* Drawer holds the informational links until the primary nav appears at `xl`. */}
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen((open) => !open);
+              setSearchOpen(false);
+            }}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
@@ -150,6 +180,15 @@ export function SiteHeader() {
           </button>
         </div>
       </Container>
+
+      {/* Mobile search drawer */}
+      {searchOpen ? (
+        <div id="mobile-search" className="border-t border-line bg-bone-50 lg:hidden">
+          <Container className="py-3">
+            <SearchBar id="mobile-search-input" size="sm" autoFocus />
+          </Container>
+        </div>
+      ) : null}
 
       {/* Category bar — the fastest path to merchandise on desktop. */}
       <div className="hidden border-t border-line bg-bone-50 lg:block">
@@ -175,11 +214,11 @@ export function SiteHeader() {
             </ul>
           </nav>
           <Link
-            href="/inventory"
-            className="flex items-center gap-1.5 text-[13px] font-medium text-ink-600 transition-colors hover:text-brand-500"
+            href="/inventory?deals=1&sort=savings"
+            className="flex items-center gap-1.5 whitespace-nowrap text-[13px] font-semibold text-brand-500 transition-colors hover:text-brand-600"
           >
-            <Search aria-hidden className="size-3.5" strokeWidth={2.5} />
-            Search by brand or model
+            <Tag aria-hidden className="size-3.5" strokeWidth={2.5} />
+            Today&apos;s Deals
           </Link>
         </Container>
       </div>
@@ -197,12 +236,21 @@ function MobileMenu({
   isActive: (href: string) => boolean;
 }) {
   return (
+    /*
+      Anchored to the bottom of the header with `top-full` rather than a hardcoded
+      offset: the header's height changes across breakpoints (the utility and
+      category bars appear at `lg`), and `100%` inside the height calc resolves
+      against the header, so the drawer always fills exactly the space below it.
+    */
     <div
       id="mobile-menu"
-      className="fixed inset-x-0 bottom-0 top-16 z-50 overflow-y-auto overscroll-contain border-t border-line bg-white xl:hidden"
+      className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-100%)] overflow-y-auto overscroll-contain border-t border-line bg-white xl:hidden"
     >
       <div className="px-5 pb-32 pt-6 sm:px-6">
-        <div className="flex gap-2">
+        {/* Search first — the drawer is a shopping surface, not just a sitemap. */}
+        <SearchBar id="menu-search" size="sm" />
+
+        <div className="mt-4 flex gap-2">
           <Link href="/inventory" className={buttonStyles("primary", "lg", "flex-1")} onClick={onClose}>
             Shop Inventory
           </Link>
@@ -215,6 +263,20 @@ function MobileMenu({
             Call
           </CallLink>
         </div>
+
+        <Link
+          href="/inventory?deals=1&sort=savings"
+          onClick={onClose}
+          className="mt-3 flex items-center justify-between gap-3 border border-brand-500 bg-brand-50 px-4 py-3.5"
+        >
+          <span className="flex items-center gap-2.5">
+            <Tag aria-hidden className="size-[18px] text-brand-500" strokeWidth={2.5} />
+            <span className="font-display text-[15px] font-bold text-brand-600">
+              Today&apos;s Warehouse Deals
+            </span>
+          </span>
+          <ChevronRight aria-hidden className="size-5 shrink-0 text-brand-500" />
+        </Link>
 
         <p className="eyebrow mt-8 mb-3 text-ink-500">Shop by category</p>
         <ul className="border-t border-line">
