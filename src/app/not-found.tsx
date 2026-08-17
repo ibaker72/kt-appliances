@@ -7,6 +7,8 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { CallLink, TextLink } from "@/components/contact/contact-links";
 import { Container } from "@/components/ui/container";
 import { buttonStyles } from "@/components/ui/button";
+import { getCachedNavigationMenu } from "@/lib/inventory/navigation-cache";
+import { quickLinksFor } from "@/lib/navigation";
 import { CATEGORY_LIST } from "@/lib/inventory/types";
 import { siteConfig } from "@/lib/site-config";
 
@@ -19,10 +21,13 @@ export const metadata = {
  * 404. Lives at the app root rather than inside the (site) group so it can be
  * served for any unmatched URL, which means it composes the shell itself.
  */
-export default function NotFound() {
+export default async function NotFound() {
+  // A 404 is exactly where a working nav matters most, so it gets the real one.
+  const { categories, facets } = await getCachedNavigationMenu();
+
   return (
     <>
-      <SiteHeader />
+      <SiteHeader categories={categories} quickLinks={quickLinksFor(facets)} />
       <main id="main" className="flex-1">
         <section className="on-dark bg-ink-950 text-white">
           <Container className="py-16 sm:py-24">

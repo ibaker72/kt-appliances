@@ -73,6 +73,47 @@ export interface InventoryResult {
   isDemo: boolean;
 }
 
+/**
+ * Price bands offered in navigation and on the homepage price tiles.
+ *
+ * Bounds are inclusive of `min` and `max` because `parseFilters` maps them onto
+ * `gte`/`lte`. A band is only ever rendered once something is priced inside it —
+ * see `getNavigationMenu`.
+ */
+export const PRICE_BANDS = [
+  { label: "Under $500", min: undefined, max: 500 },
+  { label: "$500 – $1,000", min: 500, max: 1000 },
+  { label: "$1,000 & up", min: 1000, max: undefined },
+] as const satisfies ReadonlyArray<{
+  label: string;
+  min: number | undefined;
+  max: number | undefined;
+}>;
+
+/** A navigation link that is known to return at least `count` results. */
+export interface MenuLink {
+  label: string;
+  href: string;
+  count: number;
+}
+
+/** One category's mega-menu panel, derived entirely from live inventory. */
+export interface CategoryMenu {
+  slug: ApplianceCategory;
+  name: string;
+  path: string;
+  /** Units available in this category. */
+  count: number;
+  subcategories: MenuLink[];
+  brands: MenuLink[];
+  priceBands: MenuLink[];
+}
+
+export interface NavigationMenu {
+  categories: CategoryMenu[];
+  facets: InventoryFacets;
+}
+
 export interface InventoryFacets {
   brands: string[];
   categories: ApplianceCategory[];

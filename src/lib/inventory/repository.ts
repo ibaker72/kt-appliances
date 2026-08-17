@@ -3,14 +3,19 @@ import "server-only";
 import { getSupabaseReadClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { DEMO_APPLIANCES } from "./demo-data";
 import type {
+  CategoryMenu,
   InventoryFacets,
   InventoryQuery,
   InventoryResult,
   InventorySort,
+  NavigationMenu,
 } from "./query";
+import { PRICE_BANDS } from "./query";
 export * from "./query";
 
 import {
+  CATEGORIES,
+  CATEGORY_ORDER,
   FUEL_TYPES,
   savingsFor,
   type Appliance,
@@ -476,6 +481,153 @@ export async function getInventoryFacets(category?: ApplianceCategory): Promise<
     }),
     hasWarranty: rows.some((row) => Boolean(row.warranty_available)),
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Navigation menu                                                             */
+/* -------------------------------------------------------------------------- */
+
+/** The columns the mega-menu needs. Same shape from both the database and demo data. */
+interface NavRow {
+  brand: string;
+  category: ApplianceCategory;
+  subcategory: string | null;
+  price: number;
+}
+
+/** Longest column in a mega-menu panel before it stops being scannable. */
+const MENU_COLUMN_LIMIT = 8;
+
+/**
+ * Groups free-text values case-insensitively.
+ *
+ * `subcategory` and `brand` are typed by hand in the admin, so "French Door" and
+ * "French door" both occur. The query layer already matches them with `ilike`,
+ * so the menu has to group them too — otherwise the panel offers two links that
+ * lead to the same results and split the count between them. The most frequent
+ * spelling wins as the display label.
+ */
+function groupByValue(rows: NavRow[], pick: (row: NavRow) => string | null) {
+  const groups = new Map<string, { label: string; count: number; spellings: Map<string, number> }>();
+
+  for (const row of rows) {
+    const value = pick(row)?.trim();
+    if (!value) continue;
+    const key = value.toLowerCase();
+    const group = groups.get(key) ?? { label: value, count: 0, spellings: new Map() };
+    group.count += 1;
+    group.spellings.set(value, (group.spellings.get(value) ?? 0) + 1);
+    groups.set(key, group);
+  }
+
+  return [...groups.values()]
+    .map((group) => ({
+      label: [...group.spellings.entries()].sort((a, b) => b[1] - a[1])[0][0],
+      count: group.count,
+    }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+function menuHref(path: string, params: Record<string, string | number | undefined>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value != null) search.set(key, String(value));
+  }
+  const query = search.toString();
+  return query ? `${path}?${query}` : path;
+}
+
+/**
+ * Builds every mega-menu panel from live inventory.
+ *
+ * The guarantee here is the same one `quickLinksFor` makes about the popular-
+ * search rail, applied to the whole navigation: a link only exists because rows
+ * matching it were counted, so a shopper cannot open a category panel and land
+ * on an empty grid. Categories with nothing in them come back with empty columns
+ * and the header renders them as a plain link instead of a panel.
+ */
+function deriveNavigationMenu(rows: NavRow[]): CategoryMenu[] {
+  return CATEGORY_ORDER.map((slug) => {
+    const definition = CATEGORIES[slug];
+    const inCategory = rows.filter((row) => row.category === slug);
+    const path = definition.path;
+
+    return {
+      slug,
+      name: definition.name,
+      path,
+      count: inCategory.length,
+      subcategories: groupByValue(inCategory, (row) => row.subcategory)
+        .slice(0, MENU_COLUMN_LIMIT)
+        .map(({ label, count }) => ({ label, count, href: menuHref(path, { type: label }) })),
+      brands: groupByValue(inCategory, (row) => row.brand)
+        .slice(0, MENU_COLUMN_LIMIT)
+        .map(({ label, count }) => ({ label, count, href: menuHref(path, { brand: label }) })),
+      priceBands: PRICE_BANDS.map((band) => {
+        const count = inCategory.filter(
+          (row) =>
+            row.price > 0 &&
+            (band.min == null || row.price >= band.min) &&
+            (band.max == null || row.price <= band.max),
+        ).length;
+        return {
+          label: band.label,
+          count,
+          href: menuHref(path, { min: band.min, max: band.max }),
+        };
+      }).filter((band) => band.count > 0),
+    };
+  });
+}
+
+/**
+ * Everything the site header needs, in one pass over the catalogue.
+ *
+ * Deliberately a single query rather than one per category: the mega-menu needs
+ * facet values for all seven categories at once, and this runs on every route
+ * because the header lives in the layout. The result is wrapped in a cache by
+ * the caller so a page render does not pay for it each time.
+ */
+export async function getNavigationMenu(): Promise<NavigationMenu> {
+  const client = getSupabaseReadClient();
+  const facets = await getInventoryFacets();
+
+  if (!client) {
+    if (!isDemoInventory()) return { categories: deriveNavigationMenu([]), facets };
+    const rows: NavRow[] = DEMO_APPLIANCES.filter(
+      (item) => item.published && item.status === "available",
+    ).map((item) => ({
+      brand: item.brand,
+      category: item.category,
+      subcategory: item.subcategory,
+      price: item.price,
+    }));
+    return { categories: deriveNavigationMenu(rows), facets };
+  }
+
+  const { data, error } = await client
+    .from("appliances")
+    .select("brand, category, subcategory, price")
+    .eq("published", true)
+    .eq("status", "available")
+    .limit(5000);
+
+  if (error) {
+    console.error("[inventory] navigation menu failed:", error.message);
+    return { categories: deriveNavigationMenu([]), facets };
+  }
+
+  const rows: NavRow[] = (data ?? []).map((row) => {
+    const category = str((row as Row).category);
+    return {
+      brand: str((row as Row).brand),
+      category: isApplianceCategory(category) ? category : "other",
+      subcategory: nullableStr((row as Row).subcategory),
+      price: num((row as Row).price),
+    };
+  });
+
+  return { categories: deriveNavigationMenu(rows), facets };
 }
 
 /** Recently sold units — real turnover, used as honest social proof. */

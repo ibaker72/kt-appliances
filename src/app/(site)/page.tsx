@@ -22,7 +22,6 @@ import {
   getRecentlySold,
   queryInventory,
 } from "@/lib/inventory/repository";
-import { quickLinksFor } from "@/lib/navigation";
 import { pageMetadata } from "@/lib/seo/metadata";
 
 export const revalidate = 300;
@@ -49,11 +48,10 @@ export default async function HomePage() {
 
   const heroUnit = featured.items[0] ?? latest.items[0] ?? null;
   const totalAvailable = Object.values(counts).reduce((sum, count) => sum + count, 0);
-  const quickLinks = quickLinksFor(facets);
 
   return (
     <>
-      <SearchBand quickLinks={quickLinks} availableCount={totalAvailable} />
+      <SearchBand availableCount={totalAvailable} />
       <HeroRetail featured={heroUnit} />
       <TrustStrip />
 
