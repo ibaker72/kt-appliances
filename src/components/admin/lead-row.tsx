@@ -29,7 +29,7 @@ export function LeadRow({ lead }: { lead: AdminLead }) {
             <span className="font-display text-[17px] font-bold text-ink-950">{lead.name}</span>
             <span
               className={cn(
-                "inline-block px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-[0.08em]",
+                "inline-block px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide",
                 lead.status === "new" ? "bg-brand-500 text-white" : "bg-bone-200 text-ink-600",
               )}
             >
@@ -49,7 +49,7 @@ export function LeadRow({ lead }: { lead: AdminLead }) {
 
           {lead.applianceLabel ? (
             <p className="mt-2 text-[13.5px] text-ink-700">
-              <span className="font-display text-[11px] font-bold uppercase tracking-[0.07em] text-ink-500">
+              <span className="text-[11.5px] font-semibold uppercase tracking-wide text-ink-500">
                 Appliance
               </span>{" "}
               {lead.applianceLabel}
@@ -98,7 +98,7 @@ export function LeadRow({ lead }: { lead: AdminLead }) {
         <input type="hidden" name="id" value={lead.id} />
         <label
           htmlFor={`lead-status-${lead.id}`}
-          className="font-display text-[11px] font-bold uppercase tracking-[0.07em] text-ink-500"
+          className="text-[11.5px] font-semibold uppercase tracking-wide text-ink-500"
         >
           Status
         </label>
@@ -116,7 +116,7 @@ export function LeadRow({ lead }: { lead: AdminLead }) {
         </select>
         <button
           type="submit"
-          className="h-10 border border-line bg-white px-3 font-display text-[11px] font-bold uppercase tracking-[0.06em] text-ink-700 transition-colors hover:border-ink-950 hover:text-ink-950"
+          className="h-10 border border-line bg-white px-3 text-[11.5px] font-semibold uppercase tracking-wide text-ink-700 transition-colors hover:border-ink-950 hover:text-ink-950"
         >
           Update
         </button>

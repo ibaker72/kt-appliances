@@ -47,7 +47,7 @@ export default async function AdminDashboard() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-[-0.03em] text-ink-950">
+          <h1 className="font-display text-[1.7rem] font-extrabold tracking-[-0.02em] text-ink-950">
             Dashboard
           </h1>
           <p className="mt-1.5 text-[15px] text-ink-600">
@@ -86,7 +86,7 @@ export default async function AdminDashboard() {
           </h2>
           <Link
             href="/admin/inventory"
-            className="inline-flex items-center gap-1.5 font-display text-[12px] font-bold uppercase tracking-[0.06em] text-ink-700 hover:text-brand-500"
+            className="inline-flex items-center gap-1.5 text-ui font-semibold uppercase tracking-wide text-ink-700 hover:text-brand-500"
           >
             All inventory
             <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />
@@ -102,7 +102,7 @@ export default async function AdminDashboard() {
           </h2>
           <Link
             href="/admin/leads"
-            className="inline-flex items-center gap-1.5 font-display text-[12px] font-bold uppercase tracking-[0.06em] text-ink-700 hover:text-brand-500"
+            className="inline-flex items-center gap-1.5 text-ui font-semibold uppercase tracking-wide text-ink-700 hover:text-brand-500"
           >
             All leads
             <ArrowRight aria-hidden className="size-3.5" strokeWidth={2.5} />

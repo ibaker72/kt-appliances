@@ -54,7 +54,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               <form action={logoutAction}>
                 <button
                   type="submit"
-                  className="flex min-h-10 items-center gap-1.5 border border-white/20 px-3 py-2 font-display text-[11.5px] font-bold uppercase tracking-[0.06em] text-white transition-colors hover:bg-white hover:text-ink-950"
+                  className="flex min-h-10 items-center gap-1.5 border border-white/20 px-3 py-2 text-[13.5px] font-semibold text-white transition-colors hover:bg-white hover:text-ink-950"
                 >
                   <LogOut aria-hidden className="size-3.5" strokeWidth={2.5} />
                   Sign out
@@ -71,7 +71,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 <li key={href}>
                   <Link
                     href={href}
-                    className="flex min-h-12 items-center gap-2 whitespace-nowrap px-3 font-display text-[12.5px] font-bold uppercase tracking-[0.05em] text-white/65 transition-colors hover:text-white"
+                    className="flex min-h-12 items-center gap-2 whitespace-nowrap px-3 text-[13.5px] font-semibold text-white/65 transition-colors hover:text-white"
                   >
                     <Icon aria-hidden className="size-4" strokeWidth={2.25} />
                     {label}

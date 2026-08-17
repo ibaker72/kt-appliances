@@ -106,7 +106,7 @@ export default async function EditAppliancePage({
       </section>
 
       <section className="mt-12 border border-line bg-white p-5">
-        <h2 className="font-display text-[15px] font-bold uppercase tracking-[0.05em] text-ink-950">
+        <h2 className="text-[15px] font-semibold text-ink-950">
           Other actions
         </h2>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -124,7 +124,7 @@ export default async function EditAppliancePage({
             <input type="hidden" name="id" value={appliance.id} />
             <button
               type="submit"
-              className="inline-flex h-11 items-center gap-2 border border-brand-500 px-5 font-display text-[12px] font-bold uppercase tracking-[0.06em] text-brand-500 transition-colors hover:bg-brand-500 hover:text-white"
+              className="inline-flex h-11 items-center gap-2 border border-brand-500 px-5 text-ui font-semibold uppercase tracking-wide text-brand-500 transition-colors hover:bg-brand-500 hover:text-white"
             >
               <Trash2 aria-hidden className="size-4" strokeWidth={2.5} />
               Delete permanently

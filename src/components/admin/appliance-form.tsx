@@ -42,7 +42,7 @@ function SectionCard({
   return (
     <section className="border border-line bg-white">
       <div className="border-b border-line px-5 py-4">
-        <h2 className="font-display text-[15px] font-bold uppercase tracking-[0.05em] text-ink-950">
+        <h2 className="text-[15px] font-semibold text-ink-950">
           {title}
         </h2>
         {description ? <p className="mt-1 text-[13px] text-ink-500">{description}</p> : null}
@@ -99,7 +99,7 @@ function SelectField({
     <div>
       <label
         htmlFor={id}
-        className="mb-1.5 block font-display text-[12px] font-bold uppercase tracking-[0.07em] text-ink-700"
+        className="mb-1.5 block text-ui font-semibold uppercase tracking-wide text-ink-700"
       >
         {label}
       </label>

@@ -97,7 +97,7 @@ function StatusSelect({ appliance }: { appliance: Appliance }) {
       </select>
       <button
         type="submit"
-        className="ml-1 h-10 border border-line bg-white px-3 font-display text-[11px] font-bold uppercase tracking-[0.06em] text-ink-700 transition-colors hover:border-ink-950 hover:text-ink-950"
+        className="ml-1 h-10 border border-line bg-white px-3 text-[11.5px] font-semibold uppercase tracking-wide text-ink-700 transition-colors hover:border-ink-950 hover:text-ink-950"
       >
         Set
       </button>
@@ -135,7 +135,7 @@ export function AdminInventoryTable({ appliances }: { appliances: Appliance[] })
                 <th
                   key={heading}
                   scope="col"
-                  className="px-4 py-3 font-display text-[11px] font-bold uppercase tracking-[0.07em] text-ink-500"
+                  className="px-4 py-3 text-[11.5px] font-semibold uppercase tracking-wide text-ink-500"
                 >
                   {heading}
                 </th>
@@ -279,7 +279,7 @@ export function AdminInventoryTable({ appliances }: { appliances: Appliance[] })
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Link
                 href={`/admin/inventory/${appliance.id}`}
-                className="flex h-11 flex-1 items-center justify-center gap-2 border border-ink-900 bg-white font-display text-[11.5px] font-bold uppercase tracking-[0.06em] text-ink-900"
+                className="flex h-11 flex-1 items-center justify-center gap-2 border border-ink-900 bg-white text-[13.5px] font-semibold text-ink-900"
               >
                 <Pencil aria-hidden className="size-3.5" strokeWidth={2.5} />
                 Edit

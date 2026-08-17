@@ -65,7 +65,7 @@ export function ImageManager({ appliance }: { appliance: Appliance }) {
 
         <label
           htmlFor="photos"
-          className="block font-display text-[12px] font-bold uppercase tracking-[0.07em] text-ink-700"
+          className="block text-ui font-semibold uppercase tracking-wide text-ink-700"
         >
           Add photos
         </label>
@@ -82,7 +82,7 @@ export function ImageManager({ appliance }: { appliance: Appliance }) {
           multiple
           accept={ALLOWED_IMAGE_TYPES.join(",")}
           onChange={(event) => setSelectedCount(event.target.files?.length ?? 0)}
-          className="mt-3 block w-full cursor-pointer border border-ink-200 bg-white p-3 text-[14px] text-ink-700 file:mr-3 file:cursor-pointer file:border-0 file:bg-ink-950 file:px-4 file:py-2.5 file:font-display file:text-[12px] file:font-bold file:uppercase file:tracking-[0.06em] file:text-white"
+          className="mt-3 block w-full cursor-pointer rounded-sm border border-ink-200 bg-white p-3 text-[14px] text-ink-700 file:mr-3 file:cursor-pointer file:rounded-sm file:border-0 file:bg-ink-950 file:px-4 file:py-2.5 file:text-[14px] file:font-semibold file:text-white"
         />
 
         {selectedCount > 0 ? (
@@ -127,7 +127,7 @@ export function ImageManager({ appliance }: { appliance: Appliance }) {
                   className="object-contain"
                 />
                 {image.isPrimary ? (
-                  <span className="absolute left-2 top-2 inline-flex items-center gap-1 bg-brand-500 px-2 py-1 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white">
+                  <span className="absolute left-2 top-2 inline-flex items-center gap-1 bg-brand-500 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-white">
                     <Star aria-hidden className="size-3" strokeWidth={2.5} />
                     Main
                   </span>
