@@ -38,6 +38,14 @@
   --color-save-600: #1c7c4a;
   --color-save-50: #eef8f2;
 
+  /* Gold and deep brown, taken from the company logo's ribbon and frame.
+     Reserved for brand furniture — never for prices, CTAs or savings, which
+     already own red and green. */
+  --color-gold-600: #8a7343;
+  --color-gold-500: #a58d57;
+  --color-gold-50: #f7f3ea;
+  --color-bark-900: #3a2a21;
+
   /* Warm neutrals — section backgrounds and hairlines */
   --color-bone-50: #faf9f7;
   --color-bone-100: #f4f2ef;

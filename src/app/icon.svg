@@ -1,4 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="KT Appliances">
-  <rect width="64" height="64" fill="#c8202b"/>
-  <text x="32" y="44" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="-1.5" fill="#ffffff">KT</text>
+  <!--
+    Browser tab icon.
+
+    Reduced to the KT monogram on purpose: the full logo — bracket frame, three
+    appliances, script wordmark and ribbon — is unreadable below about 96px, and
+    a tab icon is 16. The monogram is the part of the mark that survives, which
+    is how most retail brands handle the same problem.
+
+    Red field with a white monogram rather than the logo's red-on-white, because
+    a white-ground icon disappears against a light browser tab strip. The dark
+    keyline nods to the frame around the real mark without becoming noise.
+  -->
+  <rect width="64" height="64" rx="8" fill="#c8202b" />
+  <rect x="1" y="1" width="62" height="62" rx="7.5" fill="none" stroke="#3a2a21" stroke-width="2" />
+  <text
+    x="32"
+    y="45.5"
+    text-anchor="middle"
+    font-family="Archivo, Helvetica Neue, Helvetica, Arial, sans-serif"
+    font-size="36"
+    font-weight="800"
+    letter-spacing="-2"
+    fill="#ffffff"
+  >KT</text>
 </svg>

@@ -25,10 +25,11 @@ export const metadata = pageMetadata({
 /**
  * About page.
  *
- * No founding year, employee count, customer count, family history or sales
- * figures appear here — none of that has been supplied, and inventing it is
- * exactly the kind of thing that makes a site read as fake. What is here is
- * verifiable: where the warehouse is, how units are handled, and how buying works.
+ * Founding year and family ownership come from the company logo, so they are
+ * stated. Employee count, customer count and sales figures still are not — none
+ * of that has been supplied, and inventing it is exactly the kind of thing that
+ * makes a site read as fake. Everything else here is verifiable: where the
+ * warehouse is, how units are handled, and how buying works.
  */
 
 const PRINCIPLES = [
@@ -87,6 +88,9 @@ export default async function AboutPage() {
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="min-w-0 lg:col-span-5">
               <ModuleHeader title="Appliances are expensive. Dents are not." />
+              <p className="mb-4 inline-flex items-center rounded-pill border border-gold-600/40 bg-gold-50 px-3 py-1 text-ui font-semibold text-gold-600">
+                {siteConfig.brand.ownership}
+              </p>
             </div>
             <div className="min-w-0 lg:col-span-7">
               <div className="space-y-5 text-[16px] leading-relaxed text-ink-700">

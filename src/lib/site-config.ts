@@ -17,7 +17,16 @@ function formatPhone(digits: string): string {
 
 export const siteConfig = {
   name: "KT Appliances",
-  legalName: "KT Appliances",
+  legalName: "KT Appliances, LLC",
+
+  /**
+   * From the company logo. Recorded here because the rest of the site is
+   * deliberately silent about company history — until this was supplied there
+   * was no founding year to cite, and inventing one is exactly the sort of
+   * detail that makes a small business site read as fake.
+   */
+  foundedYear: 2000,
+  familyOwned: true,
   shortDescription: "Scratch & dent appliance warehouse in East Stroudsburg, PA.",
   description:
     "KT Appliances is a scratch & dent appliance warehouse in East Stroudsburg, PA. Name-brand refrigerators, washers, dryers, ranges and dishwashers — tested, working, and priced below traditional retail. Serving Pennsylvania, New Jersey and New York.",
@@ -59,6 +68,20 @@ export const siteConfig = {
       days: "Monday – Sunday",
       note: "Appointments required after 5 PM.",
     },
+  },
+
+  brand: {
+    /**
+     * Mark referenced by the LocalBusiness schema and the app icons.
+     *
+     * Points at the KT monogram, which is a real asset in this repo. When the
+     * full company logo is supplied as a file, drop it in `public/img/brand/`
+     * and change this one path — nothing else reads the logo directly.
+     */
+    mark: "/icon.svg",
+    /** Straplines carried on the company logo. */
+    strapline: "True Family Deal",
+    ownership: "Family Owned Since 2000",
   },
 
   /** States where the business advertises sales and delivery coverage. */

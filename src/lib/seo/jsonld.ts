@@ -63,7 +63,12 @@ export function localBusinessSchema(): Json {
     "@type": ["Store", "HomeGoodsStore", "LocalBusiness"],
     "@id": LOCAL_BUSINESS_ID,
     name: siteConfig.name,
+    legalName: siteConfig.legalName,
     url: SITE_URL,
+    logo: absoluteUrl(siteConfig.brand.mark),
+    image: absoluteUrl(siteConfig.brand.mark),
+    // Supplied by the company logo, so it can be stated rather than estimated.
+    foundingDate: String(siteConfig.foundedYear),
     description: siteConfig.description,
     telephone: siteConfig.phone.e164,
     email: siteConfig.email,

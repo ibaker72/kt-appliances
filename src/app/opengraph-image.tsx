@@ -57,6 +57,10 @@ export default function OpengraphImage() {
             <div style={{ color: "#8d949c", fontSize: 17, letterSpacing: 3, marginTop: 4 }}>
               SCRATCH &amp; DENT WAREHOUSE
             </div>
+            {/* From the company logo, so it is a fact rather than a flourish. */}
+            <div style={{ color: "#a58d57", fontSize: 16, letterSpacing: 1, marginTop: 6 }}>
+              {siteConfig.brand.ownership}
+            </div>
           </div>
         </div>
 
