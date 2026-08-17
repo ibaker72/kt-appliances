@@ -44,9 +44,13 @@ export function SiteFooter() {
           {/* Identity + contact */}
           <div className="min-w-0 lg:col-span-4">
             <Wordmark tone="light" size="lg" />
-            <p className="mt-4 inline-flex items-center rounded-pill border border-gold-500/50 px-3 py-1 text-ui font-semibold text-gold-500">
-              {siteConfig.brand.ownership}
-            </p>
+            {/* The logo's own ribbon already says this. Shown only while the
+                typographic stand-in is up, which carries no ribbon. */}
+            {siteConfig.brand.logoFile ? null : (
+              <p className="mt-4 inline-flex items-center rounded-pill border border-gold-500/50 px-3 py-1 text-ui font-semibold text-gold-500">
+                {siteConfig.brand.ownership}
+              </p>
+            )}
             <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/70">
               Scratch &amp; dent and open-box appliances from name brands, tested at our East
               Stroudsburg warehouse and priced below traditional retail.

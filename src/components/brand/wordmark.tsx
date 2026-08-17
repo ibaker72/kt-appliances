@@ -25,7 +25,7 @@ interface WordmarkProps {
 /** Display heights for the supplied artwork. Width follows the file's own ratio. */
 const LOGO_HEIGHTS = {
   sm: "h-8",
-  md: "h-11 sm:h-[52px]",
+  md: "h-11 sm:h-[52px] lg:h-[64px]",
   lg: "h-16 sm:h-20",
 } as const;
 

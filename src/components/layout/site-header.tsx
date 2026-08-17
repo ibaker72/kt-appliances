@@ -103,7 +103,7 @@ export function SiteHeader({ categories, quickLinks }: SiteHeaderProps) {
 
       {/* Row 2 — main bar. Search is the widest thing in it on purpose: it is the
           fastest route into inventory, so it outranks the informational links. */}
-      <Container className="flex h-16 items-center gap-4 lg:gap-6">
+      <Container className="flex h-16 items-center gap-4 lg:h-[76px] lg:gap-6">
         <Link
           href="/"
           className="shrink-0"

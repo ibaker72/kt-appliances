@@ -82,7 +82,7 @@ export const siteConfig = {
      * artwork, and the LocalBusiness schema points at it too. Leave it null and
      * the typographic lockup stands in. See public/img/brand/README.md.
      */
-    logoFile: null as string | null,
+    logoFile: "/img/brand/kt-appliances-logo.png" as string | null,
 
     /**
      * Whether the logo needs a white plate on dark surfaces.
