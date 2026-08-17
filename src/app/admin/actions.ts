@@ -28,6 +28,7 @@ import {
   uploadApplianceImage,
 } from "@/lib/admin/inventory-repo";
 import { setLeadStatus } from "@/lib/admin/leads-repo";
+import { setAppointmentStatus } from "@/lib/admin/appointments-repo";
 import {
   MAX_IMAGES_PER_UPLOAD,
   applianceFormSchema,
@@ -37,6 +38,7 @@ import {
 } from "@/lib/admin/appliance-schema";
 import { APPLIANCE_STATUSES, type ApplianceStatus } from "@/lib/inventory/types";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/leads/schema";
+import { APPOINTMENT_STATUSES, type AppointmentStatus } from "@/lib/appointments/schema";
 
 /**
  * Admin server actions.
@@ -299,5 +301,32 @@ export async function updateLeadStatusAction(formData: FormData): Promise<void> 
     revalidatePath("/admin");
   } catch (error) {
     console.error("[admin] lead status update failed:", error);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Appointments                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Status only. Moving an appointment to `canceled` or `rescheduled` here does
+ * not text the customer — the copy for both already exists in
+ * `src/lib/appointments/messages.ts`, but firing a customer-facing message from
+ * a dropdown while the A2P campaign is still under review is exactly the kind of
+ * surprise this work is meant to avoid. Wiring it up is a deliberate follow-up.
+ */
+export async function updateAppointmentStatusAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (!id || !(APPOINTMENT_STATUSES as readonly string[]).includes(status)) return;
+
+  try {
+    await setAppointmentStatus(id, status as AppointmentStatus);
+    revalidatePath("/admin/appointments");
+    revalidatePath("/admin");
+  } catch (error) {
+    console.error("[admin] appointment status update failed:", error);
   }
 }

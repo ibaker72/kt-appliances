@@ -22,6 +22,8 @@ phone in the warehouse.
 | Database & storage | Supabase (Postgres + Storage), optional |
 | Validation | Zod |
 | Email | Resend, optional |
+| SMS | Twilio REST API over `fetch`, no SDK — gated off until A2P approval |
+| Tests | `node --test` with Node's built-in TypeScript support, no framework |
 
 ---
 
@@ -44,6 +46,7 @@ npm run build      # production build
 npm run start      # serve the production build
 npm run lint       # ESLint
 npm run typecheck  # tsc --noEmit
+npm test           # node:test — never sends a real SMS, see tests/register.mjs
 ```
 
 ---
@@ -51,9 +54,13 @@ npm run typecheck  # tsc --noEmit
 ## Connecting the database
 
 1. Create a Supabase project.
-2. Run `supabase/migrations/0001_init.sql` (SQL editor, or `supabase db push`). It creates
-   the `appliances`, `appliance_images` and `leads` tables, their indexes and triggers, the
-   RLS policies, and the `appliance-images` storage bucket.
+2. Run **every** file in `supabase/migrations/` in order (SQL editor, or `supabase db push`):
+   - `0001_init.sql` — `appliances`, `appliance_images` and `leads`, their indexes and
+     triggers, the RLS policies, and the `appliance-images` storage bucket.
+   - `0002_api_role_grants.sql` — explicit table grants. Without it Postgres answers
+     "permission denied for table appliances".
+   - `0003_appointments.sql` — `appointments` and `appointment_notifications`, plus the
+     `claim_appointment_notification()` function that makes the SMS automation idempotent.
 3. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and
    `SUPABASE_SERVICE_ROLE_KEY`.
 4. Restart. Sample data switches off automatically and the admin area comes to life.
@@ -61,8 +68,9 @@ npm run typecheck  # tsc --noEmit
 ### Security model
 
 - The **anon key** can read published, non-draft appliances and their images. That is all.
-- `leads` has RLS enabled with **no policies**, so the anon key can neither read nor write
-  it. A leaked public key cannot expose customer contact details.
+- `leads`, `appointments` and `appointment_notifications` have RLS enabled with **no
+  policies**, so the anon key can neither read nor write them. A leaked public key cannot
+  expose customer contact details, phone numbers or SMS consent records.
 - All writes — inventory, images, leads — go through the **service-role key** from modules
   marked `server-only`, so importing them into a client component is a build error rather
   than a leak.
@@ -93,11 +101,13 @@ src/
       page.tsx               homepage
       inventory/             listing + /inventory/[slug] product pages
       refrigerators/ …       one thin route per category
+      schedule/              appointment booking
       deals/[campaign]/      paid-traffic landing pages
       appliances/[location]/ service-area pages
       guides/                buying guides
-    admin/                   admin shell, actions, inventory + leads
+    admin/                   admin shell, actions, inventory + leads + appointments
     actions/leads.ts         public lead submission
+    actions/appointments.ts  public appointment booking
     sitemap.ts, robots.ts, opengraph-image.tsx, not-found.tsx
   components/
     inventory/ home/ shared/ layout/ forms/ admin/ ui/
@@ -105,7 +115,9 @@ src/
     site-config.ts           single source of truth for business details
     inventory/               types, query shapes, repository, sample data
     admin/                   auth, session, admin repositories, form schemas
-    leads/                   schema, persistence, email, SMS stub
+    leads/                   schema, persistence, email
+    appointments/            schema, time zones, message copy, notifications
+    sms/                     Twilio transport, config gating, phone helpers
     analytics/               events, tracking, UTM attribution
     seo/                     metadata builder, JSON-LD
     content/                 FAQ bank, locations, campaigns, guides
@@ -114,6 +126,67 @@ supabase/migrations/         database schema
 
 Business details live in **one place** — `src/lib/site-config.ts`. Phone number, address,
 hours and service area are never hardcoded anywhere else.
+
+---
+
+## Appointments and SMS
+
+`/schedule` books an appointment. On a successful booking the customer gets a confirmation
+text and the owner gets an alert — both through Twilio, both gated.
+
+```
+booking form  →  submitAppointment (honeypot, rate limit, Zod)
+              →  persistAppointment          ← the appointment now exists
+              →  sendAppointmentBookedNotifications
+                   ├─ customer confirmation  (only with consent)
+                   └─ owner alert            (internal, consent does not apply)
+              →  appointment_notifications   ← SID, status, error, timing
+```
+
+Nothing is texted before the row is committed, and nothing that happens after it can fail
+the booking. A Twilio outage, a missing owner number or a withheld consent all end with the
+customer seeing a confirmed appointment.
+
+### The A2P gate
+
+Outbound SMS is off. `SMS_SENDING_ENABLED=false` skips every message, customer and internal,
+and logs why. **After the A2P 10DLC campaign is approved, setting `SMS_SENDING_ENABLED=true`
+is the only change required** — no code, no redeploy-only-for-a-constant, because the flag is
+read per request rather than frozen into the bundle at import.
+
+`SMS_CUSTOMER_SENDING_ENABLED=false` is an optional narrower valve that keeps customer-facing
+traffic off while internal alerts flow. Leave it unset unless you need exactly that.
+
+`/admin/appointments` shows the current state in plain language: whether customer
+confirmations are sending, and which number owner alerts go to.
+
+### Consent
+
+The booking form carries an **unchecked** SMS consent box. Consent is never required to book,
+and is never inferred from someone typing a phone number. When it is given, the appointment
+stores the timestamp, the source (`appointment_web_form`) and the exact disclosure text that
+was on screen — carriers ask what the customer agreed to, not whether a boolean was true.
+
+The lead forms carry no consent field, so `dispatchLeadSms` deliberately sends nothing even
+once the flag is on. See `src/lib/leads/sms.ts`.
+
+### Not sending the same text twice
+
+Every message claims a row in `appointment_notifications` before it is sent, via a single
+atomic statement (`claim_appointment_notification`). A unique index on
+`(appointment_id, event_type)` is what enforces it — not application memory, which two
+serverless instances do not share. Double-clicks, refreshed POSTs and retried actions all
+converge on one message. The booking itself is deduplicated the same way, by a unique
+`submission_token` minted when the form mounts.
+
+### Adding reminders later
+
+The message copy for 24-hour and 2-hour reminders, reschedules, cancellations and follow-ups
+already exists in `src/lib/appointments/messages.ts`, and
+`sendAppointmentNotification(event, appointment)` is generic over all of them. What is missing
+is only a scheduler — this project has none today. On Vercel, a `vercel.json` cron hitting an
+authenticated route handler is the natural fit. The claim makes an overlapping schedule safe:
+a cron that fires twice sends once.
 
 ---
 

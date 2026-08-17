@@ -1,64 +1,43 @@
 import "server-only";
 
+import { isCustomerSmsEnabled, isSmsEnabled } from "@/lib/sms/config";
 import type { LeadData } from "./schema";
 
 /**
- * Outbound SMS — architected, intentionally disabled.
+ * Lead-triggered SMS.
  *
- * Twilio requires a provisioned number and, for anything resembling marketing,
- * A2P 10DLC registration. Until that is in place `SMS_SENDING_ENABLED` stays
- * false and every call here is a logged no-op, so the lead pipeline is complete
- * and testable without sending anything.
+ * The transport that used to be stubbed here now lives in `@/lib/sms/client` and
+ * is fully implemented, because the appointment automation needs it. This module
+ * is what remains: the lead pipeline's fan-out point.
  *
- * To enable: register the campaign, set the Twilio env vars, flip
- * `SMS_SENDING_ENABLED=true`, and implement `deliver()` against the Twilio REST
- * API. Nothing else in the codebase needs to change — `dispatchLeadSms` is
- * already called from the lead pipeline.
+ * ---------------------------------------------------------------------------
+ * WHY THIS STILL SENDS NOTHING
+ * ---------------------------------------------------------------------------
+ * A working transport is not permission to use it. The inquiry forms collect a
+ * phone number under an explicit promise — "We use your number to respond to
+ * this request only. No marketing texts" — and they carry no SMS consent
+ * checkbox, so no lead in the database has agreed to be texted. Sending an
+ * automated confirmation to that number would break both the promise on the form
+ * and the consent requirements of the A2P campaign.
+ *
+ * So this stays a logged no-op, exactly as it behaved before the transport
+ * existed. It is deliberately *not* wired to `SMS_SENDING_ENABLED`: flipping
+ * that flag after A2P approval must not silently start texting people who never
+ * opted in.
+ *
+ * To enable lead confirmations later, capture consent on the inquiry forms the
+ * way `/schedule` does (`SmsConsentField` in `src/components/forms/form-fields.tsx`),
+ * store it on the lead, and send through `sendSms` from `@/lib/sms/client` with
+ * `audience: "customer"`. The appointment notification service in
+ * `src/lib/appointments/notifications.ts` is the worked example.
  */
 
-export const SMS_ENABLED =
-  process.env.SMS_SENDING_ENABLED === "true" &&
-  Boolean(process.env.TWILIO_ACCOUNT_SID?.trim()) &&
-  Boolean(process.env.TWILIO_AUTH_TOKEN?.trim()) &&
-  Boolean(
-    process.env.TWILIO_MESSAGING_SERVICE_SID?.trim() || process.env.TWILIO_FROM_NUMBER?.trim(),
-  );
+/** Retained for callers and diagnostics; the appointment path uses the config module directly. */
+export const smsTransportReady = { isSmsEnabled, isCustomerSmsEnabled };
 
-export type SmsKind =
-  | "lead-confirmation"
-  | "internal-alert"
-  | "delivery-reminder"
-  | "appointment-reminder"
-  | "review-request"
-  | "inventory-alert";
-
-export interface SmsMessage {
-  kind: SmsKind;
-  to: string;
-  body: string;
-}
-
-async function deliver(message: SmsMessage): Promise<void> {
-  if (!SMS_ENABLED) {
-    console.info(`[sms] skipped (disabled) kind=${message.kind} to=***${message.to.slice(-4)}`);
-    return;
-  }
-  // Intentionally unimplemented until 10DLC registration is complete.
-  console.warn(`[sms] enabled but no transport implemented — kind=${message.kind}`);
-}
-
-/**
- * Fan-out point for lead-triggered messages. Called from the lead pipeline today
- * so that enabling SMS later is a configuration change, not a code change.
- */
 export async function dispatchLeadSms(lead: LeadData): Promise<void> {
-  if (!SMS_ENABLED) return;
-
-  await deliver({
-    kind: "lead-confirmation",
-    to: `+1${lead.phone}`,
-    body: `Thanks for contacting KT Appliances. We received your request${
-      lead.applianceLabel ? ` about the ${lead.applianceLabel}` : ""
-    } and will follow up shortly.`,
-  });
+  if (!lead.phone) return;
+  console.info(
+    "[leads] customer SMS skipped: inquiry forms do not capture SMS consent (see src/lib/leads/sms.ts)",
+  );
 }

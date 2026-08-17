@@ -20,6 +20,7 @@ export const ANALYTICS_EVENTS = {
   generalInquiry: "general_inquiry",
   afterHoursRequest: "after_hours_request",
   leadSubmitted: "lead_submitted",
+  appointmentBooked: "appointment_booked",
   filterApplied: "filter_applied",
 } as const;
 
@@ -38,6 +39,10 @@ export const META_EVENT_MAP: Partial<Record<AnalyticsEvent, string>> = {
   installation_inquiry: "Lead",
   general_inquiry: "Lead",
   lead_submitted: "Lead",
+  // Meta's standard event for a booked appointment. Distinct from "Lead" on
+  // purpose: a booking is a firm commitment and should not be averaged into
+  // enquiry conversion rates when optimising ad spend.
+  appointment_booked: "Schedule",
 };
 
 export type AnalyticsPayload = Record<string, string | number | boolean | undefined | null>;

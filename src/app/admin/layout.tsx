@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ExternalLink, LayoutDashboard, LogOut, MessageSquare, Package } from "lucide-react";
+import {
+  CalendarClock,
+  ExternalLink,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  Package,
+} from "lucide-react";
 
 import { logoutAction } from "@/app/admin/actions";
 import { Wordmark } from "@/components/brand/wordmark";
@@ -15,6 +22,7 @@ const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/inventory", label: "Inventory", icon: Package },
   { href: "/admin/leads", label: "Leads", icon: MessageSquare },
+  { href: "/admin/appointments", label: "Appointments", icon: CalendarClock },
 ];
 
 /**

@@ -9,6 +9,7 @@ import {
   listAppliancesForAdmin,
 } from "@/lib/admin/inventory-repo";
 import { listLeads } from "@/lib/admin/leads-repo";
+import { countUpcomingAppointments } from "@/lib/admin/appointments-repo";
 import { buttonStyles } from "@/components/ui/button";
 import { AdminInventoryTable } from "@/components/admin/admin-inventory-table";
 import { LeadRow } from "@/components/admin/lead-row";
@@ -29,7 +30,7 @@ export default async function AdminDashboard() {
   const data = await loadDashboard();
   if (!data) return <NotConfigured />;
 
-  const { stats, recent, leads } = data;
+  const { stats, recent, leads, upcomingAppointments } = data;
 
   const tiles = [
     { label: "Available", value: stats.available, href: "/admin/inventory?status=available" },
@@ -42,6 +43,12 @@ export default async function AdminDashboard() {
       href: "/admin/inventory?published=unpublished",
     },
     { label: "New leads", value: stats.newLeads, href: "/admin/leads", accent: true },
+    {
+      label: "Upcoming",
+      value: upcomingAppointments,
+      href: "/admin/appointments",
+      accent: true,
+    },
   ];
 
   return (
@@ -61,7 +68,7 @@ export default async function AdminDashboard() {
         </Link>
       </div>
 
-      <ul className="grid grid-cols-2 gap-px bg-line sm:grid-cols-3 lg:grid-cols-6">
+      <ul className="grid grid-cols-2 gap-px bg-line sm:grid-cols-4 lg:grid-cols-7">
         {tiles.map((tile) => (
           <li key={tile.label} className="bg-white">
             <Link href={tile.href} className="block p-4 transition-colors hover:bg-bone-50 sm:p-5">
@@ -129,12 +136,13 @@ export default async function AdminDashboard() {
 async function loadDashboard() {
   if (!isSupabaseWritable) return null;
   try {
-    const [stats, recent, leads] = await Promise.all([
+    const [stats, recent, leads, upcomingAppointments] = await Promise.all([
       getInventoryStats(),
       listAppliancesForAdmin({ limit: 8 }),
       listLeads({ limit: 5 }),
+      countUpcomingAppointments(),
     ]);
-    return { stats, recent: recent.items, leads: leads.items };
+    return { stats, recent: recent.items, leads: leads.items, upcomingAppointments };
   } catch (error) {
     if (error instanceof AdminNotConfiguredError || error instanceof AdminPermissionError) return null;
     throw error;

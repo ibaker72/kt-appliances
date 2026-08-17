@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CalendarClock, Mail, MessageSquareText, Navigation, Phone } from "lucide-react";
 
 import { LeadForm } from "@/components/forms/lead-form";
@@ -89,18 +90,23 @@ export default function ContactPage() {
                 <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-white/70">
                   After-hours visits run {siteConfig.hours.afterHours.label},{" "}
                   {siteConfig.hours.afterHours.days.toLowerCase()}.{" "}
-                  {siteConfig.hours.afterHours.note} Text or call ahead and we&apos;ll set a time and
-                  have the unit ready when you arrive.
+                  {siteConfig.hours.afterHours.note} Book a slot below, or text or call ahead and
+                  we&apos;ll set a time and have the unit ready when you arrive.
                 </p>
               </div>
             </div>
-            <TextLink
-              context="after-hours"
-              message={`Hi ${siteConfig.name}, I'd like to schedule an after-hours visit to the warehouse.`}
-              className={buttonStyles("primary", "lg", "shrink-0")}
-            >
-              Schedule After-Hours Visit
-            </TextLink>
+            <div className="flex shrink-0 flex-col gap-2.5 sm:flex-row">
+              <Link href="/schedule" className={buttonStyles("primary", "lg")}>
+                Book an Appointment
+              </Link>
+              <TextLink
+                context="after-hours"
+                message={`Hi ${siteConfig.name}, I'd like to schedule an after-hours visit to the warehouse.`}
+                className={buttonStyles("outlineLight", "lg")}
+              >
+                Text Us
+              </TextLink>
+            </div>
           </div>
         </Container>
       </Section>
