@@ -21,6 +21,7 @@ import { ProductGallery } from "@/components/inventory/product-gallery";
 import { ProductPrice } from "@/components/inventory/product-price";
 import { ProductSpecifications } from "@/components/inventory/product-specifications";
 import { ProductViewTracker } from "@/components/inventory/product-view-tracker";
+import { RecentlyViewed } from "@/components/inventory/recently-viewed";
 import { inquiryMessage } from "@/components/inventory/product-card";
 import { CallLink, TextLink } from "@/components/contact/contact-links";
 import { LeadForm } from "@/components/forms/lead-form";
@@ -101,6 +102,7 @@ export default async function AppliancePage({ params }: { params: Promise<{ slug
   const sold = appliance.status === "sold";
   const message = inquiryMessage(appliance);
   const name = `${appliance.brand} ${appliance.title}`;
+  const heroImage = primaryImage(appliance);
 
   return (
     <>
@@ -108,9 +110,11 @@ export default async function AppliancePage({ params }: { params: Promise<{ slug
       <ProductViewTracker
         id={appliance.id}
         slug={appliance.slug}
+        title={appliance.title}
         brand={appliance.brand}
         category={appliance.category}
         price={appliance.price}
+        image={heroImage?.imageUrl ?? null}
       />
 
       <div className="border-b border-line bg-bone-50">
@@ -365,6 +369,8 @@ export default async function AppliancePage({ params }: { params: Promise<{ slug
           </Container>
         </Section>
       ) : null}
+
+      <RecentlyViewed excludeSlug={appliance.slug} />
 
       <ContactCta
         title={sold ? "Tell us what you're looking for" : "Questions about this unit?"}

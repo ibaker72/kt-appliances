@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PackageSearch } from "lucide-react";
 
 import { ProductCard } from "@/components/inventory/product-card";
+export { ProductCardSkeleton, ProductGridSkeleton } from "@/components/inventory/product-card-skeleton";
 import { CallLink, TextLink } from "@/components/contact/contact-links";
 import { buttonStyles } from "@/components/ui/button";
 import type { Appliance } from "@/lib/inventory/types";
@@ -14,6 +15,10 @@ interface InventoryGridProps {
   columns?: 3 | 4;
   /** First N cards get `priority` so above-the-fold images are not lazy. */
   priorityCount?: number;
+  /** Builds the compare toggle URL for a unit. Omitted where compare is not offered. */
+  compareHref?: (id: string) => string;
+  /** Ids currently in the comparison. */
+  compareIds?: string[];
   className?: string;
 }
 
@@ -25,17 +30,22 @@ export function InventoryGrid({
   appliances,
   columns = 4,
   priorityCount = 0,
+  compareHref,
+  compareIds,
   className,
 }: InventoryGridProps) {
+  const selected = new Set(compareIds ?? []);
   const sizes =
     columns === 4
       ? "(min-width: 1280px) 300px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 47vw"
       : "(min-width: 1280px) 330px, (min-width: 1024px) 45vw, (min-width: 640px) 45vw, 47vw";
 
   return (
+    // Cards now carry their own border and elevation, so the grid is a real gap
+    // rather than a 1px rule showing through a bg-line backdrop.
     <div
       className={cn(
-        "grid grid-cols-2 gap-px bg-line lg:grid-cols-3",
+        "grid grid-cols-2 gap-3 lg:grid-cols-3",
         columns === 4 ? "xl:grid-cols-4" : "lg:grid-cols-2 xl:grid-cols-3",
         className,
       )}
@@ -46,7 +56,8 @@ export function InventoryGrid({
           appliance={appliance}
           priority={index < priorityCount}
           sizes={sizes}
-          className="border-0"
+          compareHref={compareHref?.(appliance.id)}
+          compareChecked={selected.has(appliance.id)}
         />
       ))}
     </div>
@@ -90,43 +101,6 @@ export function InventoryEmptyState({
           </Link>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-/** Skeleton that matches the real card's geometry so nothing shifts on load. */
-export function ProductCardSkeleton() {
-  return (
-    <div className="flex animate-pulse flex-col border border-line bg-white">
-      <div className="aspect-[4/3] w-full bg-bone-200" />
-      <div className="p-4 sm:p-5">
-        <div className="flex items-center justify-between">
-          <div className="h-3 w-16 bg-bone-200" />
-          <div className="h-4 w-20 bg-bone-200" />
-        </div>
-        <div className="mt-3 h-4 w-full bg-bone-200" />
-        <div className="mt-2 h-4 w-2/3 bg-bone-200" />
-        <div className="mt-3 h-3 w-1/2 bg-bone-100" />
-        <div className="mt-4 border-t border-line pt-4">
-          <div className="h-7 w-28 bg-bone-200" />
-        </div>
-        <div className="mt-5 h-11 w-full bg-bone-100" />
-      </div>
-    </div>
-  );
-}
-
-export function InventoryGridSkeleton({ count = 8, columns = 4 }: { count?: number; columns?: 3 | 4 }) {
-  return (
-    <div
-      className={cn(
-        "grid grid-cols-2 gap-px bg-line lg:grid-cols-3",
-        columns === 4 ? "xl:grid-cols-4" : "lg:grid-cols-2 xl:grid-cols-3",
-      )}
-    >
-      {Array.from({ length: count }).map((_, index) => (
-        <ProductCardSkeleton key={index} />
-      ))}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { InventoryBrowser } from "@/components/inventory/inventory-browser";
-import { InventoryGridSkeleton } from "@/components/inventory/inventory-grid";
+import { ProductGridSkeleton } from "@/components/inventory/inventory-grid";
 import { ListViewTracker } from "@/components/inventory/product-view-tracker";
 import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
@@ -150,7 +150,7 @@ export async function CategoryPage({
         key={JSON.stringify(searchParams)}
         fallback={
           <Container className="py-10">
-            <InventoryGridSkeleton count={8} />
+            <ProductGridSkeleton count={8} />
           </Container>
         }
       >

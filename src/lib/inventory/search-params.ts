@@ -33,9 +33,13 @@ export const FILTER_KEYS = [
   "status",
   "sort",
   "page",
+  "compare",
 ] as const;
 
 export const PAGE_SIZE = 24;
+
+/** Maximum units in a side-by-side comparison. */
+export const COMPARE_LIMIT = 4;
 
 function first(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return value[0] ?? "";
@@ -75,6 +79,16 @@ export interface ParsedFilters {
   showSold: boolean;
   sort: InventorySort;
   page: number;
+  /**
+   * Ids selected for comparison.
+   *
+   * Carried in the URL rather than storage so a comparison is shareable and
+   * survives a server render. It is parsed and re-serialised alongside the
+   * filters purely so changing a filter does not silently drop the selection —
+   * it is deliberately not part of `toInventoryQuery`, because selecting units
+   * to compare must never change which units are shown.
+   */
+  compare: string[];
 }
 
 /** Free-text facet values (brand, subcategory, color) come from the data, so they
@@ -116,6 +130,8 @@ export function parseFilters(params: RawSearchParams): ParsedFilters {
     showSold: first(params.status) === "sold",
     sort: INVENTORY_SORTS.includes(sortRaw) ? sortRaw : "featured",
     page: Math.max(1, positiveInt(first(params.page)) ?? 1),
+    // Four is the most a comparison table can show without becoming unreadable.
+    compare: textList(params.compare, COMPARE_LIMIT),
   };
 }
 
@@ -179,6 +195,7 @@ export function buildQueryString(filters: Partial<ParsedFilters>): string {
   if (filters.showSold) params.set("status", "sold");
   if (filters.sort && filters.sort !== "featured") params.set("sort", filters.sort);
   if (filters.page && filters.page > 1) params.set("page", String(filters.page));
+  if (filters.compare?.length) params.set("compare", filters.compare.join(","));
   const query = params.toString();
   return query ? `?${query}` : "";
 }

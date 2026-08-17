@@ -2,6 +2,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 
 import { FilterSidebar, InventoryToolbar } from "@/components/inventory/inventory-filters";
+import { CompareBar } from "@/components/inventory/compare-bar";
 import { InventoryEmptyState, InventoryGrid } from "@/components/inventory/inventory-grid";
 import { SoldProductCard } from "@/components/inventory/product-card";
 import { SearchBar } from "@/components/inventory/search-bar";
@@ -11,6 +12,7 @@ import { itemListSchema } from "@/lib/seo/jsonld";
 import { getInventoryFacets, queryInventory } from "@/lib/inventory/repository";
 import { CONDITION_LABELS, FUEL_LABELS, CATEGORIES } from "@/lib/inventory/types";
 import {
+  COMPARE_LIMIT,
   PAGE_SIZE,
   activeFilterCount,
   buildQueryString,
@@ -56,6 +58,23 @@ export async function InventoryBrowser({
     queryInventory(toInventoryQuery(scoped)),
     getInventoryFacets(category ?? filters.category),
   ]);
+
+  /**
+   * Compare selection lives in the querystring, so the toggle is a plain link
+   * and the whole feature works before hydration. Ids are kept even when they
+   * are not on the current page — paging away from a selected unit must not
+   * silently drop it from the comparison.
+   */
+  const compareIds = scoped.compare;
+  const compareHref = (id: string) => {
+    const next = compareIds.includes(id)
+      ? compareIds.filter((entry) => entry !== id)
+      : [...compareIds, id].slice(0, COMPARE_LIMIT);
+    return `${basePath}${buildQueryString({ ...scoped, compare: next })}`;
+  };
+  const compareSelected = compareIds
+    .map((id) => result.items.find((item) => item.id === id))
+    .filter((item): item is (typeof result.items)[number] => Boolean(item));
 
   const totalPages = Math.max(1, Math.ceil(result.total / PAGE_SIZE));
   const currentPage = Math.min(filters.page, totalPages);
@@ -132,7 +151,13 @@ export async function InventoryBrowser({
                     ))}
                   </ul>
                 ) : (
-                  <InventoryGrid appliances={result.items} columns={3} priorityCount={3} />
+                  <InventoryGrid
+                    appliances={result.items}
+                    columns={3}
+                    priorityCount={3}
+                    compareHref={compareHref}
+                    compareIds={compareIds}
+                  />
                 )}
 
                 {totalPages > 1 ? (
@@ -164,6 +189,14 @@ export async function InventoryBrowser({
           </div>
         </div>
       </div>
+
+      <CompareBar
+        selected={compareSelected}
+        removeHref={(id) =>
+          `${basePath}${buildQueryString({ ...scoped, compare: compareIds.filter((entry) => entry !== id) })}`
+        }
+        clearHref={`${basePath}${buildQueryString({ ...scoped, compare: [] })}`}
+      />
     </Container>
   );
 }

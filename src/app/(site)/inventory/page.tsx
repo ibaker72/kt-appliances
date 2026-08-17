@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 
 import { InventoryBrowser } from "@/components/inventory/inventory-browser";
-import { InventoryGridSkeleton } from "@/components/inventory/inventory-grid";
+import { ProductGridSkeleton } from "@/components/inventory/inventory-grid";
 import { QuickCategoryNav } from "@/components/inventory/quick-category-nav";
 import { ContactCta } from "@/components/shared/contact-cta";
 import { PageHeader } from "@/components/shared/page-header";
@@ -51,7 +51,7 @@ export default async function InventoryPage({
         key={JSON.stringify(params)}
         fallback={
           <Container className="py-10">
-            <InventoryGridSkeleton count={8} />
+            <ProductGridSkeleton count={8} />
           </Container>
         }
       >
