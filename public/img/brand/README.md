@@ -1,8 +1,29 @@
-# Adding the KT Appliances logo
+# The KT Appliances logo
+
+`kt-appliances-logo.png` is in place and switched on, so there is nothing to do
+unless you are **replacing** it. If you are, follow the two steps below.
+
+## About the file that is here now
+
+It came from a screenshot of the logo PDF, so it carried the PDF viewer's own
+chrome. Three things were cleaned off before it went in:
+
+- the grey viewer strips at the top and bottom, and the page-edge shadow and
+  neighbouring page down the right-hand side
+- the viewer's small "1/1" page counter in the bottom-right corner
+- the frame's right-hand point, which the screenshot had cut off — the mark is
+  symmetric, so it was rebuilt by mirroring the matching columns from the left
+
+The result is 786 × 687 with a white background. **If you can find the original
+vector artwork (`.ai`, `.eps`, `.pdf` or `.svg`), send it over and it should
+replace this file** — it would be sharper on large screens and give a
+transparent background instead of a white box.
+
+## Replacing it
 
 Two steps. Nothing else on the site needs touching.
 
-## 1. Put the file here
+### 1. Put the file here
 
 Save the logo into this folder — `public/img/brand/` — as one of:
 
@@ -18,7 +39,7 @@ it to PNG at the largest size you can, or open the PDF and "Save as image".
 Uploading through GitHub in a browser: open this folder on github.com, click
 **Add file → Upload files**, drag the logo in, then **Commit changes**.
 
-## 2. Switch it on
+### 2. Switch it on
 
 Open `src/lib/site-config.ts`, find `logoFile`, and set it to the path:
 
