@@ -11,11 +11,25 @@
  * uses `maskPhoneNumber` client-side to confirm where a text was sent.
  */
 
+/**
+ * Drops the US country code from a run of digits: `15707500622` → `5707500622`.
+ *
+ * The single place this rule is expressed. It is safe precisely because NANP
+ * forbids an area code starting with 1, so an eleven-digit US number beginning
+ * with 1 can only be `+1` followed by the national number — there is no
+ * ambiguity to resolve. Any other length is returned untouched, which is what
+ * lets the progressive form formatter call this on every keystroke without
+ * swallowing half-typed input.
+ *
+ * Takes digits, not formatted text: callers strip punctuation first.
+ */
+export function stripUsCountryCode(digits: string): string {
+  return digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+}
+
 /** Ten digits, or "" when the input cannot be a US number. */
 export function normalizePhoneDigits(value: string): string {
-  const digits = value.replace(/\D/g, "");
-  const withoutCountryCode =
-    digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  const withoutCountryCode = stripUsCountryCode(value.replace(/\D/g, ""));
   return withoutCountryCode.length === 10 ? withoutCountryCode : "";
 }
 

@@ -32,7 +32,10 @@ process.env.NEXT_PUBLIC_BUSINESS_PHONE = BUSINESS_E164;
 
 const { siteConfig, telHref, smsHref } = await import("@/lib/site-config");
 const { localBusinessSchema } = await import("@/lib/seo/jsonld");
-const { normalizePhoneDigits, maskPhoneNumber } = await import("@/lib/sms/phone");
+const { normalizePhoneDigits, maskPhoneNumber, stripUsCountryCode } = await import(
+  "@/lib/sms/phone"
+);
+const { formatPhoneNumber } = await import("@/lib/utils");
 const { customerConfirmationBody, ownerNotificationBody } = await import(
   "@/lib/appointments/messages"
 );
@@ -62,6 +65,76 @@ describe("public business number", () => {
     // on the published line; only outbound automation uses Twilio.
     assert.ok(smsHref().startsWith(`sms:${BUSINESS_E164}`));
     assert.doesNotMatch(smsHref(), /5707500622/);
+  });
+});
+
+describe("E.164 to US display formatting", () => {
+  /**
+   * The admin's SMS SENDER field reads `TWILIO_FROM_NUMBER`, which is stored in
+   * E.164 because that is what Twilio requires. Rendering it went straight
+   * through `formatPhoneNumber`, which clamped to ten digits *before* removing
+   * the country code and produced `(157) 075-0062` — a number that looks real,
+   * belongs to nobody, and told the owner the wrong sender.
+   */
+  test("the Twilio sender displays as (570) 750-0622", () => {
+    assert.equal(formatPhoneNumber(TWILIO_SENDER), "(570) 750-0622");
+  });
+
+  test("the business line displays as (973) 519-9717 from E.164", () => {
+    assert.equal(formatPhoneNumber(BUSINESS_E164), BUSINESS_DISPLAY);
+  });
+
+  test("every accepted input shape yields the same display string", () => {
+    for (const input of [
+      "5707500622",
+      "+15707500622",
+      "15707500622",
+      "(570) 750-0622",
+      "570-750-0622",
+      "570.750.0622",
+      "+1 (570) 750-0622",
+    ]) {
+      assert.equal(formatPhoneNumber(input), "(570) 750-0622", `failed for input: ${input}`);
+    }
+  });
+
+  test("the country code is stripped before the ten-digit clamp, not after", () => {
+    // The precise ordering bug. Clamping first leaves "1570750062".
+    assert.equal(stripUsCountryCode("15707500622"), "5707500622");
+    assert.equal(stripUsCountryCode("5707500622"), "5707500622");
+    // Only an eleven-digit run beginning with 1 is a country code. NANP forbids
+    // an area code starting with 1, so there is nothing else this could be.
+    assert.equal(stripUsCountryCode("1570750062"), "1570750062");
+    assert.equal(stripUsCountryCode("25707500622"), "25707500622");
+  });
+
+  test("the malformed renderings never appear again", () => {
+    for (const value of [TWILIO_SENDER, BUSINESS_E164, "15707500622", "19735199717"]) {
+      const rendered = formatPhoneNumber(value);
+      assert.notEqual(rendered, "(157) 075-0062");
+      assert.notEqual(rendered, "(197) 351-9971");
+      assert.doesNotMatch(rendered, /^\(1\d\d\)/, `leading country code leaked into ${rendered}`);
+    }
+    // And the E.164 values themselves are never double-prefixed.
+    assert.notEqual(siteConfig.phone.e164, "+119735199717");
+    assert.doesNotMatch(`+1${normalizePhoneDigits(TWILIO_SENDER)}`, /^\+11/);
+  });
+
+  test("partial input still formats progressively for the live form fields", () => {
+    // `formatPhoneNumber` backs the onChange handlers on the lead and appointment
+    // phone inputs. Blanking partial input would eat keystrokes mid-typing.
+    assert.equal(formatPhoneNumber("9"), "9");
+    assert.equal(formatPhoneNumber("973"), "973");
+    assert.equal(formatPhoneNumber("9735"), "(973) 5");
+    assert.equal(formatPhoneNumber("973519"), "(973) 519");
+    assert.equal(formatPhoneNumber("9735199717"), BUSINESS_DISPLAY);
+    assert.equal(formatPhoneNumber(""), "");
+  });
+
+  test("E.164 is preserved for machine-readable use, not rewritten to ten digits", () => {
+    // Display is a boundary concern only. Twilio and schema.org keep E.164.
+    assert.equal(siteConfig.phone.e164, BUSINESS_E164);
+    assert.equal(telHref, `tel:${BUSINESS_E164}`);
   });
 });
 
