@@ -129,6 +129,14 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+
+    /* View-transition pseudo-elements live on the document, not on elements,
+       so the wildcard above does not reach them. Same rule: no motion. */
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
   }
 
   body {
@@ -197,9 +205,10 @@
 }
 
 @layer utilities {
-  /* Product image hover: the photo grows, the frame does not. */
+  /* Product image hover: the photo grows, the frame does not. 200ms and a
+     small scale — depth and the image change; nothing moves position. */
   .zoom-frame img {
-    transition: transform 420ms cubic-bezier(0.2, 0.6, 0.2, 1);
+    transition: transform 200ms cubic-bezier(0.2, 0.6, 0.2, 1);
   }
   .zoom-frame:hover img {
     transform: scale(1.035);

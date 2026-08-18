@@ -5,6 +5,7 @@ import Image from "next/image";
 import { X, ZoomIn } from "lucide-react";
 
 import { DamageMap } from "@/components/inventory/damage-map";
+import { Morph } from "@/components/ui/morph";
 import { CATEGORIES, type Appliance, type ApplianceImage } from "@/lib/inventory/types";
 import { cn } from "@/lib/utils";
 
@@ -86,36 +87,40 @@ export function ProductGallery({ appliance }: { appliance: Appliance }) {
 
       <div className="min-w-0 flex-1">
         <div className="relative">
-          <button
-            type="button"
-            onClick={() => setZoomed(true)}
-            aria-label={`Zoom image ${index + 1} of ${images.length}`}
-            className={cn(
-              "group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-md border border-line bg-bone-50",
-              sold ? "grayscale" : "",
-            )}
-          >
-            <Image
-              src={active.imageUrl}
-              alt={active.altText ?? label}
-              fill
-              priority
-              sizes="(min-width: 1024px) 560px, 100vw"
-              className={cn("object-contain", sold ? "opacity-60" : "")}
-            />
-            {sold ? (
-              <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-ink-950/90 py-3 text-center font-display text-base font-extrabold uppercase tracking-[0.35em] text-white sm:text-xl">
-                Sold
-              </span>
-            ) : (
-              <span
-                aria-hidden
-                className="absolute bottom-3 right-3 grid size-9 place-items-center rounded-pill border border-line bg-white/95 text-ink-700 opacity-0 shadow-card transition-opacity group-hover:opacity-100"
-              >
-                <ZoomIn className="size-4" strokeWidth={2.5} />
-              </span>
-            )}
-          </button>
+          {/* Pairs with the product card's Morph of the same name, so the card
+              photo the shopper clicked morphs into this frame. */}
+          <Morph name={`product-image-${appliance.id}`}>
+            <button
+              type="button"
+              onClick={() => setZoomed(true)}
+              aria-label={`Zoom image ${index + 1} of ${images.length}`}
+              className={cn(
+                "group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-md border border-line bg-bone-50",
+                sold ? "grayscale" : "",
+              )}
+            >
+              <Image
+                src={active.imageUrl}
+                alt={active.altText ?? label}
+                fill
+                priority
+                sizes="(min-width: 1024px) 560px, 100vw"
+                className={cn("object-contain", sold ? "opacity-60" : "")}
+              />
+              {sold ? (
+                <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-ink-950/90 py-3 text-center font-display text-base font-extrabold uppercase tracking-[0.35em] text-white sm:text-xl">
+                  Sold
+                </span>
+              ) : (
+                <span
+                  aria-hidden
+                  className="absolute bottom-3 right-3 grid size-9 place-items-center rounded-pill border border-line bg-white/95 text-ink-700 opacity-0 shadow-card transition-opacity group-hover:opacity-100"
+                >
+                  <ZoomIn className="size-4" strokeWidth={2.5} />
+                </span>
+              )}
+            </button>
+          </Morph>
 
           {/* Spots are recorded against the primary photo, so the overlay only
               renders while that photo is showing. Activating a spot with a

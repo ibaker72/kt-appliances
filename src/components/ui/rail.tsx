@@ -72,14 +72,29 @@ export function Rail({ children, label, itemWidth = "card", className }: RailPro
   // Nothing overflows, so the controls would be decoration.
   const hasOverflow = !(atStart && atEnd);
 
+  // Edge fades signal "there is more" on exactly the side where there is.
+  // A mask fades the content itself, so it reads correctly on any section
+  // background; it disappears entirely when the rail has no overflow, and
+  // before hydration (both flags start true), so no-JS never sees a fade.
+  const fade = "44px";
+  const maskImage =
+    atStart && atEnd
+      ? undefined
+      : atStart
+        ? `linear-gradient(to right, black calc(100% - ${fade}), transparent)`
+        : atEnd
+          ? `linear-gradient(to right, transparent, black ${fade})`
+          : `linear-gradient(to right, transparent, black ${fade}, black calc(100% - ${fade}), transparent)`;
+
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("group/rail relative", className)}>
       <div
         ref={scrollerRef}
         onScroll={sync}
         role="region"
         aria-label={label}
         tabIndex={0}
+        style={{ maskImage, WebkitMaskImage: maskImage }}
         className={cn(
           // No smooth scroll-behaviour on the container itself. It would apply
           // to the browser's own scroll-snap adjustment during load, which runs
@@ -89,6 +104,10 @@ export function Rail({ children, label, itemWidth = "card", className }: RailPro
           // animates.
           "no-scrollbar -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5",
           "sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0",
+          // Snap lands items on the same gutter the container padding draws,
+          // so a snapped card sits flush with the page grid, not under the
+          // bleed. Positive, not floaty: mandatory snap plus matched padding.
+          "scroll-pl-5 sm:scroll-pl-6 lg:scroll-pl-0",
           "[&>*]:shrink-0 [&>*]:snap-start",
           ITEM_WIDTHS[itemWidth],
         )}
@@ -141,8 +160,10 @@ function RailArrow({
       title={label}
       className={cn(
         "absolute top-1/2 hidden size-10 -translate-y-1/2 place-items-center rounded-pill border border-line",
-        "bg-white text-ink-900 shadow-card transition-[opacity,box-shadow] hover:shadow-hover lg:grid",
-        "disabled:pointer-events-none disabled:opacity-0",
+        "bg-white text-ink-900 shadow-card transition-[opacity,box-shadow] duration-200 hover:shadow-hover lg:grid",
+        // Present only while the pointer is over the rail — they are a
+        // pointer-only convenience, so they appear for the pointer.
+        disabled ? "pointer-events-none opacity-0" : "opacity-0 group-hover/rail:opacity-100",
         direction === "prev" ? "-left-5" : "-right-5",
       )}
     >

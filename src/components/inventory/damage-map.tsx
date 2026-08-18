@@ -29,6 +29,10 @@ interface ContentBox {
  * container. Spot coordinates are fractions of the photo, not of the layout
  * box, so markers must be laid out against this rectangle — otherwise the
  * letterboxing that `object-contain` adds would shift every marker.
+ *
+ * The photo is looked up inside the element, then in its parent: the admin
+ * editor wraps the image, while the PDP overlay is an `inset-0` sibling of it
+ * (both share the same box, so the geometry is the same either way).
  */
 export function useImageContentBox(ref: RefObject<HTMLElement | null>): ContentBox | null {
   const [box, setBox] = useState<ContentBox | null>(null);
@@ -37,8 +41,11 @@ export function useImageContentBox(ref: RefObject<HTMLElement | null>): ContentB
     const container = ref.current;
     if (!container) return;
 
+    const findImage = () =>
+      container.querySelector("img") ?? container.parentElement?.querySelector("img") ?? null;
+
     const measure = () => {
-      const img = container.querySelector("img");
+      const img = findImage();
       if (!img || !img.naturalWidth || !img.naturalHeight) {
         setBox(null);
         return;
@@ -54,10 +61,15 @@ export function useImageContentBox(ref: RefObject<HTMLElement | null>): ContentB
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(container);
-    const img = container.querySelector("img");
+    const img = findImage();
     img?.addEventListener("load", measure);
+    // The photo can also be swapped (gallery thumbnails, a close-up opening),
+    // which changes the intrinsic size without resizing the container.
+    const mutations = new MutationObserver(measure);
+    if (img) mutations.observe(img, { attributes: true, attributeFilter: ["src", "srcset"] });
     return () => {
       observer.disconnect();
+      mutations.disconnect();
       img?.removeEventListener("load", measure);
     };
   }, [ref]);

@@ -5,6 +5,7 @@ import { ConditionBadge } from "@/components/inventory/availability-badge";
 import { DealBadges } from "@/components/inventory/deal-badge";
 import { ProductImage } from "@/components/inventory/product-image";
 import { SaveButton } from "@/components/inventory/save-button";
+import { Morph } from "@/components/ui/morph";
 import { CATEGORIES, formatPrice, isPurchasable, savingsFor, type Appliance } from "@/lib/inventory/types";
 import { siteConfig } from "@/lib/site-config";
 import { cn, relativeTime } from "@/lib/utils";
@@ -76,13 +77,18 @@ export function ProductCard({
       )}
     >
       <div className="zoom-frame relative overflow-hidden bg-bone-50">
-        <ProductImage
-          appliance={appliance}
-          sizes={sizes ?? DEFAULT_SIZES[variant]}
-          priority={priority}
-          framed={false}
-          className="aspect-square bg-bone-50"
-        />
+        {/* The card photo morphs into the PDP gallery image on navigation —
+            the one cross-page transition the site runs. Same name as the
+            gallery's main frame; everything degrades to a normal cut. */}
+        <Morph name={`product-image-${appliance.id}`}>
+          <ProductImage
+            appliance={appliance}
+            sizes={sizes ?? DEFAULT_SIZES[variant]}
+            priority={priority}
+            framed={false}
+            className="aspect-square bg-bone-50"
+          />
+        </Morph>
 
         {/* Promotional flags top-left; the factual condition chip bottom-left, so
             "why it's cheap" reads separately from "what the deal is". */}
