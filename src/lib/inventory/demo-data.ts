@@ -35,6 +35,8 @@ interface Seed {
   artwork?: string;
   daysAgo: number;
   soldDaysAgo?: number;
+  /** Recorded damage locations, for exercising the damage map locally. */
+  damageSpots?: Appliance["damageSpots"];
 }
 
 const SEEDS: Seed[] = [
@@ -116,6 +118,9 @@ const SEEDS: Seed[] = [
     description:
       "French door refrigerator with an internal water dispenser and a full-width temperature-controlled drawer.",
     cosmeticNotes: "Dent along the top of the freezer drawer, about 3 inches wide.",
+    // Matches the cosmetic notes above, so the local demo exercises the damage
+    // map with data that tells the same story as the text.
+    damageSpots: [{ x: 0.5, y: 0.72, label: "Dent along the top of the freezer drawer, about 3 inches wide" }],
     price: 1049,
     compareAtPrice: 1799,
     quantity: 1,
@@ -476,6 +481,7 @@ function buildAppliance(seed: Seed, index: number): Appliance {
     condition: seed.condition ?? "scratch-and-dent",
     cosmeticNotes: seed.cosmeticNotes,
     functionalNotes: seed.functionalNotes ?? "Tested and working at the warehouse before listing.",
+    damageSpots: seed.damageSpots ?? [],
     price: seed.price,
     compareAtPrice: seed.compareAtPrice ?? null,
     quantity: seed.quantity,

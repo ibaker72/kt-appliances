@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, CheckCircle2, ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
 
 import { applianceQuickAction, uploadImagesAction } from "@/app/admin/actions";
+import { DamageSpotEditor } from "@/components/admin/damage-spot-editor";
 import { buttonStyles } from "@/components/ui/button";
 import {
   ALLOWED_IMAGE_TYPES,
@@ -186,6 +187,9 @@ export function ImageManager({ appliance }: { appliance: Appliance }) {
           real photos of the actual unit convert far better.
         </p>
       )}
+
+      {/* Renders nothing until a photo exists — spots are recorded on the photo. */}
+      <DamageSpotEditor appliance={appliance} />
     </div>
   );
 }

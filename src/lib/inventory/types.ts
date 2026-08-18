@@ -40,6 +40,47 @@ export interface ApplianceImage {
   isPrimary: boolean;
 }
 
+/**
+ * One recorded damage location on a unit's primary photo.
+ *
+ * `x`/`y` are 0–1 fractions of the photo's own box, so a spot lands in the
+ * same place at any rendered size. `imageId` optionally names the close-up
+ * photo of this spot among the unit's images.
+ */
+export interface DamageSpot {
+  x: number;
+  y: number;
+  label: string;
+  imageId?: string | null;
+}
+
+/**
+ * Parses the `damage_spots` jsonb column defensively: anything that is not a
+ * well-formed spot is dropped rather than rendered wrong, coordinates are
+ * clamped into the photo box, and a malformed column yields an empty array —
+ * which renders nothing, the same as no data. Absence of data is never turned
+ * into a claim.
+ */
+export function parseDamageSpots(value: unknown): DamageSpot[] {
+  if (!Array.isArray(value)) return [];
+  const spots: DamageSpot[] = [];
+  for (const entry of value) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const spot = entry as Record<string, unknown>;
+    const x = Number(spot.x);
+    const y = Number(spot.y);
+    const label = typeof spot.label === "string" ? spot.label.trim() : "";
+    if (!Number.isFinite(x) || !Number.isFinite(y) || label.length === 0) continue;
+    spots.push({
+      x: Math.min(1, Math.max(0, x)),
+      y: Math.min(1, Math.max(0, y)),
+      label,
+      imageId: typeof spot.imageId === "string" && spot.imageId ? spot.imageId : null,
+    });
+  }
+  return spots;
+}
+
 export interface Appliance {
   id: string;
   slug: string;
@@ -53,6 +94,8 @@ export interface Appliance {
   condition: ApplianceCondition;
   cosmeticNotes: string | null;
   functionalNotes: string | null;
+  /** Recorded damage locations on the primary photo. Empty renders nothing. */
+  damageSpots: DamageSpot[];
   /** Price in whole US dollars. */
   price: number;
   /** Comparison retail price. Null when no verified comparison exists — never invent one. */

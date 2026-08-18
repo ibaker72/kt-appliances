@@ -5,7 +5,12 @@ import {
   getSupabaseAdminClient,
   supabaseStorageBucket,
 } from "@/lib/supabase/client";
-import type { Appliance, ApplianceStatus } from "@/lib/inventory/types";
+import {
+  parseDamageSpots,
+  type Appliance,
+  type ApplianceStatus,
+  type DamageSpot,
+} from "@/lib/inventory/types";
 import { slugify } from "@/lib/utils";
 import type { ApplianceFormData } from "./appliance-schema";
 
@@ -47,6 +52,7 @@ function mapRow(row: Row): Appliance {
     condition: str(row.condition) as Appliance["condition"],
     cosmeticNotes: nullableStr(row.cosmetic_notes),
     functionalNotes: nullableStr(row.functional_notes),
+    damageSpots: parseDamageSpots(row.damage_spots),
     price: num(row.price),
     compareAtPrice: row.compare_at_price == null ? null : num(row.compare_at_price),
     quantity: num(row.quantity),
@@ -289,6 +295,19 @@ export async function updateAppliance(id: string, data: ApplianceFormData): Prom
   if (error) throw adminQueryError(error);
 }
 
+/**
+ * Replaces the recorded damage locations for one unit. Spots are re-parsed on
+ * the way in so nothing that is not a well-formed spot can reach the column.
+ */
+export async function updateDamageSpots(id: string, spots: DamageSpot[]): Promise<void> {
+  const supabase = client();
+  const { error } = await supabase
+    .from("appliances")
+    .update({ damage_spots: parseDamageSpots(spots) })
+    .eq("id", id);
+  if (error) throw adminQueryError(error);
+}
+
 /** Copies an appliance (and its image references) as an unpublished draft. */
 export async function duplicateAppliance(id: string): Promise<string> {
   const supabase = client();
@@ -306,6 +325,8 @@ export async function duplicateAppliance(id: string): Promise<string> {
     .insert({
       slug,
       sku: null, // A duplicate is a different physical unit — it needs its own SKU.
+      // damage_spots deliberately not copied, for the same reason: the copy's
+      // dents are its own. The column defaults to an empty array.
       title: source.title,
       brand: source.brand,
       model_number: source.modelNumber,

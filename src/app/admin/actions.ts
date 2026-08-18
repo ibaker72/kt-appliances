@@ -25,6 +25,7 @@ import {
   setApplianceStatus,
   setPrimaryImage,
   updateAppliance,
+  updateDamageSpots,
   uploadApplianceImage,
 } from "@/lib/admin/inventory-repo";
 import { setLeadStatus } from "@/lib/admin/leads-repo";
@@ -32,6 +33,7 @@ import { setAppointmentStatus } from "@/lib/admin/appointments-repo";
 import {
   MAX_IMAGES_PER_UPLOAD,
   applianceFormSchema,
+  damageSpotsSchema,
   validateImageFile,
   type AdminFormState,
   type LoginState,
@@ -212,6 +214,56 @@ export async function uploadImagesAction(
     }
     console.error("[admin] image upload failed:", error);
     return { status: "error", message: "Upload failed. Please try again." };
+  }
+}
+
+/**
+ * Saves the recorded damage locations for one unit, from the click-to-place
+ * editor under the photo manager. The payload is a JSON array in the `spots`
+ * field; an empty array is a valid save and clears the map.
+ */
+export async function saveDamageSpotsAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  await requireAdmin();
+
+  const applianceId = formData.get("applianceId");
+  if (typeof applianceId !== "string" || !applianceId) {
+    return { status: "error", message: "Save the appliance before mapping damage." };
+  }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(formData.get("spots") ?? "[]"));
+  } catch {
+    return { status: "error", message: "Could not read the damage spots. Reload and try again." };
+  }
+
+  const parsed = damageSpotsSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: parsed.error.issues[0]?.message ?? "Check the damage spot labels.",
+    };
+  }
+
+  try {
+    await updateDamageSpots(applianceId, parsed.data);
+    revalidateInventory();
+    return {
+      status: "success",
+      message:
+        parsed.data.length === 0
+          ? "Damage map cleared."
+          : `Damage map saved — ${parsed.data.length} spot${parsed.data.length === 1 ? "" : "s"}.`,
+    };
+  } catch (error) {
+    if (error instanceof AdminNotConfiguredError) {
+      return { status: "error", message: "No database connected. Set SUPABASE_SERVICE_ROLE_KEY." };
+    }
+    console.error("[admin] save damage spots failed:", error);
+    return { status: "error", message: "Could not save. Please try again." };
   }
 }
 

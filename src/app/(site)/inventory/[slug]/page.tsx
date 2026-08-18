@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { AvailabilityBadge, ConditionBadge } from "@/components/inventory/availability-badge";
+import { DamageSpotList } from "@/components/inventory/damage-map";
 import { ProductGallery } from "@/components/inventory/product-gallery";
 import { ProductPrice } from "@/components/inventory/product-price";
 import { ProductSpecifications } from "@/components/inventory/product-specifications";
@@ -134,6 +135,10 @@ export default async function AppliancePage({ params }: { params: Promise<{ slug
           {/* Gallery */}
           <div className="min-w-0 lg:col-span-7">
             <ProductGallery appliance={appliance} />
+            {/* The complete record of the recorded damage spots — readable
+                without JavaScript, by screen readers, and in print. The markers
+                the gallery overlays are the enhancement, this is the source. */}
+            <DamageSpotList spots={appliance.damageSpots} className="mt-6" />
           </div>
 
           {/*

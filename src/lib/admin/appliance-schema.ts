@@ -115,6 +115,38 @@ export interface AdminFormState {
 export const initialAdminFormState: AdminFormState = { status: "idle", message: "" };
 
 /* -------------------------------------------------------------------------- */
+/* Damage spots                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** Enough for any honest unit; more than this reads as noise, not disclosure. */
+export const MAX_DAMAGE_SPOTS = 12;
+
+/**
+ * One damage location, as saved from the admin editor. Coordinates are 0–1
+ * fractions of the primary photo's own box; `imageId` optionally names the
+ * close-up image of the spot.
+ */
+export const damageSpotSchema = z.object({
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  label: z
+    .string()
+    .trim()
+    .min(3, "Describe the spot — e.g. \"Dent, lower left door — 2 inches\".")
+    .max(160),
+  imageId: z
+    .string()
+    .trim()
+    .max(64)
+    .nullish()
+    .transform((value) => value || null),
+});
+
+export const damageSpotsSchema = z
+  .array(damageSpotSchema)
+  .max(MAX_DAMAGE_SPOTS, `Keep it to ${MAX_DAMAGE_SPOTS} spots — group nearby marks into one.`);
+
+/* -------------------------------------------------------------------------- */
 /* Image uploads                                                               */
 /* -------------------------------------------------------------------------- */
 
