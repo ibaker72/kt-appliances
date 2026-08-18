@@ -29,6 +29,22 @@ const LOGO_HEIGHTS = {
   lg: "h-16 sm:h-20",
 } as const;
 
+/**
+ * Rendered widths per breakpoint, so the optimizer serves a mark sized for the
+ * header rather than the nominal 640px intrinsic width.
+ *
+ * Without `sizes`, next/image reads `width` as the layout width and emits a 1x/2x
+ * srcSet — meaning a ~50px-wide header logo downloads the 1280px variant, on a
+ * `priority` request that is preloaded ahead of everything else. The values
+ * below are the CSS heights above multiplied by the artwork's aspect ratio, with
+ * headroom so a future file with a wider ratio still resolves sharp.
+ */
+const LOGO_SIZES = {
+  sm: "48px",
+  md: "(min-width: 1024px) 88px, (min-width: 640px) 72px, 60px",
+  lg: "(min-width: 640px) 108px, 88px",
+} as const;
+
 const sizes = {
   sm: { tile: "h-8 w-8 text-[15px]", name: "text-[15px]", tag: "text-[8px]" },
   md: { tile: "h-10 w-10 text-lg sm:h-11 sm:w-11 sm:text-xl", name: "text-lg sm:text-xl", tag: "text-[9px]" },
@@ -58,6 +74,7 @@ export function Wordmark({ tone = "dark", size = "md", withTagline = true, class
           // lets width follow whatever aspect ratio the supplied file has.
           width={640}
           height={260}
+          sizes={LOGO_SIZES[size]}
           priority
           unoptimized={logoFile.endsWith(".svg")}
           className={cn("w-auto object-contain", LOGO_HEIGHTS[size])}

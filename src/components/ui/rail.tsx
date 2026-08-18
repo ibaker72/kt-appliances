@@ -81,7 +81,13 @@ export function Rail({ children, label, itemWidth = "card", className }: RailPro
         aria-label={label}
         tabIndex={0}
         className={cn(
-          "no-scrollbar -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5",
+          // No smooth scroll-behaviour on the container itself. It would apply
+          // to the browser's own scroll-snap adjustment during load, which runs
+          // on the compositor and permanently ends Chrome's LCP measurement
+          // window if it lands before the first LCP candidate. The arrows pass
+          // `behavior: "smooth"` themselves, so pointer scrolling still
+          // animates.
+          "no-scrollbar -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5",
           "sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0",
           "[&>*]:shrink-0 [&>*]:snap-start",
           ITEM_WIDTHS[itemWidth],

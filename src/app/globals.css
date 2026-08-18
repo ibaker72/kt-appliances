@@ -100,15 +100,28 @@
    ========================================================================== */
 
 @layer base {
+  /*
+    No `scroll-behavior: smooth` here, deliberately.
+
+    On `html` it silently promotes *every* programmatic scroll on the site onto
+    the compositor, and Chrome's PaintTimingDetector treats a compositor-driven
+    scroll as the end of the LCP measurement window
+    (`StopRecordingLargestContentfulPaint`). That stop is permanent: one landing
+    before the first LCP candidate is recorded leaves a trace carrying a
+    firstContentfulPaint and no `largestContentfulPaint::Candidate` at all, which
+    is what Lighthouse reports as NO_LCP. Scroll-snap adjustments during load are
+    exactly such a scroll, and they run within milliseconds of first paint.
+
+    Anchor jumps are instant instead — the site's only in-page anchors are the
+    skip link and /about#faq, where an instant jump is also the better
+    accessibility behaviour. Anything that should animate asks for it at the call
+    site, after load, with `behavior: "smooth"`.
+  */
   html {
     -webkit-text-size-adjust: 100%;
-    scroll-behavior: smooth;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
     *,
     *::before,
     *::after {

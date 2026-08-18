@@ -44,6 +44,8 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [interacting, setInteracting] = useState(false);
+  /** Gates rotation on the page having loaded — see the effect below. */
+  const [ready, setReady] = useState(false);
 
   // Autoplay starts only after we know motion is welcome. Starting it on and
   // switching off would move the page once before the preference is read.
@@ -55,6 +57,39 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
     return () => query.removeEventListener("change", sync);
   }, []);
 
+  /*
+    Rotation is additionally held until the page has finished loading and the
+    main thread has gone idle once.
+
+    `scrollTo({ behavior: "smooth" })` is a compositor-driven scroll, and the
+    first one Chrome sees ends its LCP measurement window for good
+    (PaintTimingDetector::NotifyScroll -> StopRecordingLargestContentfulPaint).
+    A rotation that lands while the browser is still settling paint timings can
+    therefore leave a trace carrying a firstContentfulPaint and no
+    `largestContentfulPaint::Candidate` at all — the NO_LCP Lighthouse reports.
+    Waiting for load plus one idle callback keeps every rotation clear of it.
+  */
+  useEffect(() => {
+    let cancelled = false;
+
+    const arm = () => {
+      if (cancelled) return;
+      const idle =
+        window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 200));
+      idle(() => {
+        if (!cancelled) setReady(true);
+      });
+    };
+
+    if (document.readyState === "complete") arm();
+    else window.addEventListener("load", arm, { once: true });
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("load", arm);
+    };
+  }, []);
+
   const goTo = useCallback((next: number) => {
     const track = trackRef.current;
     if (!track) return;
@@ -63,10 +98,10 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
   }, [slides.length]);
 
   useEffect(() => {
-    if (!playing || interacting || slides.length < 2) return;
+    if (!ready || !playing || interacting || slides.length < 2) return;
     const timer = setInterval(() => goTo(index + 1), ADVANCE_MS);
     return () => clearInterval(timer);
-  }, [playing, interacting, index, slides.length, goTo]);
+  }, [ready, playing, interacting, index, slides.length, goTo]);
 
   // Scroll position is the source of truth for which slide is current, so swipe,
   // dot clicks and autoplay all stay in sync without separate bookkeeping.
@@ -95,6 +130,11 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
       >
         {slides.map((slide, position) => {
           const tone = TONES[slide.tone];
+          // The first slide's headline is the page's main heading. It is
+          // server-rendered, on screen from the first paint, and never moves
+          // before the browser has settled — which is what the LCP measurement
+          // needs to latch onto. Identical typography either way.
+          const Headline = position === 0 ? "h1" : "h2";
           return (
             <div
               key={slide.id}
@@ -105,14 +145,14 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
               className={cn("w-full min-w-0 shrink-0 basis-full snap-start", tone.panel)}
             >
               <div className="mx-auto flex min-h-[190px] w-full max-w-[1320px] flex-col justify-center px-5 pb-11 pt-6 sm:min-h-[260px] sm:px-6 sm:pb-14 sm:pt-9 lg:min-h-[330px] lg:px-10">
-                <h2
+                <Headline
                   className={cn(
                     "max-w-2xl font-display text-[1.4rem] font-extrabold leading-[1.08] sm:text-[2.1rem] sm:leading-[1.02] lg:text-[2.8rem]",
                     tone.head,
                   )}
                 >
                   {slide.headline}
-                </h2>
+                </Headline>
                 <p className={cn("clamp-2 mt-2 max-w-xl text-[13.5px] leading-snug sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-relaxed", tone.body)}>
                   {slide.subhead}
                 </p>
