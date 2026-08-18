@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# media originals — full-resolution photos/videos with EXIF still attached.
+# Only the processed, metadata-stripped outputs in public/ are committed.
+/media-source/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

@@ -56,6 +56,12 @@ const nextConfig: NextConfig = {
         source: "/img/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
+      {
+        // Ambient video clips from scripts/process-media.mjs. Filenames carry a
+        // content hash, so immutable is safe and replacements never go stale.
+        source: "/video/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
     ];
   },
 };
