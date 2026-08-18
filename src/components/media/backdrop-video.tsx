@@ -21,6 +21,8 @@ interface BackdropVideoProps {
   className?: string;
   /** Repositions the play/pause control if the default corner is occupied. */
   controlClassName?: string;
+  /** Pass -1 while the host slide is off-screen so the control is not a tab stop. */
+  controlTabIndex?: number;
 }
 
 /** `navigator.connection` is not in TS's lib; read it defensively. */
@@ -61,6 +63,7 @@ export function BackdropVideo({
   scrim,
   className,
   controlClassName,
+  controlTabIndex,
 }: BackdropVideoProps) {
   const video = getVideo(mediaKey);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -175,6 +178,7 @@ export function BackdropVideo({
 
       <button
         type="button"
+        tabIndex={controlTabIndex}
         onClick={() => setUserIntent(playing ? "pause" : "play")}
         aria-label={playing ? "Pause background video" : "Play background video"}
         className={cn(

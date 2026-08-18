@@ -1,4 +1,6 @@
 import type { ApplianceCategory } from "@/lib/inventory/types";
+import type { MediaKey } from "@/lib/media/manifest";
+import type { ScrimStrength } from "@/components/media/scrim";
 
 /**
  * Campaign landing pages under `/deals/[campaign]`.
@@ -103,8 +105,22 @@ export interface HeroSlide {
   subhead: string;
   href: string;
   ctaLabel: string;
-  /** Background treatment. */
+  /** Background treatment — and the fallback when `media` has no asset yet. */
   tone: "ink" | "brand" | "bone";
+  /**
+   * Photography or ambient video behind the slide. Resolved through the media
+   * manifest at render: a key with no asset (or no alt text) falls back to the
+   * flat `tone` panel, so a slide never renders broken while the owner is still
+   * collecting photos. Only the first slide may carry video — a clip on a slide
+   * the visitor has not reached is wasted bandwidth, so later slides demote a
+   * video to its poster frame.
+   */
+  media?: { kind: "photo"; key: MediaKey } | { kind: "video"; key: MediaKey };
+  /**
+   * Contrast gradient over the media. Chosen per slide against the actual
+   * image — a bright photo needs "heavy" — never assumed. Defaults to "medium".
+   */
+  scrim?: ScrimStrength;
   /** Hidden unless some unit carries a verified comparison price. */
   requiresDeals?: boolean;
 }
@@ -128,6 +144,8 @@ export const heroSlides: HeroSlide[] = [
     href: "/inventory",
     ctaLabel: "Shop all inventory",
     tone: "ink",
+    media: { kind: "video", key: "hero.warehouse-walk" },
+    scrim: "medium",
   },
   {
     id: "deals",
@@ -147,6 +165,8 @@ export const heroSlides: HeroSlide[] = [
     href: "/delivery-installation",
     ctaLabel: "See delivery options",
     tone: "bone",
+    media: { kind: "photo", key: "hero.delivery" },
+    scrim: "medium",
   },
   {
     id: "financing",

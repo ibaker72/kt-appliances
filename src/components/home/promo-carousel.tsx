@@ -1,14 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Pause, Play } from "lucide-react";
 
+import { BackdropVideo } from "@/components/media/backdrop-video";
+import { Scrim } from "@/components/media/scrim";
 import { buttonStyles } from "@/components/ui/button";
 import type { HeroSlide } from "@/lib/content/campaigns";
+import { getPhoto, getVideo, type MediaKey, type PhotoAsset } from "@/lib/media/manifest";
 import { cn } from "@/lib/utils";
 
 const ADVANCE_MS = 6000;
+
+/** The promo panel spans 2/3 of the page grid at lg, full width below. */
+const HERO_SIZES = "(min-width: 1024px) 66vw, 100vw";
 
 const TONES: Record<HeroSlide["tone"], { panel: string; head: string; body: string; cta: string }> = {
   ink: {
@@ -30,6 +37,37 @@ const TONES: Record<HeroSlide["tone"], { panel: string; head: string; body: stri
     cta: buttonStyles("dark", "md"),
   },
 };
+
+/** Over media the text is white regardless of the slide's `tone`. */
+const MEDIA_TONE = {
+  panel: "on-dark bg-ink-950",
+  head: "text-white",
+  body: "text-white/80",
+  cta: buttonStyles("white", "md"),
+};
+
+type ResolvedMedia =
+  | { kind: "video"; key: MediaKey }
+  | { kind: "photo"; photo: PhotoAsset };
+
+/**
+ * What a slide's `media` field actually gets to render. A key with no asset
+ * (or no alt text) resolves to `null` and the slide keeps its flat `tone`
+ * panel. Video is only allowed on the first slide — autoplaying a clip on a
+ * slide the visitor has not reached is wasted bandwidth — so later slides
+ * demote a video to its poster photo.
+ */
+function resolveSlideMedia(slide: HeroSlide, position: number): ResolvedMedia | null {
+  if (!slide.media) return null;
+  if (slide.media.kind === "video") {
+    const video = getVideo(slide.media.key);
+    if (!video) return null;
+    if (position === 0) return { kind: "video", key: slide.media.key };
+    return { kind: "photo", photo: video.poster };
+  }
+  const photo = getPhoto(slide.media.key);
+  return photo ? { kind: "photo", photo } : null;
+}
 
 /**
  * Rotating promotional slot at the top of the homepage.
@@ -113,6 +151,13 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
 
   if (slides.length === 0) return null;
 
+  // One track height for every slide. Text panels are sized for text; once any
+  // slide carries imagery the whole strip gets room for it to breathe.
+  const hasMedia = slides.some((slide, position) => resolveSlideMedia(slide, position) !== null);
+  const panelHeight = hasMedia
+    ? "min-h-[300px] sm:min-h-[380px] lg:min-h-[460px]"
+    : "min-h-[190px] sm:min-h-[260px] lg:min-h-[330px]";
+
   return (
     <section
       aria-label="Promotions"
@@ -129,11 +174,18 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
         className="no-scrollbar flex w-full snap-x snap-mandatory overflow-x-auto"
       >
         {slides.map((slide, position) => {
-          const tone = TONES[slide.tone];
+          const media = resolveSlideMedia(slide, position);
+          const tone = media ? MEDIA_TONE : TONES[slide.tone];
           // The first slide's headline is the page's main heading. It is
           // server-rendered, on screen from the first paint, and never moves
           // before the browser has settled — which is what the LCP measurement
           // needs to latch onto. Identical typography either way.
+          //
+          // Once slide 1 carries media, the LCP element becomes its image (the
+          // photo, or the video's poster — the clip itself mounts long after
+          // load and can never be it). That image is server-rendered with
+          // `preload`, correctly sized via HERO_SIZES, and static: the same
+          // no-movement-before-settle rule the headline obeys.
           const Headline = position === 0 ? "h1" : "h2";
           return (
             <div
@@ -142,9 +194,41 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
               aria-roledescription="slide"
               aria-label={`${position + 1} of ${slides.length}`}
               aria-hidden={position !== index}
-              className={cn("w-full min-w-0 shrink-0 basis-full snap-start", tone.panel)}
+              className={cn("relative w-full min-w-0 shrink-0 basis-full snap-start", tone.panel)}
             >
-              <div className="mx-auto flex min-h-[190px] w-full max-w-[1320px] flex-col justify-center px-5 pb-11 pt-6 sm:min-h-[260px] sm:px-6 sm:pb-14 sm:pt-9 lg:min-h-[330px] lg:px-10">
+              {media?.kind === "video" ? (
+                <BackdropVideo
+                  mediaKey={media.key}
+                  sizes={HERO_SIZES}
+                  posterPreload
+                  scrim={slide.scrim ?? "medium"}
+                  controlClassName="bottom-3 right-3 sm:bottom-4 sm:right-4"
+                  controlTabIndex={position === index ? undefined : -1}
+                />
+              ) : media ? (
+                <>
+                  <Image
+                    src={media.photo.src}
+                    alt={media.photo.alt}
+                    fill
+                    sizes={HERO_SIZES}
+                    preload={position === 0 || undefined}
+                    placeholder={media.photo.blurDataURL ? "blur" : "empty"}
+                    blurDataURL={media.photo.blurDataURL || undefined}
+                    className="object-cover"
+                  />
+                  <Scrim strength={slide.scrim ?? "medium"} />
+                </>
+              ) : null}
+              <div
+                className={cn(
+                  // pointer-events pass through the text layer so the video's
+                  // pause control underneath stays clickable; the link opts
+                  // back in.
+                  "pointer-events-none relative mx-auto flex w-full max-w-[1320px] flex-col justify-center px-5 pb-11 pt-6 sm:px-6 sm:pb-14 sm:pt-9 lg:px-10",
+                  panelHeight,
+                )}
+              >
                 <Headline
                   className={cn(
                     "max-w-2xl font-display text-[1.4rem] font-extrabold leading-[1.08] sm:text-[2.1rem] sm:leading-[1.02] lg:text-[2.8rem]",
@@ -161,7 +245,7 @@ export function PromoCarousel({ slides }: { slides: HeroSlide[] }) {
                   <Link
                     href={slide.href}
                     tabIndex={position === index ? undefined : -1}
-                    className={cn(tone.cta, "w-full sm:w-auto")}
+                    className={cn(tone.cta, "pointer-events-auto w-full sm:w-auto")}
                   >
                     {slide.ctaLabel}
                     <ChevronRight aria-hidden className="size-4" strokeWidth={2.5} />
