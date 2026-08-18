@@ -24,7 +24,8 @@ describe("customer confirmation", () => {
     assert.equal(
       body,
       "KT Appliances: Your warehouse visit appointment is confirmed for Monday, August 24 at 2:30 PM. " +
-        "We'll contact you if anything changes. Reply HELP for help or STOP to opt out.",
+        "We'll contact you if anything changes. Questions? Call (973) 519-9717. " +
+        "Reply HELP for help or STOP to opt out.",
     );
   });
 

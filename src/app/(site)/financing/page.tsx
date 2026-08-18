@@ -15,7 +15,7 @@ import { siteConfig } from "@/lib/site-config";
 export const metadata = pageMetadata({
   title: "Appliance Financing — Buy Now, Pay Later",
   description:
-    "Financing options are available on appliances at KT Appliances in East Stroudsburg, PA, including buy now, pay later. Ask about financing for the appliance you want — call or text 973-519-9717.",
+    `Financing options are available on appliances at KT Appliances in ${siteConfig.address.city}, ${siteConfig.address.state}, including buy now, pay later. Ask about financing for the appliance you want — call or text ${siteConfig.phone.display}.`,
   path: "/financing",
 });
 

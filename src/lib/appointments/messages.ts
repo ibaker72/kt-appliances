@@ -58,6 +58,20 @@ export interface AppointmentMessageContext {
 const OPT_OUT = "Reply STOP to opt out.";
 const HELP_AND_OPT_OUT = "Reply HELP for help or STOP to opt out.";
 
+/**
+ * The business line, stated inside the message.
+ *
+ * Worth the characters because of where these texts come from: outbound SMS is
+ * sent through the Messaging Service and lands on the customer's handset from
+ * the Twilio number, which is not a number they have ever dialled or recognise.
+ * Naming the shop is what `siteConfig.name` at the head of each body does;
+ * naming the line to call back on is what stops a customer replying to a sender
+ * nobody watches, or hunting for the number they originally rang.
+ *
+ * Reads from `siteConfig` so it can never drift from the published number.
+ */
+const CALL_US = `Questions? Call ${siteConfig.phone.display}.`;
+
 /** Longest run of customer-typed text allowed into the owner's alert. */
 const NOTES_LIMIT = 140;
 
@@ -109,6 +123,7 @@ export function customerConfirmationBody(appointment: AppointmentMessageContext)
   return [
     `${siteConfig.name}: ${serviceClause(appointment.serviceType)} is confirmed for ${when}.`,
     "We'll contact you if anything changes.",
+    CALL_US,
     HELP_AND_OPT_OUT,
   ].join(" ");
 }
@@ -164,7 +179,10 @@ export function rescheduledBody(appointment: AppointmentMessageContext): string 
 
 export function canceledBody(appointment: AppointmentMessageContext): string {
   const when = formatAppointmentDateTime(appointment.scheduledFor, zoneOf(appointment));
-  return `${siteConfig.name}: Your appointment for ${when} has been canceled. Contact us if you'd like to reschedule. ${OPT_OUT}`;
+  // "Contact us" from a number the customer does not recognise is a dead end, so
+  // this one names the line instead. It is also shorter than the phrase it
+  // replaced, so the message stays inside a single segment.
+  return `${siteConfig.name}: Your appointment for ${when} has been canceled. Call ${siteConfig.phone.display} to reschedule. ${OPT_OUT}`;
 }
 
 export function followupBody(): string {

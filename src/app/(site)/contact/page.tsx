@@ -16,7 +16,7 @@ import { siteConfig } from "@/lib/site-config";
 export const metadata = pageMetadata({
   title: "Contact & Warehouse Hours",
   description:
-    "KT Appliances, 109 Burson St, East Stroudsburg, PA. Call or text 973-519-9717. Open daily 10:00 AM – 5:00 PM, with after-hours appointments 5:00 PM – 9:00 PM. Get directions to the warehouse.",
+    `KT Appliances, ${siteConfig.address.street}, ${siteConfig.address.city}, ${siteConfig.address.state}. Call or text ${siteConfig.phone.display}. Open daily ${siteConfig.hours.regular.label}, with after-hours appointments ${siteConfig.hours.afterHours.label}. Get directions to the warehouse.`,
   path: "/contact",
 });
 

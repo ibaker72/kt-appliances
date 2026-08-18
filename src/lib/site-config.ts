@@ -3,17 +3,40 @@
  * Nothing in this file should be duplicated elsewhere in the codebase — import from here.
  */
 
+import { normalizePhoneDigits } from "@/lib/sms/phone";
+import { formatPhoneNumber } from "@/lib/utils";
+
 const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
 
 /** Canonical origin used for metadata, sitemaps and absolute URLs. */
 export const SITE_URL = rawSiteUrl && rawSiteUrl.length > 0 ? rawSiteUrl : "http://localhost:3000";
 
-const rawPhone = (process.env.NEXT_PUBLIC_BUSINESS_PHONE ?? "9735199717").replace(/\D/g, "");
+/**
+ * THE PUBLIC BUSINESS LINE — the number customers call, text and see.
+ *
+ * Not to be confused with the Twilio sending number (`TWILIO_FROM_NUMBER`, see
+ * `src/lib/sms/config.ts`). Automated texts are *sent from* the Twilio number and
+ * arrive on the customer's handset from it; everything a visitor is invited to
+ * dial, and every `telephone` this site publishes for local SEO, is this one.
+ * They must never be swapped: the published NAP phone is what Google matches
+ * against the business listing.
+ */
+const BUSINESS_PHONE_FALLBACK = "9735199717";
 
-function formatPhone(digits: string): string {
-  if (digits.length !== 10) return digits;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
+/**
+ * Accepts any US format — `9735199717`, `+19735199717`, `(973) 519-9717` — and
+ * reduces it to ten digits.
+ *
+ * `normalizePhoneDigits` is doing real work here, not tidying: it strips the
+ * leading country code from an eleven-digit input. The previous implementation
+ * only stripped non-digits, so the E.164 form of this variable — the form the
+ * deployment docs ask for — became `+1` + `19735199717` = `+119735199717`, which
+ * silently broke every `tel:` link and the LocalBusiness `telephone` at once.
+ * An unparseable value falls back rather than publishing a malformed number.
+ */
+const rawPhone = normalizePhoneDigits(
+  process.env.NEXT_PUBLIC_BUSINESS_PHONE ?? BUSINESS_PHONE_FALLBACK,
+) || BUSINESS_PHONE_FALLBACK;
 
 export const siteConfig = {
   name: "KT Appliances",
@@ -35,8 +58,12 @@ export const siteConfig = {
   phone: {
     /** Digits only — used to build tel: and sms: hrefs. */
     digits: rawPhone,
-    /** Human readable — used for display. */
-    display: formatPhone(rawPhone),
+    /**
+     * Human readable — `(973) 519-9717`. Rendered by every customer-facing
+     * surface, so it goes through the same formatter the admin and the email
+     * templates use rather than a second one that drifts from it.
+     */
+    display: formatPhoneNumber(rawPhone),
     /** E.164 — used for tel:/sms: hrefs and schema.org. */
     e164: `+1${rawPhone}`,
   },

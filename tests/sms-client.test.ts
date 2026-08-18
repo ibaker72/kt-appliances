@@ -188,7 +188,10 @@ describe("request shape", () => {
 
   test("falls back to a bare From number when no Messaging Service is set", async () => {
     delete process.env.TWILIO_MESSAGING_SERVICE_SID;
-    process.env.TWILIO_FROM_NUMBER = "+19735199717";
+    // The Twilio-owned sender, not the published business line. Using the
+    // business number here would assert the one arrangement Twilio will not
+    // carry: sending as a number the account does not own.
+    process.env.TWILIO_FROM_NUMBER = "+15707500622";
 
     await sendSms({
       kind: "internal-alert",
@@ -197,7 +200,7 @@ describe("request shape", () => {
       body: "new booking",
     });
 
-    assert.equal(captured[0].body.get("From"), "+19735199717");
+    assert.equal(captured[0].body.get("From"), "+15707500622");
   });
 });
 

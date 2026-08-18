@@ -78,11 +78,38 @@ export function isCustomerSmsEnabled(): boolean {
 }
 
 /**
- * The number internal booking alerts go to. Server-only and never rendered to a
- * visitor: this is the owner's personal handset, not the published business
- * line, and it is deliberately not defaulted to `siteConfig.phone` — texting the
- * shop's own published number on every booking would be a surprise, not a
- * feature.
+ * The Twilio number this account owns — `(570) 750-0622` in production.
+ *
+ * Read on its own rather than through `getTwilioCredentials()` so a caller that
+ * only needs to *show* which number customers are texted from never has the
+ * account SID and auth token in scope alongside it.
+ *
+ * Note what this is not: it is not the number the site tells customers to ring.
+ * See `siteConfig.phone` for that. When a Messaging Service SID is configured
+ * this value is not sent to Twilio at all — the service picks the sender from
+ * its registered pool — so treat it as documentation of the owned sender rather
+ * than proof of which number a given message went out from.
+ */
+export function getSmsSenderNumber(): string {
+  return env("TWILIO_FROM_NUMBER");
+}
+
+/**
+ * The number internal booking alerts go to. Server-only, and rendered to the
+ * admin only through `maskPhoneNumber`.
+ *
+ * Configured to the published business line, so bookings reach the owner on the
+ * number the shop already runs on. It stays a separate variable rather than
+ * defaulting to `siteConfig.phone` for two reasons: the destination is an
+ * operational choice that may move to a private handset without changing what
+ * the website publishes, and an unset value must mean "skip the alert" rather
+ * than "text the shop", so a deployment that has not configured it does not
+ * start texting a number nobody chose.
+ *
+ * This is a delivery destination, so it has to be able to RECEIVE SMS. A
+ * landline or a non-SMS VoIP line here produces Twilio 21614/30006 and every
+ * alert is recorded `failed` in `appointment_notifications` — the booking and
+ * the customer's confirmation are unaffected. See `.env.example`.
  */
 export function getOwnerNotificationPhone(): string {
   return env("APPOINTMENT_NOTIFICATION_PHONE");

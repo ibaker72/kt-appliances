@@ -10,9 +10,15 @@ import {
   APPOINTMENT_STATUS_LABELS,
   type AppointmentStatus,
 } from "@/lib/appointments/schema";
-import { getOwnerNotificationPhone, isCustomerSmsEnabled, smsConfigProblem } from "@/lib/sms/config";
+import { siteConfig } from "@/lib/site-config";
+import {
+  getOwnerNotificationPhone,
+  getSmsSenderNumber,
+  isCustomerSmsEnabled,
+  smsConfigProblem,
+} from "@/lib/sms/config";
 import { maskPhoneNumber } from "@/lib/sms/phone";
-import { cn } from "@/lib/utils";
+import { cn, formatPhoneNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +58,7 @@ export default async function AdminAppointmentsPage({
   // no Twilio credential is read here at all — just whether one is usable.
   const smsProblem = smsConfigProblem();
   const ownerPhone = getOwnerNotificationPhone();
+  const smsSender = getSmsSenderNumber();
   const customerSmsLive = isCustomerSmsEnabled();
 
   return (
@@ -101,7 +108,7 @@ export default async function AdminAppointmentsPage({
           </div>
           <div>
             <dt className="text-[11.5px] font-semibold uppercase tracking-wide text-ink-500">
-              Owner alerts go to
+              Owner appointment alerts
             </dt>
             <dd className="mt-1 text-[14px] font-semibold text-ink-900 tnum">
               {ownerPhone ? maskPhoneNumber(ownerPhone) : "Not configured"}
@@ -112,6 +119,34 @@ export default async function AdminAppointmentsPage({
                 saved either way.
               </p>
             ) : null}
+          </div>
+
+          {/* The two numbers most easily confused, stated side by side. The owner
+              needs to know that a customer who says "you texted me from a number
+              I don't know" is seeing the SMS sender, not a wrong business line. */}
+          <div>
+            <dt className="text-[11.5px] font-semibold uppercase tracking-wide text-ink-500">
+              Business phone
+            </dt>
+            <dd className="mt-1 text-[14px] font-semibold text-ink-900 tnum">
+              {siteConfig.phone.display}
+            </dd>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-600">
+              Published on the site and what customers call.
+            </p>
+          </div>
+          <div>
+            <dt className="text-[11.5px] font-semibold uppercase tracking-wide text-ink-500">
+              SMS sender
+            </dt>
+            <dd className="mt-1 text-[14px] font-semibold text-ink-900 tnum">
+              {smsSender ? formatPhoneNumber(smsSender) : "Set by Messaging Service"}
+            </dd>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-600">
+              {smsSender
+                ? "Automated texts reach customers from this number."
+                : "Twilio picks the sender from the Messaging Service pool."}
+            </p>
           </div>
         </dl>
       </section>
