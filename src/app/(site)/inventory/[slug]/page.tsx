@@ -429,6 +429,12 @@ export default async function AppliancePage({ params }: { params: Promise<{ slug
                   </li>
                   <li className="flex gap-2.5">
                     <MapPin aria-hidden className="mt-1 size-4 shrink-0 text-ink-400" strokeWidth={2.5} />
+                    <Link href="/service-areas" className="underline underline-offset-4 hover:text-brand-500">
+                      Where we deliver, and what it costs
+                    </Link>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <ClipboardCheck aria-hidden className="mt-1 size-4 shrink-0 text-ink-400" strokeWidth={2.5} />
                     <Link href="/terms" className="underline underline-offset-4 hover:text-brand-500">
                       Terms of sale
                     </Link>

@@ -15,6 +15,10 @@ import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
 import { heroSlidesFor } from "@/lib/content/campaigns";
 import { HOME_FAQS } from "@/lib/content/faq";
+import { GUIDES } from "@/lib/content/guides";
+import { locationsByDistance } from "@/lib/content/locations";
+import { indexableLocations } from "@/lib/seo/location-quality";
+import { siteConfig } from "@/lib/site-config";
 import { getCachedNavigationMenu } from "@/lib/inventory/navigation-cache";
 import { merchandiseHome } from "@/lib/inventory/repository";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -38,6 +42,10 @@ export default async function HomePage() {
   const [home, nav] = await Promise.all([merchandiseHome(), getCachedNavigationMenu()]);
 
   const slides = heroSlidesFor(home.facets);
+  // Only towns that clear the content bar are linked, so the homepage can never
+  // become the entry point to a thin page.
+  const published = new Set(indexableLocations().map((location) => location.slug));
+  const serviceAreas = locationsByDistance().filter((location) => published.has(location.slug));
 
   return (
     <>
@@ -193,7 +201,63 @@ export default async function HomePage() {
       {/* 8 — Recently sold. */}
       <RecentlySold appliances={home.recentlySold} />
 
-      {/* 9 — Visit us. */}
+      {/* 9 — Where we deliver. The homepage is the strongest page on the site,
+          so the service-area hub and its town pages are linked from it directly
+          rather than only from the footer — that is the difference between those
+          pages being crawled as primary content and being crawled as boilerplate. */}
+      <Section tone="bone">
+        <Container>
+          <ModuleHeader
+            title="Where we deliver"
+            href="/service-areas"
+            hrefLabel="All service areas"
+          />
+          <p className="max-w-2xl text-[15px] leading-relaxed text-ink-600">
+            Delivered from the {siteConfig.address.city} warehouse across Monroe County and the
+            Poconos, with installation and old-appliance haul-away available. Warehouse pickup is
+            open to everyone, every day.
+          </p>
+          <ul className="mt-6 flex flex-wrap gap-2.5">
+            {serviceAreas.map((location) => (
+              <li key={location.slug}>
+                <Link
+                  href={`/appliances/${location.slug}`}
+                  className="inline-flex min-h-11 items-center gap-2 border border-line bg-white px-4 py-2 text-[14.5px] font-medium text-ink-800 transition-colors hover:border-ink-950 hover:text-brand-500"
+                >
+                  {location.name}, {location.state}
+                  <span className="text-[12.5px] text-ink-400">{location.distance}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Container>
+      </Section>
+
+      {/* 10 — Guides. Informational content earns links and answers the questions
+          that come before a purchase; linking it from here keeps it out of the
+          footer-only tier. */}
+      <Section tone="flat">
+        <Container>
+          <ModuleHeader title="Know what you're buying" href="/guides" hrefLabel="All guides" />
+          <ul className="grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
+            {GUIDES.slice(0, 3).map((guide) => (
+              <li key={guide.slug} className="bg-white">
+                <Link
+                  href={`/guides/${guide.slug}`}
+                  className="group flex h-full flex-col p-6 transition-colors hover:bg-bone-50"
+                >
+                  <h3 className="font-display text-[19px] font-bold leading-snug tracking-[-0.02em] text-ink-950 group-hover:text-brand-500">
+                    {guide.title}
+                  </h3>
+                  <p className="mt-2.5 text-[14.5px] leading-relaxed text-ink-600">{guide.excerpt}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Container>
+      </Section>
+
+      {/* 11 — Visit us. */}
       <Section tone="flat">
         <Container>
           <ModuleHeader
@@ -205,7 +269,7 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* 10 — A short FAQ; the full set lives on /about. */}
+      {/* 12 — A short FAQ; the full set lives on /about. */}
       <Section tone="bone">
         <Container>
           <ModuleHeader title="Before you buy" href="/about#faq" hrefLabel="All questions" />

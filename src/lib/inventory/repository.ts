@@ -460,6 +460,80 @@ export async function getPublishedSlugs(): Promise<Array<{ slug: string; updated
   return (data ?? []).map((row) => ({ slug: str(row.slug), updatedAt: str(row.updated_at) }));
 }
 
+/** One published unit, reduced to what indexing needs to know about it. */
+export interface IndexableProduct {
+  slug: string;
+  category: ApplianceCategory;
+  status: ApplianceStatus;
+  updatedAt: string;
+  /** Flags a record the sitemap can list but whose page will be thin. */
+  hasImage: boolean;
+  hasDescription: boolean;
+}
+
+/**
+ * Everything the sitemap, the category lastmod and the SEO health check need.
+ *
+ * One query for all three. The alternative — a slug list here, a per-category
+ * max(updated_at) there, a completeness audit somewhere else — is three round
+ * trips to answer one question about the same rows.
+ */
+export async function getIndexableProducts(): Promise<IndexableProduct[]> {
+  const client = getSupabaseReadClient();
+
+  const shape = (item: Appliance): IndexableProduct => ({
+    slug: item.slug,
+    category: item.category,
+    status: item.status,
+    updatedAt: item.updatedAt,
+    hasImage: item.images.length > 0,
+    hasDescription: Boolean(item.description?.trim()),
+  });
+
+  if (!client) {
+    if (!isDemoInventory()) return [];
+    return DEMO_APPLIANCES.filter((item) => item.published && item.status !== "draft").map(shape);
+  }
+
+  const { data, error } = await client
+    .from("appliances")
+    .select("slug, category, status, updated_at, description, appliance_images(id)")
+    .eq("published", true)
+    .neq("status", "draft")
+    .order("updated_at", { ascending: false })
+    .limit(5000);
+
+  if (error) {
+    console.error("[inventory] indexable product list failed:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row) => {
+    const record = row as Row & { appliance_images?: unknown[] };
+    const category = str(record.category);
+    return {
+      slug: str(record.slug),
+      category: isApplianceCategory(category) ? category : "other",
+      status: str(record.status) as ApplianceStatus,
+      updatedAt: str(record.updated_at),
+      hasImage: Array.isArray(record.appliance_images) && record.appliance_images.length > 0,
+      hasDescription: Boolean(nullableStr(record.description)?.trim()),
+    };
+  });
+}
+
+/** Newest `updatedAt` per category, for honest category-page sitemap dates. */
+export function categoryFreshness(products: IndexableProduct[]): Record<string, Date | undefined> {
+  const newest: Record<string, Date | undefined> = {};
+  for (const product of products) {
+    const stamp = new Date(product.updatedAt);
+    if (Number.isNaN(stamp.getTime())) continue;
+    const current = newest[product.category];
+    if (!current || stamp > current) newest[product.category] = stamp;
+  }
+  return newest;
+}
+
 /** The columns faceting needs. Same shape from the database and the demo data. */
 interface FacetRow {
   brand: string;

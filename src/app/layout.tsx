@@ -8,6 +8,7 @@ import { AnalyticsScripts } from "@/components/analytics/analytics-scripts";
 import { AttributionTracker } from "@/components/analytics/attribution-tracker";
 import { JsonLd } from "@/components/seo/json-ld";
 import { localBusinessSchema, websiteSchema } from "@/lib/seo/jsonld";
+import { indexableLocations } from "@/lib/seo/location-quality";
 import { rootMetadata } from "@/lib/seo/metadata";
 
 /** Display face — headings, prices, buttons, the wordmark. */
@@ -50,7 +51,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <AttributionTracker />
         </Suspense>
         <AnalyticsScripts />
-        <JsonLd data={[localBusinessSchema(), websiteSchema()]} />
+        {/* The one business entity and the site entity, emitted once site-wide.
+            `areaServed` is fed the published service areas so the towns the site
+            claims to reach are the towns that actually have a verified page. */}
+        <JsonLd data={[localBusinessSchema(indexableLocations()), websiteSchema()]} />
       </body>
     </html>
   );

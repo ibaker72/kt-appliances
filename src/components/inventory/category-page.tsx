@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import type { Metadata } from "next";
 
 import { InventoryBrowser } from "@/components/inventory/inventory-browser";
 import { ProductGridSkeleton } from "@/components/inventory/inventory-grid";
@@ -16,8 +15,7 @@ import { getCategoryCounts } from "@/lib/inventory/repository";
 import { getCachedNavigationMenu } from "@/lib/inventory/navigation-cache";
 import { CATEGORIES, CATEGORY_LIST, type ApplianceCategory } from "@/lib/inventory/types";
 import type { RawSearchParams } from "@/lib/inventory/search-params";
-import { CORE_FAQS } from "@/lib/content/faq";
-import { pageMetadata } from "@/lib/seo/metadata";
+import { CATEGORY_FAQS, CATEGORY_SHARED_FAQS } from "@/lib/content/faq";
 import { siteConfig } from "@/lib/site-config";
 
 /**
@@ -94,18 +92,6 @@ const BUYING_NOTES: Record<ApplianceCategory, { title: string; points: string[] 
   },
 };
 
-/** Category FAQs pull from the shared answer bank so nothing contradicts. */
-const CATEGORY_FAQ_INDEXES = [1, 2, 3, 4, 6];
-
-export function categoryMetadata(slug: ApplianceCategory): Metadata {
-  const category = CATEGORIES[slug];
-  return pageMetadata({
-    title: `Scratch & Dent ${category.name}`,
-    description: `${category.name} at warehouse prices from ${siteConfig.name} in ${siteConfig.address.city}, ${siteConfig.address.state}. ${category.intro.slice(0, 150)} Delivery, installation and warranty options available across ${siteConfig.serviceStatesShort.join(", ")}.`,
-    path: category.path,
-  });
-}
-
 export async function CategoryPage({
   slug,
   searchParams,
@@ -117,7 +103,11 @@ export async function CategoryPage({
   const [counts, menu] = await Promise.all([getCategoryCounts(), getCachedNavigationMenu()]);
   const count = counts[slug] ?? 0;
   const notes = BUYING_NOTES[slug];
-  const faqs = CATEGORY_FAQ_INDEXES.map((index) => CORE_FAQS[index]);
+  // Category-specific answers first, then the two shared ones every shopper
+  // still needs. One `FAQPage` graph per route, and no two routes emit the same
+  // one — duplicate FAQ structured data across seven near-identical pages is
+  // exactly what gets rich results discarded.
+  const faqs = [...(CATEGORY_FAQS[slug] ?? []), ...CATEGORY_SHARED_FAQS];
   // Reuses the header's cached read, so the merchandising strip costs no query.
   const panel = menu.categories.find((entry) => entry.slug === slug);
 

@@ -182,6 +182,35 @@ export function activeFilterCount(filters: ParsedFilters): number {
   );
 }
 
+/**
+ * How a listing URL should be indexed.
+ *
+ * Separate from `parseFilters` because it answers a different question: not
+ * "what should this page show" but "is this URL one of the handful worth having
+ * in the index, or one of the thousands of permutations that should not be".
+ * Anything that narrows, reorders or re-renders the list counts as filtered,
+ * including the view-only parameters (`cols`, `compare`) — those change nothing
+ * about which products qualify, but they do multiply URLs.
+ *
+ * `page` is deliberately excluded: pagination is the crawl path to products
+ * beyond the first screen, so those URLs stay indexable and self-canonical.
+ */
+export function listingView(params: RawSearchParams): {
+  filtered: boolean;
+  page: number;
+  /** Set when `?category=` is used on the generic listing, which duplicates a category route. */
+  category?: ApplianceCategory;
+} {
+  const filters = parseFilters(params);
+  const filtered =
+    activeFilterCount(filters) > 0 ||
+    filters.sort !== "featured" ||
+    filters.compare.length > 0 ||
+    filters.cols === 3;
+
+  return { filtered, page: filters.page, category: filters.category };
+}
+
 /** Serialises filters back into a querystring, omitting defaults. */
 export function buildQueryString(filters: Partial<ParsedFilters>): string {
   const params = new URLSearchParams();

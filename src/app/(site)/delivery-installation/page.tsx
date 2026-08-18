@@ -6,11 +6,12 @@ import { CallLink, TextLink } from "@/components/contact/contact-links";
 import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
+import { QuickAnswerBand } from "@/components/shared/quick-answer";
 import { StoreHours } from "@/components/layout/store-hours";
 import { Container } from "@/components/ui/container";
 import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
-import { DELIVERY_FAQS } from "@/lib/content/faq";
+import { DELIVERY_COST_ANSWER, DELIVERY_FAQS } from "@/lib/content/faq";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site-config";
 
@@ -96,6 +97,28 @@ export default function DeliveryInstallationPage() {
           </>
         }
       />
+
+      {/* "How much is appliance delivery" is the single highest-intent query this
+          page can answer, and the honest answer is "it depends" — which is only
+          a useful answer if you immediately say what it depends on. Stated
+          outright, before the service cards. */}
+      <QuickAnswerBand
+        question="How much does appliance delivery cost?"
+        answer={DELIVERY_COST_ANSWER}
+      >
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+          <TextLink
+            context="delivery-quick-answer"
+            message={`Hi ${siteConfig.name}, can you quote delivery? My ZIP code is `}
+            className={buttonStyles("dark", "md")}
+          >
+            Text us your ZIP for a price
+          </TextLink>
+          <Link href="/service-areas" className={buttonStyles("outline", "md")}>
+            See the towns we deliver to
+          </Link>
+        </div>
+      </QuickAnswerBand>
 
       <Section tone="white" size="md">
         <Container>

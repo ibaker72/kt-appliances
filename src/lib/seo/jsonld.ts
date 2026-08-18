@@ -5,6 +5,7 @@ import {
   isPurchasable,
   primaryImage,
 } from "@/lib/inventory/types";
+import type { ServiceLocation } from "@/lib/content/locations";
 
 /**
  * Structured data helpers.
@@ -12,11 +13,20 @@ import {
  * Rule applied throughout: schema only ever describes content that is actually
  * visible on the page and factually true. No aggregate ratings, no review counts,
  * no offers for units we cannot sell.
+ *
+ * THE GRAPH
+ *
+ * One business entity, at `LOCAL_BUSINESS_ID`, typed `Store / HomeGoodsStore /
+ * LocalBusiness`. There is deliberately no second `Organization` node: schema.org
+ * `LocalBusiness` is already a subclass of `Organization`, and publishing both
+ * for a single-location business creates two nodes competing to be the same
+ * entity — the exact ambiguity structured data is supposed to remove. Everything
+ * that needs to reference the business — the website, an offer's seller, a
+ * guide's publisher, a delivery service's provider — points at that one `@id`.
  */
 
 type Json = Record<string, unknown>;
 
-export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 export const LOCAL_BUSINESS_ID = `${SITE_URL}/#store`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 
@@ -51,7 +61,70 @@ function openingHours(): Json[] {
   ];
 }
 
-export function localBusinessSchema(): Json {
+/**
+ * Services the business actually performs, as an offer catalogue.
+ *
+ * These are the three things a local searcher asks for by name — "appliance
+ * delivery", "appliance installation", "appliance haul away" — and all three are
+ * offered, quoted per job, and described on `/delivery-installation`. Nothing is
+ * priced here because nothing is flat-rate.
+ */
+function serviceCatalog(): Json {
+  return {
+    "@type": "OfferCatalog",
+    name: `${siteConfig.name} services`,
+    itemListElement: [
+      {
+        "@type": "Offer",
+        itemOffered: {
+          "@type": "Service",
+          name: "Appliance delivery",
+          description:
+            "Local appliance delivery from the East Stroudsburg warehouse, quoted by ZIP code, appliance and access.",
+        },
+      },
+      {
+        "@type": "Offer",
+        itemOffered: {
+          "@type": "Service",
+          name: "Appliance installation",
+          description:
+            "Installation of delivered appliances, including laundry hookups and dishwasher installs, quoted separately from delivery.",
+        },
+      },
+      {
+        "@type": "Offer",
+        itemOffered: {
+          "@type": "Service",
+          name: "Old appliance haul-away",
+          description: "Removal of the old appliance at the time of delivery, arranged when the delivery is booked.",
+        },
+      },
+    ],
+  };
+}
+
+/**
+ * Areas the business serves.
+ *
+ * Both levels are truthful and both matter: the states are where the business
+ * advertises coverage, and the named towns are the ones with a published,
+ * verified service page. No `PostalAddress` is ever emitted for a town other
+ * than the warehouse — a second address would claim a second location that does
+ * not exist.
+ */
+function areaServed(locations: Pick<ServiceLocation, "name" | "state">[]): Json[] {
+  const states = siteConfig.serviceStates.map((state) => ({ "@type": "State", name: state }));
+  const cities = locations.map((location) => ({
+    "@type": "City",
+    name: `${location.name}, ${location.state}`,
+  }));
+  return [...states, ...cities];
+}
+
+export function localBusinessSchema(
+  servedLocations: Pick<ServiceLocation, "name" | "state">[] = [],
+): Json {
   const sameAs = [
     siteConfig.social.facebook,
     siteConfig.social.instagram,
@@ -82,10 +155,8 @@ export function localBusinessSchema(): Json {
       postalCode: siteConfig.address.postalCode,
       addressCountry: siteConfig.address.country,
     },
-    areaServed: siteConfig.serviceStates.map((state) => ({
-      "@type": "State",
-      name: state,
-    })),
+    areaServed: areaServed(servedLocations),
+    hasOfferCatalog: serviceCatalog(),
     openingHoursSpecification: openingHours(),
     ...(sameAs.length ? { sameAs } : {}),
   };
@@ -107,6 +178,38 @@ export function websiteSchema(): Json {
       },
       "query-input": "required name=search_term_string",
     },
+  };
+}
+
+/**
+ * Delivery, installation and haul-away offered *to one town*, provided by the
+ * one warehouse.
+ *
+ * This is how a service area is expressed without faking a branch: `provider`
+ * points at the single business node, and `areaServed` is a `City`. There is no
+ * address, no phone and no opening hours on this node, because there is no
+ * building in that town — the only claim made is that the service reaches it.
+ */
+export function locationServiceSchema(location: ServiceLocation): Json {
+  const url = absoluteUrl(`/appliances/${location.slug}`);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${url}#service`,
+    name: `Appliance delivery to ${location.name}, ${location.state}`,
+    serviceType: "Appliance delivery, installation and haul-away",
+    description: location.quickAnswer,
+    url,
+    provider: { "@id": LOCAL_BUSINESS_ID },
+    areaServed: {
+      "@type": "City",
+      name: `${location.name}, ${location.state}`,
+      containedInPlace: {
+        "@type": "AdministrativeArea",
+        name: `${location.county}, ${location.state}`,
+      },
+    },
+    hasOfferCatalog: serviceCatalog(),
   };
 }
 

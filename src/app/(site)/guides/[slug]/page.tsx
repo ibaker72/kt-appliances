@@ -54,6 +54,10 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
     : null;
 
   const others = GUIDES.filter((entry) => entry.slug !== guide.slug).slice(0, 3);
+  const guideCategoryPath = guide.category ? CATEGORIES[guide.category].path : "/inventory";
+  const guideCategoryLabel = guide.category
+    ? CATEGORIES[guide.category].name.toLowerCase()
+    : "all appliances";
 
   const articleSchema = {
     "@context": "https://schema.org",
@@ -154,6 +158,32 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
                   <p className="mt-3 text-center text-[13px] text-white/50 tnum">
                     {siteConfig.phone.display}
                   </p>
+                </div>
+
+                {/* Guides are the top of the funnel, so each one carries a short,
+                    contextual route into the commercial pages rather than being
+                    an informational cul-de-sac. Three links, chosen because they
+                    are the next question a reader of any guide actually has. */}
+                <div className="border border-line p-6">
+                  <p className="text-ui font-semibold uppercase tracking-wide text-ink-500">
+                    Ready to buy?
+                  </p>
+                  <ul className="mt-4 divide-y divide-line">
+                    {[
+                      { href: guideCategoryPath, label: `Shop ${guideCategoryLabel}` },
+                      { href: "/delivery-installation", label: "Delivery, installation & haul-away" },
+                      { href: "/service-areas", label: "Where we deliver" },
+                    ].map((item) => (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className="block py-3.5 text-[15px] font-semibold text-ink-800 transition-colors hover:text-brand-500"
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 {others.length > 0 ? (

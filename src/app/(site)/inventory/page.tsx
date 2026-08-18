@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
 import { InventoryBrowser } from "@/components/inventory/inventory-browser";
 import { ProductGridSkeleton } from "@/components/inventory/inventory-grid";
@@ -8,18 +9,51 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Container } from "@/components/ui/container";
 import { getInventoryFacets } from "@/lib/inventory/repository";
 import { quickLinksFor } from "@/lib/navigation";
-import { pageMetadata } from "@/lib/seo/metadata";
-import type { RawSearchParams } from "@/lib/inventory/search-params";
+import { listingMetadata, pageMetadata } from "@/lib/seo/metadata";
+import { listingView, type RawSearchParams } from "@/lib/inventory/search-params";
+import { CATEGORIES } from "@/lib/inventory/types";
 import { siteConfig } from "@/lib/site-config";
 
 export const revalidate = 120;
 
-export const metadata = pageMetadata({
-  title: "Appliance Inventory",
-  description:
-    "Browse every scratch & dent and open-box appliance currently in the KT Appliances warehouse — refrigerators, washers, dryers, ranges and dishwashers. Filter by brand, price, condition and fuel type.",
-  path: "/inventory",
-});
+const TITLE = "Appliance Inventory";
+const DESCRIPTION =
+  "Browse every scratch & dent and open-box appliance currently in the KT Appliances warehouse — refrigerators, washers, dryers, ranges and dishwashers. Filter by brand, price, condition and fuel type.";
+
+/**
+ * `?category=refrigerators` renders the same products as `/refrigerators`, which
+ * is a duplicate of a page that already ranks. That permutation therefore
+ * canonicalises to the dedicated category route rather than back to `/inventory`
+ * — consolidating the signal on the URL with the buying guidance and the
+ * category FAQ on it, instead of splitting it across two.
+ *
+ * Every other filtered permutation is `noindex, follow` pointing at `/inventory`.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<RawSearchParams>;
+}): Promise<Metadata> {
+  const view = listingView(await searchParams);
+
+  if (view.category) {
+    return pageMetadata({
+      title: TITLE,
+      description: DESCRIPTION,
+      path: "/inventory",
+      canonicalPath: CATEGORIES[view.category].path,
+      noindex: true,
+    });
+  }
+
+  return listingMetadata({
+    title: TITLE,
+    description: DESCRIPTION,
+    path: "/inventory",
+    filtered: view.filtered,
+    page: view.page,
+  });
+}
 
 export default async function InventoryPage({
   searchParams,

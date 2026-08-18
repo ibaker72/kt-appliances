@@ -10,8 +10,10 @@ import { CallLink } from "@/components/contact/contact-links";
 import { Container } from "@/components/ui/container";
 import { ModuleHeader, Section } from "@/components/ui/section";
 import { buttonStyles } from "@/components/ui/button";
+import { FactGrid } from "@/components/shared/quick-answer";
 import { CORE_FAQS } from "@/lib/content/faq";
 import { getCachedNavigationMenu } from "@/lib/inventory/navigation-cache";
+import { indexableLocations } from "@/lib/seo/location-quality";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site-config";
 
@@ -58,6 +60,7 @@ const PRINCIPLES = [
 export default async function AboutPage() {
   // Already cached for the header, so this costs nothing extra.
   const { facets } = await getCachedNavigationMenu();
+  const serviceAreaCount = indexableLocations().length;
 
   return (
     <>
@@ -116,6 +119,51 @@ export default async function AboutPage() {
               </div>
             </div>
           </div>
+        </Container>
+      </Section>
+
+      {/*
+        The entity block.
+
+        One paragraph that states what this business is, where it is, what it
+        sells and how you get it, in plain declarative sentences with no
+        marketing verbs — followed by the same facts as a labelled table. This is
+        what a search engine or an assistant extracts when it needs to describe
+        KT Appliances, and leaving it to infer that from persuasive copy
+        elsewhere on the page is how it ends up inventing a detail. Every claim
+        here is repeated identically in the LocalBusiness schema, `/llms.txt` and
+        the FAQ bank, because inconsistent facts are worse than sparse ones.
+      */}
+      <Section tone="white" size="md" id="business">
+        <Container>
+          <ModuleHeader title="KT Appliances, in plain terms" />
+          <p className="max-w-3xl text-[16.5px] leading-relaxed text-ink-800">
+            {siteConfig.name} is a scratch &amp; dent appliance warehouse at{" "}
+            {siteConfig.address.street}, {siteConfig.address.city}, {siteConfig.address.state}{" "}
+            {siteConfig.address.postalCode}. It sells name-brand refrigerators, washers, dryers,
+            matched laundry sets, ranges and ovens, dishwashers, microwaves and freezers — units
+            with cosmetic damage, open-box returns and refurbished appliances, each tested for
+            function before it is listed and described with the location of its damage. Customers
+            shop current stock online, then either collect at the warehouse or arrange delivery
+            across {siteConfig.serviceStates.join(", ")}, with installation, old-appliance haul-away,
+            financing options and 1-year warranty options on qualifying units. The business is
+            family owned and has traded since {siteConfig.foundedYear}. The phone number is{" "}
+            {siteConfig.phone.display}.
+          </p>
+
+          <FactGrid
+            className="mt-8"
+            facts={[
+              { label: "Business type", value: "Scratch & dent appliance warehouse" },
+              { label: "Address", value: `${siteConfig.address.street}, ${siteConfig.address.city}, ${siteConfig.address.state} ${siteConfig.address.postalCode}` },
+              { label: "Phone", value: siteConfig.phone.display },
+              { label: "Hours", value: `Daily ${siteConfig.hours.regular.label}` },
+              { label: "After hours", value: `${siteConfig.hours.afterHours.label}, by appointment` },
+              { label: "States served", value: siteConfig.serviceStates.join(", ") },
+              { label: "Service-area pages", value: `${serviceAreaCount} towns in Monroe County, PA` },
+              { label: "Family owned since", value: String(siteConfig.foundedYear) },
+            ]}
+          />
         </Container>
       </Section>
 

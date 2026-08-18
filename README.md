@@ -106,9 +106,10 @@ src/
       appliances/[location]/ service-area pages
       guides/                buying guides
     admin/                   admin shell, actions, inventory + leads + appointments
+    api/cron/                scheduled SEO health check + search-discovery jobs
     actions/leads.ts         public lead submission
     actions/appointments.ts  public appointment booking
-    sitemap.ts, robots.ts, opengraph-image.tsx, not-found.tsx
+    sitemap.ts, robots.ts, llms.txt/, indexnow-key.txt/, opengraph-image.tsx
   components/
     inventory/ home/ shared/ layout/ forms/ admin/ ui/
   lib/
@@ -119,7 +120,9 @@ src/
     appointments/            schema, time zones, message copy, notifications
     sms/                     Twilio transport, config gating, phone helpers
     analytics/               events, tracking, UTM attribution
-    seo/                     metadata builder, JSON-LD
+    seo/                     metadata + canonical policy, JSON-LD, route registry,
+                             sitemap builder, location quality gate, cron auth,
+                             health check, IndexNow, submission ledger
     content/                 FAQ bank, locations, campaigns, guides
 supabase/migrations/         database schema
 ```
@@ -210,6 +213,16 @@ and misleading claims are a real liability:
   credit check". The page explains that options exist and routes the question to a person.
 - **Sold products do not 404.** They keep their URL, show a SOLD state, and cross-sell
   available stock — so ad and social links stay alive and search equity is retained.
+- **No thin location pages.** A service-area record that does not clear the content bar in
+  `src/lib/seo/location-quality.ts` renders `noindex` and is left out of the sitemap, the
+  hub page and the schema. A page copied from a neighbouring town with the name swapped is
+  rejected by a copy-overlap check, with a cloned page as the test fixture.
+- **No fake freshness.** Sitemap `lastmod` comes from real timestamps — product
+  `updated_at`, guide and location review dates — never from `new Date()`. A test fails if
+  any entry claims to have changed in the last minute.
+- **No answers that bury the answer.** A yes/no FAQ question must be answered in the first
+  word, and no answer may open with marketing throat-clearing or promise something the
+  business has not committed to. Asserted in `tests/seo-content.test.ts`.
 
 ---
 
@@ -228,7 +241,15 @@ site.** Upload them at `/admin`.
 Any Node host; Vercel is the straightforward option.
 
 1. Set the environment variables from `.env.example`.
-2. Set `NEXT_PUBLIC_SITE_URL` to the production domain. Until it is set, `robots.txt`
+2. Set `NEXT_PUBLIC_SITE_URL` to `https://kt-appliances.com`. Until it is set, `robots.txt`
    disallows all crawling so a preview cannot be indexed ahead of launch.
-3. Run the database migration against the production Supabase project.
-4. Submit `/sitemap.xml` in Search Console.
+3. Set `CRON_SECRET`. The scheduled routes in `vercel.json` fail closed without it — they
+   answer 503 rather than running unauthenticated.
+4. Run every migration in `supabase/migrations/` against the production project.
+5. Submit `/sitemap.xml` in Search Console.
+
+**Organic search, structured data, the location engine and the cron jobs are documented in
+[`docs/seo-aeo-geo.md`](docs/seo-aeo-geo.md).** Adding a service area has its own checklist
+in [`docs/local-seo-locations.md`](docs/local-seo-locations.md) — read it before adding a
+town, because half of the bar is confirming delivery with the warehouse rather than writing
+copy.
