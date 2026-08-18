@@ -1,4 +1,5 @@
 import type { ApplianceCategory } from "@/lib/inventory/types";
+import type { MediaKey } from "@/lib/media/manifest";
 import type { FaqEntry } from "@/lib/seo/jsonld";
 
 /**
@@ -16,6 +17,12 @@ export interface GuideSection {
   paragraphs?: string[];
   listTitle?: string;
   list?: string[];
+  /**
+   * A photograph illustrating this section, rendered after its text. Resolved
+   * through the media manifest, so a key with no asset simply renders nothing —
+   * sections read complete without their pictures.
+   */
+  figure?: { key: MediaKey; caption: string };
 }
 
 export interface Guide {
@@ -29,6 +36,8 @@ export interface Guide {
   /** ISO date, surfaced as the article's published/updated date. */
   updated: string;
   category?: ApplianceCategory;
+  /** Lead photograph, shown at the top of the article when the asset exists. */
+  heroKey?: MediaKey;
   intro: string;
   sections: GuideSection[];
   faqs?: FaqEntry[];
@@ -45,6 +54,7 @@ export const GUIDES: Guide[] = [
       "Where the damage comes from, what it affects, and the questions that separate a good scratch & dent buy from a bad one.",
     readMinutes: 5,
     updated: "2026-01-15",
+    heroKey: "damage.door-corner-dent",
     intro:
       "\"Scratch & dent\" is one of those retail phrases that sounds like it might be hiding something. It is not. It describes an appliance with cosmetic damage and no functional defect — and understanding exactly where that damage comes from is the difference between a confident purchase and a nervous one.",
     sections: [
@@ -54,6 +64,11 @@ export const GUIDES: Guide[] = [
           "Appliances get marked long before anyone cooks with them. A refrigerator is loaded and unloaded several times between the factory and a showroom floor, and each handling is a chance for a corner to catch a forklift, a door to scuff against a wall, or a panel to dent against another crate.",
           "The rest happens in stores. A unit gets used as a floor model, a customer's return is opened and cannot be resold as new, a delivery is refused at the door because the buyer noticed a scratch. All of it produces the same result: an appliance that works exactly as designed but cannot be sold at full price next to an unmarked one.",
         ],
+        figure: {
+          key: "damage.front-scratch",
+          caption:
+            "A typical front-panel scratch on a unit at the warehouse — the kind of mark that takes hundreds off the price and nothing off the performance.",
+        },
       },
       {
         heading: "What the damage does and does not affect",
@@ -69,6 +84,11 @@ export const GUIDES: Guide[] = [
           "Interior liner cracks: a real problem in a refrigerator or freezer. Ask specifically.",
           "Control panels and glass: check that everything lights, responds and reads correctly.",
         ],
+        figure: {
+          key: "damage.side-panel-scuff",
+          caption:
+            "A scuffed side panel — usually invisible once the unit is installed between cabinets, which is why side damage is the best value on the floor.",
+        },
       },
       {
         heading: "What happens to a unit before it reaches the floor",

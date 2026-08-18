@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Rail } from "@/components/ui/rail";
 import { CATEGORY_LIST } from "@/lib/inventory/types";
+import { getPhoto } from "@/lib/media/manifest";
 
 /**
  * Category doorways.
@@ -19,6 +20,11 @@ export function CategoryRail({ counts = {} }: { counts?: Record<string, number> 
     <Rail label="Shop by category" itemWidth="category">
       {CATEGORY_LIST.map((category) => {
         const count = counts[category.slug] ?? 0;
+        // A real unit from the warehouse floor when one has been shot; the
+        // neutral vector otherwise. Both live in the same 4:3 box, so tiles
+        // never shift as photos arrive category by category. The image is
+        // decorative either way — the tile's heading names the category.
+        const photo = getPhoto(`category.${category.slug}`);
         return (
           <Link
             key={category.slug}
@@ -26,13 +32,25 @@ export function CategoryRail({ counts = {} }: { counts?: Record<string, number> 
             className="group flex flex-col items-center rounded-md border border-line bg-white p-2.5 text-center shadow-card transition-shadow hover:shadow-hover"
           >
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-bone-50">
-              <Image
-                src={category.artwork}
-                alt=""
-                fill
-                sizes="(min-width: 640px) 130px, 104px"
-                className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
-              />
+              {photo ? (
+                <Image
+                  src={photo.src}
+                  alt=""
+                  fill
+                  sizes="(min-width: 640px) 130px, 104px"
+                  placeholder={photo.blurDataURL ? "blur" : "empty"}
+                  blurDataURL={photo.blurDataURL || undefined}
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <Image
+                  src={category.artwork}
+                  alt=""
+                  fill
+                  sizes="(min-width: 640px) 130px, 104px"
+                  className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+                />
+              )}
             </div>
             <h3 className="mt-1.5 text-[12px] font-semibold leading-tight text-ink-950 group-hover:text-brand-500 sm:mt-2 sm:text-ui">
               {category.name}

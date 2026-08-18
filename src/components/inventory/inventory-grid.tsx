@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { PackageSearch } from "lucide-react";
 
@@ -6,6 +7,7 @@ export { ProductCardSkeleton, ProductGridSkeleton } from "@/components/inventory
 import { CallLink, TextLink } from "@/components/contact/contact-links";
 import { buttonStyles } from "@/components/ui/button";
 import type { Appliance } from "@/lib/inventory/types";
+import { getPhoto } from "@/lib/media/manifest";
 import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +81,60 @@ export function InventoryEmptyState({
   showReset?: boolean;
   resetHref?: string;
 }) {
+  // With a floor photo, the dead end becomes evidence: there is a warehouse
+  // full of stock, the website is just between listings. Without one, the
+  // flat treatment below is unchanged.
+  const floor = getPhoto("hero.floor-wide");
+
+  if (floor) {
+    return (
+      <div className="on-dark relative overflow-hidden border border-line">
+        <Image
+          src={floor.src}
+          alt=""
+          fill
+          sizes="(min-width: 1280px) 1280px, 100vw"
+          placeholder={floor.blurDataURL ? "blur" : "empty"}
+          blurDataURL={floor.blurDataURL || undefined}
+          className="object-cover"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/70 to-ink-950/45"
+        />
+        <div className="relative px-6 py-14 text-center sm:py-20">
+          <h3 className="font-display text-xl font-bold text-white sm:text-2xl">{title}</h3>
+          <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-white/80">
+            {description}
+          </p>
+          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap">
+            <TextLink
+              context="empty-inventory"
+              message={`Hi ${siteConfig.name}, what appliances do you have available right now?`}
+              className={buttonStyles("primary", "md", "w-full sm:w-auto")}
+            >
+              Text {siteConfig.phone.display}
+            </TextLink>
+            <CallLink
+              context="empty-inventory"
+              className={buttonStyles("outlineLight", "md", "w-full sm:w-auto")}
+            >
+              Call the warehouse
+            </CallLink>
+            {showReset ? (
+              <Link
+                href={resetHref}
+                className={buttonStyles("outlineLight", "md", "w-full sm:w-auto")}
+              >
+                Clear filters
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="border border-line bg-bone-50 px-6 py-14 text-center sm:py-20">
       <PackageSearch aria-hidden className="mx-auto size-9 text-ink-400" strokeWidth={1.75} />

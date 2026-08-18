@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
 
@@ -5,6 +6,7 @@ import { Wordmark } from "@/components/brand/wordmark";
 import { CallLink, DirectionsLink, EmailLink, TextLink } from "@/components/contact/contact-links";
 import { StoreHours } from "@/components/layout/store-hours";
 import { Container } from "@/components/ui/container";
+import { getPhoto } from "@/lib/media/manifest";
 import {
   FOOTER_COMPANY_NAV,
   FOOTER_LEGAL_NAV,
@@ -36,9 +38,27 @@ function LinkColumn({ title, items }: { title: string; items: { label: string; h
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
+  const strip = getPhoto("footer.strip");
 
   return (
     <footer className="on-dark bg-ink-950 text-white">
+      {strip ? (
+        // A slim band of the actual floor above the link columns — decorative
+        // (the footer's text carries all the information), heavily scrimmed so
+        // it grounds the footer without competing with it.
+        <div aria-hidden className="relative h-24 overflow-hidden sm:h-32">
+          <Image
+            src={strip.src}
+            alt=""
+            fill
+            sizes="100vw"
+            placeholder={strip.blurDataURL ? "blur" : "empty"}
+            blurDataURL={strip.blurDataURL || undefined}
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-ink-950/40 to-ink-950" />
+        </div>
+      ) : null}
       <Container className="py-14 sm:py-16">
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
           {/* Identity + contact */}

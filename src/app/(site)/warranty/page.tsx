@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ClipboardCheck, FileText, ShieldCheck } from "lucide-react";
 
 import { CallLink, TextLink } from "@/components/contact/contact-links";
+import { PhotoFigure } from "@/components/media/photo";
 import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
@@ -80,6 +81,13 @@ export default function WarrantyPage() {
               </div>
             ))}
           </div>
+          <PhotoFigure
+            mediaKey="people.testing"
+            sizes="(min-width: 1280px) 1280px, 100vw"
+            aspect="aspect-[3/2] sm:aspect-[5/2]"
+            className="mt-8"
+            caption="Function testing at the warehouse — what was tested goes on the listing."
+          />
         </Container>
       </Section>
 

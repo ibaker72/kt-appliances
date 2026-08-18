@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Clock } from "lucide-react";
 
 import { InventoryGrid } from "@/components/inventory/inventory-grid";
+import { PhotoFigure } from "@/components/media/photo";
 import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
@@ -103,6 +104,14 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
                 </span>
               </p>
 
+              {guide.heroKey ? (
+                <PhotoFigure
+                  mediaKey={guide.heroKey}
+                  sizes="(min-width: 1024px) 720px, 100vw"
+                  className="mt-8"
+                />
+              ) : null}
+
               {guide.sections.map((section) => (
                 <section key={section.heading} className="mt-10 first:mt-8">
                   <h2 className="font-display text-2xl font-extrabold tracking-[-0.025em] text-ink-950 sm:text-[1.75rem]">
@@ -127,6 +136,14 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
                         ))}
                       </ul>
                     </div>
+                  ) : null}
+                  {section.figure ? (
+                    <PhotoFigure
+                      mediaKey={section.figure.key}
+                      caption={section.figure.caption}
+                      sizes="(min-width: 1024px) 720px, 100vw"
+                      className="mt-6"
+                    />
                   ) : null}
                 </section>
               ))}

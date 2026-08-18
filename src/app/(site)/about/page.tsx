@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRight, ClipboardCheck, Eye, MapPin, PhoneCall } from "lucide-react";
 
 import { ContactCta } from "@/components/shared/contact-cta";
+import { Photo } from "@/components/media/photo";
+import { getPhoto } from "@/lib/media/manifest";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
 import { WarehousePanel } from "@/components/shared/warehouse-panel";
@@ -16,6 +18,7 @@ import { getCachedNavigationMenu } from "@/lib/inventory/navigation-cache";
 import { indexableLocations } from "@/lib/seo/location-quality";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site-config";
+import { cn } from "@/lib/utils";
 
 export const metadata = pageMetadata({
   title: "About KT Appliances",
@@ -61,6 +64,11 @@ export default async function AboutPage() {
   // Already cached for the header, so this costs nothing extra.
   const { facets } = await getCachedNavigationMenu();
   const serviceAreaCount = indexableLocations().length;
+  // Interior shots render as a pair above the visit panel; checked here so an
+  // empty pair leaves no stray grid gap behind.
+  const interiors = (["store.interior-a", "store.interior-b"] as const).filter(
+    (key) => getPhoto(key) !== null,
+  );
 
   return (
     <>
@@ -94,6 +102,15 @@ export default async function AboutPage() {
               <p className="mb-4 inline-flex items-center rounded-pill border border-gold-600/40 bg-gold-50 px-3 py-1 text-ui font-semibold text-gold-600">
                 {siteConfig.brand.ownership}
               </p>
+              {/* "Family owned" is a claim in the logo ribbon; a face on the
+                  floor is what makes it real. Nothing renders until the photo
+                  has actually been taken. */}
+              <Photo
+                mediaKey="people.team"
+                sizes="(min-width: 1024px) 440px, 100vw"
+                fit="cover"
+                className="mt-2 aspect-[4/3] w-full"
+              />
             </div>
             <div className="min-w-0 lg:col-span-7">
               <div className="space-y-5 text-[16px] leading-relaxed text-ink-700">
@@ -200,6 +217,24 @@ export default async function AboutPage() {
             We are open every day, and after 5 PM by appointment. If you are driving out for a
             specific unit, call or text first so we can have it pulled and ready.
           </p>
+          {interiors.length > 0 ? (
+            <div
+              className={cn(
+                "mb-8 grid gap-3",
+                interiors.length > 1 ? "sm:grid-cols-2" : "",
+              )}
+            >
+              {interiors.map((key) => (
+                <Photo
+                  key={key}
+                  mediaKey={key}
+                  sizes="(min-width: 640px) 50vw, 100vw"
+                  fit="cover"
+                  className="aspect-[3/2] w-full"
+                />
+              ))}
+            </div>
+          ) : null}
           <WarehousePanel />
         </Container>
       </Section>

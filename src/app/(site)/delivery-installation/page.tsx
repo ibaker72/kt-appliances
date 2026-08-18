@@ -3,6 +3,7 @@ import { ArrowRight, MapPin, Package, Truck, Trash2, Wrench } from "lucide-react
 
 import { LeadForm } from "@/components/forms/lead-form";
 import { CallLink, TextLink } from "@/components/contact/contact-links";
+import { PhotoFigure } from "@/components/media/photo";
 import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
@@ -122,6 +123,13 @@ export default function DeliveryInstallationPage() {
 
       <Section tone="white" size="md">
         <Container>
+          <PhotoFigure
+            mediaKey="hero.delivery"
+            sizes="(min-width: 1280px) 1280px, 100vw"
+            aspect="aspect-[3/2] sm:aspect-[5/2]"
+            className="mb-10"
+            caption="A delivery heading out from the East Stroudsburg warehouse."
+          />
           <div className="grid gap-px bg-line lg:grid-cols-2">
             {SERVICES.map(({ id, icon: Icon, title, body, points }) => (
               <section key={id} id={id} className="scroll-mt-32 bg-white p-6 sm:p-8 lg:p-10">

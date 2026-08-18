@@ -2,6 +2,7 @@ import { MapPin, Navigation, Phone } from "lucide-react";
 
 import { CallLink, DirectionsLink, TextLink } from "@/components/contact/contact-links";
 import { StoreHours } from "@/components/layout/store-hours";
+import { Photo } from "@/components/media/photo";
 import { buttonStyles } from "@/components/ui/button";
 import { mapEmbedSrc, siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
@@ -61,14 +62,24 @@ export function WarehousePanel({
       </div>
 
       {showMap ? (
-        <div className="relative min-h-[320px] bg-bone-100 lg:min-h-full">
-          <iframe
-            src={mapEmbedSrc()}
-            title={`Map showing ${siteConfig.name} at ${siteConfig.address.oneLine}`}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            className="absolute inset-0 size-full border-0"
+        <div className="flex flex-col bg-white">
+          {/* The building itself, once it has been photographed — the map says
+              where the warehouse is, the photo says that it exists. */}
+          <Photo
+            mediaKey="store.exterior"
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            fit="cover"
+            className="aspect-[5/2] w-full"
           />
+          <div className="relative min-h-[320px] flex-1 bg-bone-100">
+            <iframe
+              src={mapEmbedSrc()}
+              title={`Map showing ${siteConfig.name} at ${siteConfig.address.oneLine}`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="absolute inset-0 size-full border-0"
+            />
+          </div>
         </div>
       ) : null}
     </div>

@@ -43,3 +43,36 @@ export function Photo({ mediaKey, sizes, fit, className, preload = false }: Phot
     </div>
   );
 }
+
+/**
+ * A photograph as article content: a `<figure>` with an optional visible
+ * caption. Same null contract as `Photo` — no asset, no figure, no gap.
+ */
+export function PhotoFigure({
+  mediaKey,
+  sizes,
+  caption,
+  className,
+  aspect = "aspect-[3/2]",
+}: {
+  mediaKey: MediaKey;
+  sizes: string;
+  caption?: string;
+  className?: string;
+  /** Aspect utility for the image box, e.g. "aspect-[4/3]". */
+  aspect?: string;
+}) {
+  const photo = getPhoto(mediaKey);
+  if (!photo) return null;
+
+  return (
+    <figure className={className}>
+      <Photo mediaKey={mediaKey} sizes={sizes} fit="cover" className={cn(aspect, "w-full")} />
+      {caption ? (
+        <figcaption className="mt-2.5 text-[13px] leading-relaxed text-ink-500">
+          {caption}
+        </figcaption>
+      ) : null}
+    </figure>
+  );
+}

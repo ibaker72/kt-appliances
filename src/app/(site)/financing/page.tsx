@@ -2,6 +2,7 @@ import { CreditCard, ListChecks, MessageSquareText, ShieldQuestion } from "lucid
 
 import { LeadForm } from "@/components/forms/lead-form";
 import { CallLink, TextLink } from "@/components/contact/contact-links";
+import { PhotoFigure } from "@/components/media/photo";
 import { ContactCta } from "@/components/shared/contact-cta";
 import { FaqSection } from "@/components/shared/faq-section";
 import { PageHeader } from "@/components/shared/page-header";
@@ -63,6 +64,13 @@ export default function FinancingPage() {
                 paying less than retail, and paying over time makes a full kitchen or laundry
                 replacement manageable.
               </p>
+
+              <PhotoFigure
+                mediaKey="store.entrance"
+                sizes="(min-width: 1024px) 640px, 100vw"
+                className="mt-8"
+                caption="Ask at the warehouse — financing is arranged with the same people who sell you the appliance."
+              />
 
               <ol className="mt-9 border-t border-line">
                 {[
