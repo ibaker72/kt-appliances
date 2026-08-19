@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight, CheckCircle2, ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
@@ -13,6 +13,7 @@ import {
   MAX_IMAGES_PER_UPLOAD,
   initialAdminFormState,
 } from "@/lib/admin/appliance-schema";
+import { formatBytes, preparePhotos, type ResizedPhoto } from "@/lib/admin/image-resize";
 import type { Appliance } from "@/lib/inventory/types";
 
 /**
@@ -44,8 +45,40 @@ function UploadButton() {
 
 export function ImageManager({ appliance }: { appliance: Appliance }) {
   const [state, formAction] = useActionState(uploadImagesAction, initialAdminFormState);
-  const [selectedCount, setSelectedCount] = useState(0);
+  const [pending, setPending] = useState<ResizedPhoto[]>([]);
+  const [preparing, setPreparing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Object URLs are a manual allocation. Released on unmount and whenever the
+  // selection is replaced, so repeatedly picking photos does not leak.
+  useEffect(() => {
+    return () => {
+      for (const photo of pending) URL.revokeObjectURL(photo.previewUrl);
+    };
+  }, [pending]);
+
+  const clearSelection = () => {
+    setPending([]);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  /**
+   * Shrinks the selection as soon as it is picked, so the owner sees the real
+   * upload size before committing and the resizing cost is paid while they are
+   * still reading the thumbnails rather than after they press the button.
+   */
+  const onSelect = async (files: FileList | null) => {
+    for (const photo of pending) URL.revokeObjectURL(photo.previewUrl);
+    setPending([]);
+    if (!files || files.length === 0) return;
+
+    setPreparing(true);
+    try {
+      setPending(await preparePhotos([...files]));
+    } finally {
+      setPreparing(false);
+    }
+  };
 
   const defaultAlt = `${appliance.brand} ${appliance.title}${
     appliance.modelNumber ? `, model ${appliance.modelNumber}` : ""
@@ -55,9 +88,15 @@ export function ImageManager({ appliance }: { appliance: Appliance }) {
     <div className="space-y-5">
       <form
         action={(formData) => {
+          // The resized files replace whatever the file input put in the form
+          // data. Without the delete, both copies would be submitted under
+          // `photos` and every photo would upload twice.
+          if (pending.length > 0) {
+            formData.delete("photos");
+            for (const photo of pending) formData.append("photos", photo.file, photo.file.name);
+          }
           formAction(formData);
-          setSelectedCount(0);
-          if (inputRef.current) inputRef.current.value = "";
+          clearSelection();
         }}
         className="border border-line bg-white p-5"
       >
@@ -71,8 +110,9 @@ export function ImageManager({ appliance }: { appliance: Appliance }) {
           Add photos
         </label>
         <p className="mt-1 text-[13px] text-ink-500">
-          Up to {MAX_IMAGES_PER_UPLOAD} at a time, 10 MB each. Shoot the front, then the damage —
-          customers trust a listing that shows the dent.
+          Up to {MAX_IMAGES_PER_UPLOAD} at a time. Photos straight off a phone are fine — they are
+          shrunk here before they upload. Shoot the front, then the damage: customers trust a
+          listing that shows the dent.
         </p>
 
         <input
@@ -82,14 +122,57 @@ export function ImageManager({ appliance }: { appliance: Appliance }) {
           type="file"
           multiple
           accept={ALLOWED_IMAGE_TYPES.join(",")}
-          onChange={(event) => setSelectedCount(event.target.files?.length ?? 0)}
+          onChange={(event) => void onSelect(event.target.files)}
           className="mt-3 block w-full cursor-pointer rounded-sm border border-ink-200 bg-white p-3 text-[14px] text-ink-700 file:mr-3 file:cursor-pointer file:rounded-sm file:border-0 file:bg-ink-950 file:px-4 file:py-2.5 file:text-[14px] file:font-semibold file:text-white"
         />
 
-        {selectedCount > 0 ? (
-          <p className="mt-2 text-[13px] font-medium text-ink-700">
-            {selectedCount} file{selectedCount === 1 ? "" : "s"} ready to upload.
+        {preparing ? (
+          <p className="mt-3 flex items-center gap-2 text-[13px] font-medium text-ink-700">
+            <Loader2 aria-hidden className="size-3.5 animate-spin" />
+            Preparing photos…
           </p>
+        ) : null}
+
+        {pending.length > 0 ? (
+          <div className="mt-3">
+            <p className="text-[13px] font-medium text-ink-700">
+              {pending.length} photo{pending.length === 1 ? "" : "s"} ready to upload.
+            </p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {pending.map((photo) => {
+                const shrunk = photo.file.size < photo.originalBytes;
+                return (
+                  <li key={photo.previewUrl} className="w-24">
+                    <div className="relative aspect-square overflow-hidden border border-line bg-bone-100">
+                      {/* A local object URL, so next/image would only add an
+                          optimizer round trip it cannot serve. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photo.previewUrl}
+                        alt={`Preview of ${photo.file.name}`}
+                        className="size-full object-cover"
+                      />
+                    </div>
+                    <p className="mt-1 text-[11px] leading-tight text-ink-500 tnum">
+                      {formatBytes(photo.file.size)}
+                      {shrunk ? (
+                        <span className="block text-ink-400">
+                          from {formatBytes(photo.originalBytes)}
+                        </span>
+                      ) : null}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="mt-2 text-[12.5px] font-semibold text-ink-600 underline underline-offset-4 hover:text-brand-500"
+            >
+              Clear selection
+            </button>
+          </div>
         ) : null}
 
         {state.status === "error" ? (

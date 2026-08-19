@@ -24,7 +24,7 @@ import {
 } from "@/lib/appointments/schema";
 import { formatSlotLabel } from "@/lib/appointments/time";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
-import { track } from "@/lib/analytics/track";
+import { track, trackAdsConversion } from "@/lib/analytics/track";
 import { getAttribution, inferredSource } from "@/lib/analytics/attribution";
 import { siteConfig } from "@/lib/site-config";
 import { cn, formatPhoneNumber } from "@/lib/utils";
@@ -97,6 +97,10 @@ export function AppointmentForm({
   useEffect(() => {
     if (state.status !== "success") return;
     track(ANALYTICS_EVENTS.appointmentBooked, { form_location: formLocation });
+    // A confirmed booking is the strongest conversion this site produces, so it
+    // reports to Google Ads on the same footing as an inquiry — and, like the
+    // inquiry, only after the server accepted it.
+    trackAdsConversion();
     successRef.current?.focus();
   }, [state.status, formLocation]);
 

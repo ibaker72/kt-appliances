@@ -97,6 +97,19 @@ export async function logoutAction(): Promise<void> {
 /* Inventory                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * The submitted form, as plain strings, so a rejected save can be handed back
+ * to the browser with everything still in it. File entries are dropped — this
+ * form carries none, and a File would not survive serialisation anyway.
+ */
+function echoedValues(submitted: Record<string, FormDataEntryValue>): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const [key, value] of Object.entries(submitted)) {
+    if (typeof value === "string" && !key.startsWith("$")) values[key] = value;
+  }
+  return values;
+}
+
 function fieldErrors(issues: { path: PropertyKey[]; message: string }[]): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const issue of issues) {
@@ -122,12 +135,14 @@ export async function saveApplianceAction(
 ): Promise<AdminFormState> {
   await requireAdmin();
 
-  const parsed = applianceFormSchema.safeParse(Object.fromEntries(formData.entries()));
+  const submitted = Object.fromEntries(formData.entries());
+  const parsed = applianceFormSchema.safeParse(submitted);
   if (!parsed.success) {
     return {
       status: "error",
       message: "Check the highlighted fields.",
       errors: fieldErrors(parsed.error.issues),
+      values: echoedValues(submitted),
     };
   }
 

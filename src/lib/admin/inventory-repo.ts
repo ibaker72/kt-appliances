@@ -103,12 +103,19 @@ export class AdminNotConfiguredError extends Error {
  * the browser as an opaque 500 digest.
  */
 export class AdminPermissionError extends Error {
-  constructor(public readonly table: string) {
+  readonly table: string;
+
+  constructor(table: string) {
     super(
       `The database refused access to "${table}". Run supabase/migrations/0002_api_role_grants.sql, ` +
         "and confirm SUPABASE_SERVICE_ROLE_KEY holds the project's service-role secret rather than the anon key.",
     );
     this.name = "AdminPermissionError";
+    // Written out rather than declared as a constructor parameter property:
+    // Node runs this project's TypeScript by stripping types, and a parameter
+    // property is the one piece of syntax that needs real emit. Using it here
+    // would make the whole module unimportable from the test runner.
+    this.table = table;
   }
 }
 
@@ -222,12 +229,26 @@ export async function generateUniqueSlug(
   data: Pick<ApplianceFormData, "brand" | "title" | "modelNumber">,
   excludeId?: string,
 ): Promise<string> {
-  const supabase = client();
   const base =
     slugify([data.brand, data.title, data.modelNumber].filter(Boolean).join(" ")) || "appliance";
+  return ensureUniqueSlug(base, excludeId);
+}
+
+/**
+ * Makes one candidate slug unique, suffixing `-2`, `-3`… until nothing else
+ * claims it.
+ *
+ * Uniqueness is a database constraint, so an unchecked candidate surfaces as
+ * "duplicate key value violates unique constraint" — an error the store owner
+ * can neither read nor act on. Resolving it here means a hand-typed slug that
+ * collides quietly becomes a working one instead of failing the save.
+ */
+async function ensureUniqueSlug(base: string, excludeId?: string): Promise<string> {
+  const supabase = client();
+  const root = base || "appliance";
 
   for (let attempt = 0; attempt < 25; attempt += 1) {
-    const candidate = attempt === 0 ? base : `${base}-${attempt + 1}`;
+    const candidate = attempt === 0 ? root : `${root}-${attempt + 1}`;
     let builder = supabase.from("appliances").select("id").eq("slug", candidate).limit(1);
     if (excludeId) builder = builder.neq("id", excludeId);
     const { data: existing, error } = await builder;
@@ -235,7 +256,57 @@ export async function generateUniqueSlug(
     if (!existing || existing.length === 0) return candidate;
   }
 
-  return `${base}-${Date.now().toString(36)}`;
+  return `${root}-${Date.now().toString(36)}`;
+}
+
+/**
+ * What an edit should do to an existing listing's slug.
+ *
+ * THE RULE: an existing listing's URL never changes by itself.
+ *
+ * Slugs are advertised. They sit in Facebook posts, text messages to customers,
+ * Google's index and paid ad destinations. Regenerating one because the owner
+ * corrected a typo in the title would turn every one of those links into a 404
+ * — silently, and long after the edit. So a blank slug field means "leave the
+ * URL alone" on an existing record, and a new slug is only minted when there
+ * isn't one yet.
+ *
+ * A slug the owner deliberately typed is honoured, and made unique first.
+ *
+ * Pure and exported so the rule can be asserted directly; the database work
+ * lives in `slugForUpdate`.
+ */
+export type SlugDecision =
+  | { action: "keep"; slug: string }
+  | { action: "ensure-unique"; slug: string }
+  | { action: "generate" };
+
+export function slugDecision(requestedSlug: string, currentSlug: string): SlugDecision {
+  const requested = requestedSlug ? slugify(requestedSlug) : "";
+
+  if (requested) {
+    if (requested === currentSlug) return { action: "keep", slug: currentSlug };
+    return { action: "ensure-unique", slug: requested };
+  }
+
+  if (currentSlug) return { action: "keep", slug: currentSlug };
+  return { action: "generate" };
+}
+
+async function slugForUpdate(
+  id: string,
+  data: ApplianceFormData,
+  currentSlug: string,
+): Promise<string> {
+  const decision = slugDecision(data.slug, currentSlug);
+  switch (decision.action) {
+    case "keep":
+      return decision.slug;
+    case "ensure-unique":
+      return ensureUniqueSlug(decision.slug, id);
+    default:
+      return generateUniqueSlug(data, id);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -275,7 +346,9 @@ function toRow(data: ApplianceFormData, slug: string) {
 
 export async function createAppliance(data: ApplianceFormData): Promise<string> {
   const supabase = client();
-  const slug = data.slug ? slugify(data.slug) : await generateUniqueSlug(data);
+  const slug = data.slug
+    ? await ensureUniqueSlug(slugify(data.slug))
+    : await generateUniqueSlug(data);
 
   const { data: created, error } = await supabase
     .from("appliances")
@@ -289,7 +362,16 @@ export async function createAppliance(data: ApplianceFormData): Promise<string> 
 
 export async function updateAppliance(id: string, data: ApplianceFormData): Promise<void> {
   const supabase = client();
-  const slug = data.slug ? slugify(data.slug) : await generateUniqueSlug(data, id);
+
+  const { data: existing, error: readError } = await supabase
+    .from("appliances")
+    .select("slug")
+    .eq("id", id)
+    .maybeSingle();
+  if (readError) throw adminQueryError(readError);
+  if (!existing) throw new Error("Appliance not found.");
+
+  const slug = await slugForUpdate(id, data, str(existing.slug));
 
   const { error } = await supabase.from("appliances").update(toRow(data, slug)).eq("id", id);
   if (error) throw adminQueryError(error);

@@ -19,6 +19,9 @@ export interface AdminLead {
   utmMedium: string | null;
   utmCampaign: string | null;
   utmContent: string | null;
+  utmTerm: string | null;
+  /** gclid / fbclid from the ad click, for offline conversion import. */
+  clickId: string | null;
   landingPage: string | null;
   formLocation: string | null;
   status: LeadStatus;
@@ -51,6 +54,8 @@ function mapLead(row: Row): AdminLead {
     utmMedium: nullableStr(row.utm_medium),
     utmCampaign: nullableStr(row.utm_campaign),
     utmContent: nullableStr(row.utm_content),
+    utmTerm: nullableStr(row.utm_term),
+    clickId: nullableStr(row.click_id),
     landingPage: nullableStr(row.landing_page),
     formLocation: nullableStr(row.form_location),
     status: (str(row.status) || "new") as LeadStatus,

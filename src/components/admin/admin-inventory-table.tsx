@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Copy, Eye, EyeOff, Pencil, Star } from "lucide-react";
+import { Archive, ArchiveRestore, Copy, ExternalLink, Pencil, Star, Tag } from "lucide-react";
 
 import { applianceQuickAction } from "@/app/admin/actions";
 import {
@@ -105,6 +105,77 @@ function StatusSelect({ appliance }: { appliance: Appliance }) {
   );
 }
 
+/**
+ * One-click sold.
+ *
+ * Selling a unit is the most frequent thing that happens to a listing, and
+ * before this it took opening the edit page, finding the status dropdown and
+ * saving the whole form. The database trigger stamps `sold_at`, the listing
+ * keeps its URL and starts cross-selling, and it drops out of every available
+ * query — all from one button in the row.
+ */
+function MarkSoldButton({ appliance }: { appliance: Appliance }) {
+  if (appliance.status === "sold") return null;
+  return (
+    <QuickButton
+      intent="status"
+      id={appliance.id}
+      label={`Mark ${appliance.brand} ${appliance.title} sold`}
+      extra={{ status: "sold" }}
+    >
+      <Tag aria-hidden className="size-4" strokeWidth={2.25} />
+    </QuickButton>
+  );
+}
+
+/**
+ * Archive / restore.
+ *
+ * `published = false` is the archive: the listing disappears from the website
+ * and every public query, and nothing about it is destroyed — photos, price
+ * history and the slug all survive, so restoring it puts back the same URL.
+ * Named for what it does to the owner rather than for the column it writes,
+ * because "unpublish" does not tell a store owner whether their photos are
+ * still there.
+ */
+function ArchiveButton({ appliance }: { appliance: Appliance }) {
+  const archived = !appliance.published;
+  return (
+    <QuickButton
+      intent={archived ? "publish" : "unpublish"}
+      id={appliance.id}
+      label={
+        archived
+          ? `Restore ${appliance.brand} ${appliance.title} to the website`
+          : `Archive ${appliance.brand} ${appliance.title} — hides it from the website, keeps the photos`
+      }
+    >
+      {archived ? (
+        <ArchiveRestore aria-hidden className="size-4" strokeWidth={2.25} />
+      ) : (
+        <Archive aria-hidden className="size-4" strokeWidth={2.25} />
+      )}
+    </QuickButton>
+  );
+}
+
+/** Opens the customer-facing listing. Only offered when there is one to open. */
+function ViewLiveLink({ appliance }: { appliance: Appliance }) {
+  if (!appliance.published || appliance.status === "draft") return null;
+  return (
+    <a
+      href={`/inventory/${appliance.slug}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`View the live listing for ${appliance.brand} ${appliance.title}`}
+      title="View live listing"
+      className="grid size-10 place-items-center border border-line bg-white text-ink-600 transition-colors hover:border-ink-950 hover:text-ink-950"
+    >
+      <ExternalLink aria-hidden className="size-4" strokeWidth={2.25} />
+    </a>
+  );
+}
+
 function Thumb({ appliance }: { appliance: Appliance }) {
   const image = primaryImage(appliance);
   const src = image?.imageUrl ?? CATEGORIES[appliance.category].artwork;
@@ -184,7 +255,7 @@ export function AdminInventoryTable({ appliances }: { appliances: Appliance[] })
                       appliance.published ? "text-success-600" : "text-ink-400",
                     )}
                   >
-                    {appliance.published ? "Published" : "Hidden"}
+                    {appliance.published ? "Live on site" : "Archived"}
                   </span>
                   {appliance.featured ? (
                     <span className="mt-1 block text-[12px] text-brand-500">Featured</span>
@@ -202,17 +273,8 @@ export function AdminInventoryTable({ appliances }: { appliances: Appliance[] })
                     >
                       <Pencil aria-hidden className="size-4" strokeWidth={2.25} />
                     </Link>
-                    <QuickButton
-                      intent={appliance.published ? "unpublish" : "publish"}
-                      id={appliance.id}
-                      label={appliance.published ? "Unpublish" : "Publish"}
-                    >
-                      {appliance.published ? (
-                        <EyeOff aria-hidden className="size-4" strokeWidth={2.25} />
-                      ) : (
-                        <Eye aria-hidden className="size-4" strokeWidth={2.25} />
-                      )}
-                    </QuickButton>
+                    <MarkSoldButton appliance={appliance} />
+                    <ArchiveButton appliance={appliance} />
                     <QuickButton
                       intent={appliance.featured ? "unfeature" : "feature"}
                       id={appliance.id}
@@ -227,6 +289,7 @@ export function AdminInventoryTable({ appliances }: { appliances: Appliance[] })
                     <QuickButton intent="duplicate" id={appliance.id} label="Duplicate as draft">
                       <Copy aria-hidden className="size-4" strokeWidth={2.25} />
                     </QuickButton>
+                    <ViewLiveLink appliance={appliance} />
                   </div>
                 </td>
               </tr>
@@ -269,7 +332,7 @@ export function AdminInventoryTable({ appliances }: { appliances: Appliance[] })
                   appliance.published ? "text-success-600" : "text-ink-400",
                 )}
               >
-                {appliance.published ? "Published" : "Hidden"}
+                {appliance.published ? "Live on site" : "Archived"}
               </span>
               <span className="ml-auto text-[12px] text-ink-400">
                 {relativeTime(appliance.updatedAt)}
@@ -284,21 +347,30 @@ export function AdminInventoryTable({ appliances }: { appliances: Appliance[] })
                 <Pencil aria-hidden className="size-3.5" strokeWidth={2.5} />
                 Edit
               </Link>
-              <QuickButton
-                intent={appliance.published ? "unpublish" : "publish"}
-                id={appliance.id}
-                label={appliance.published ? "Unpublish" : "Publish"}
-              >
-                {appliance.published ? (
-                  <EyeOff aria-hidden className="size-4" strokeWidth={2.25} />
-                ) : (
-                  <Eye aria-hidden className="size-4" strokeWidth={2.25} />
-                )}
-              </QuickButton>
+              <ArchiveButton appliance={appliance} />
               <QuickButton intent="duplicate" id={appliance.id} label="Duplicate as draft">
                 <Copy aria-hidden className="size-4" strokeWidth={2.25} />
               </QuickButton>
+              <ViewLiveLink appliance={appliance} />
             </div>
+
+            {/* The one action worth a full-width button on a phone: this is what
+                the owner opens the admin for while standing next to the unit
+                that just left the warehouse. */}
+            {appliance.status !== "sold" ? (
+              <form action={applianceQuickAction} className="mt-3">
+                <input type="hidden" name="intent" value="status" />
+                <input type="hidden" name="id" value={appliance.id} />
+                <input type="hidden" name="status" value="sold" />
+                <button
+                  type="submit"
+                  className="flex h-11 w-full items-center justify-center gap-2 border border-ink-950 bg-ink-950 text-[13.5px] font-semibold uppercase tracking-wide text-white"
+                >
+                  <Tag aria-hidden className="size-3.5" strokeWidth={2.5} />
+                  Mark sold
+                </button>
+              </form>
+            ) : null}
 
             <div className="mt-3">
               <StatusSelect appliance={appliance} />

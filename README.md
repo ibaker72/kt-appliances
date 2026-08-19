@@ -61,6 +61,13 @@ npm test           # node:test — never sends a real SMS, see tests/register.mj
      "permission denied for table appliances".
    - `0003_appointments.sql` — `appointments` and `appointment_notifications`, plus the
      `claim_appointment_notification()` function that makes the SMS automation idempotent.
+   - `0004_seo_url_submissions.sql` — the IndexNow submission ledger, so the search-
+     discovery cron cannot resubmit the same URLs on every run.
+   - `0005_damage_spots.sql` — `appliances.damage_spots`, the recorded damage locations
+     shown on the product photo.
+   - `0006_lead_click_id_and_hardening.sql` — `leads.click_id` (the `gclid`/`fbclid` that
+     Google Ads offline conversion import is keyed on), a pinned `search_path` on every
+     trigger function, and `rls_auto_enable()` taken off the public RPC surface.
 3. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and
    `SUPABASE_SERVICE_ROLE_KEY`.
 4. Restart. Sample data switches off automatically and the admin area comes to life.
@@ -85,10 +92,50 @@ Set `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` (16+ chars) to enable sign-in. W
 missing the admin area **fails closed**: nobody can sign in and the login page explains what
 to configure.
 
-Authorization is enforced in two independent places — `src/middleware.ts` rejects
-unauthenticated requests at the edge, and `requireAdmin()` runs again inside every admin
-page and server action, because a server action is a callable endpoint whether or not
-anyone navigated to its page.
+Authorization is enforced in two independent places — `src/proxy.ts` (Next 16's rename of
+`middleware.ts`) rejects unauthenticated requests at the edge, and `requireAdmin()` runs
+again inside every admin page and server action, because a server action is a callable
+endpoint whether or not anyone navigated to its page.
+
+### Running the inventory
+
+The day-to-day workflow is written for the store owner, not for a developer, in
+[`docs/INVENTORY-GUIDE.md`](docs/INVENTORY-GUIDE.md). In short:
+
+```
+/admin/login                  sign in with ADMIN_PASSWORD
+/admin/inventory              the floor: search, filter, quick actions
+/admin/inventory/new          brand, category, name, price, condition -> Create
+/admin/inventory/[id]         photos first, then the rest of the detail
+                              Mark sold | Archive | Duplicate | Delete
+/admin/leads                  every enquiry, with the appliance it was about
+/admin/appointments           bookings from /schedule
+```
+
+Publishing is not a deploy. An appliance saved with **Published** ticked and a status of
+*available* is on the website within the revalidation window (two minutes for a product
+page, five for the homepage) — `revalidatePath` is called on every admin mutation.
+
+Three states, deliberately distinct:
+
+| Action | URL | Photos | Visible | Reversible |
+| --- | --- | --- | --- | --- |
+| **Mark sold** | kept, shows SOLD | kept | yes, cross-selling | yes |
+| **Archive** (unpublish) | kept, 404s | kept | no | yes |
+| **Delete** | gone | **deleted from storage** | no | **no** |
+
+Slugs never change on their own. Editing a title or a price leaves the web address alone,
+so links already in Facebook posts, texts and Google keep working; only a slug the owner
+deliberately types will move a listing, and it is de-duplicated before it is saved.
+
+### Photo uploads
+
+Photos are downscaled in the browser before they upload (long edge 2000px, JPEG) — a
+phone camera produces 4–12 MB files and eight of those over warehouse wifi is the
+difference between a listing that goes up and one that gets abandoned. Anything the
+browser cannot decode uploads untouched. Files land at
+`appliance-images/{appliance-id}/{timestamp}-{random}.jpg`, and deleting an appliance
+removes its objects from the bucket.
 
 ---
 
@@ -99,7 +146,7 @@ src/
   app/
     (site)/                  public site — shares header, footer, mobile action bar
       page.tsx               homepage
-      inventory/             listing + /inventory/[slug] product pages
+      inventory/             (listing)/ + [slug] product pages, compare, saved
       refrigerators/ …       one thin route per category
       schedule/              appointment booking
       deals/[campaign]/      paid-traffic landing pages
@@ -253,3 +300,33 @@ Any Node host; Vercel is the straightforward option.
 in [`docs/local-seo-locations.md`](docs/local-seo-locations.md) — read it before adding a
 town, because half of the bar is confirming delivery with the warehouse rather than writing
 copy.
+
+**Everything that has to happen outside the codebase before launch is in
+[`docs/LAUNCH-CHECKLIST.md`](docs/LAUNCH-CHECKLIST.md)**, marked against the real state of
+the repository and the Supabase project.
+
+### Running Supabase locally
+
+`supabase start` serves the stack on `http://127.0.0.1:54321`. The image config derives its
+`remotePattern` — protocol, host **and port** — from `NEXT_PUBLIC_SUPABASE_URL`, so product
+photos load from a local stack without editing `next.config.ts`. Next 16 additionally
+refuses to fetch images from a loopback address unless `images.dangerouslyAllowLocalIP` is
+set; that stays out of this config on purpose, so expect `next/image` to 400 on local
+storage objects and treat it as a local-only limitation rather than a bug.
+
+---
+
+## A note on forms
+
+Both the customer enquiry forms and the admin appliance form echo the submitted values
+back on a validation failure, and repopulate from them.
+
+That is not decoration. React resets an uncontrolled form once a form action completes, so
+without it a customer who mistypes one digit of their phone number loses their name, ZIP,
+email and message with it — and the owner loses twenty fields including the condition
+notes. If you add a form, echo the values back the same way.
+
+Checkbox fields have a related trap worth knowing: an unchecked box is not submitted as
+`"false"`, it is not submitted at all. A Zod schema that merely *accepts* `undefined`
+without being `.optional()` rejects the missing key. `src/lib/admin/appliance-schema.ts`
+documents the shape that works.

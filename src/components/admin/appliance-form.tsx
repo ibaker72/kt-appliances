@@ -163,6 +163,19 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
   const [state, formAction] = useActionState(createAndEditAction, initialAdminFormState);
   const isNew = !appliance;
 
+  /**
+   * What each field should show.
+   *
+   * React resets an uncontrolled form once a form action completes, so after a
+   * rejected save every text field would come back empty. The action echoes the
+   * submission back and the reset restores each input to its current default —
+   * so preferring the echoed value here is what keeps the owner's typing.
+   */
+  const submitted = state.status === "error" ? state.values : undefined;
+  const text = (name: string, saved?: string | null) => submitted?.[name] ?? saved ?? "";
+  const checked = (name: string, saved: boolean) =>
+    submitted ? submitted[name] === "on" || submitted[name] === "true" : saved;
+
   // Mirrored locally so the savings preview updates as the owner types, without
   // making the whole form controlled.
   const [price, setPrice] = useState(appliance ? String(appliance.price) : "");
@@ -192,12 +205,22 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
       ) : null}
 
       {state.status === "error" ? (
-        <p
+        <div
           role="alert"
-          className="border-l-[3px] border-brand-500 bg-brand-50 px-4 py-3 text-[14px] font-medium text-ink-900"
+          className="border-l-[3px] border-brand-500 bg-brand-50 px-4 py-3 text-[14px] text-ink-900"
         >
-          {state.message}
-        </p>
+          <p className="font-medium">{state.message}</p>
+          {/* Every message, not only the ones that land next to an input. The
+              toggles render no field-level error, so a problem with one of them
+              would otherwise be an error banner pointing at nothing. */}
+          {state.errors && Object.keys(state.errors).length > 0 ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-[13.5px]">
+              {Object.entries(state.errors).map(([field, message]) => (
+                <li key={field}>{message}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       ) : null}
 
       <SectionCard
@@ -210,13 +233,13 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="brand"
             required
             placeholder="Samsung"
-            defaultValue={appliance?.brand}
+            defaultValue={text("brand", appliance?.brand)}
             error={state.errors?.brand}
           />
           <SelectField
             label="Category"
             name="category"
-            defaultValue={appliance?.category ?? "refrigerators"}
+            defaultValue={text("category", appliance?.category) || "refrigerators"}
             error={state.errors?.category}
             options={CATEGORY_LIST.map((category) => ({
               value: category.slug,
@@ -228,7 +251,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="title"
             required
             placeholder="28 cu. ft. French Door Refrigerator"
-            defaultValue={appliance?.title}
+            defaultValue={text("title", appliance?.title)}
             error={state.errors?.title}
             hint="Say what it is and how big — not the brand, that's above."
             className="sm:col-span-2"
@@ -237,7 +260,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             label="Model number"
             name="modelNumber"
             placeholder="RF28T5001SR"
-            defaultValue={appliance?.modelNumber ?? ""}
+            defaultValue={text("modelNumber", appliance?.modelNumber)}
             optional
             hint="Worth adding — people search by model number."
             error={state.errors?.modelNumber}
@@ -246,7 +269,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             label="Type"
             name="subcategory"
             placeholder="French Door"
-            defaultValue={appliance?.subcategory ?? ""}
+            defaultValue={text("subcategory", appliance?.subcategory)}
             optional
             error={state.errors?.subcategory}
           />
@@ -284,7 +307,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             label="Quantity"
             name="quantity"
             inputMode="numeric"
-            defaultValue={String(appliance?.quantity ?? 1)}
+            defaultValue={submitted?.quantity ?? String(appliance?.quantity ?? 1)}
             error={state.errors?.quantity}
             hint="How many identical units."
           />
@@ -315,7 +338,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
           <SelectField
             label="Condition"
             name="condition"
-            defaultValue={appliance?.condition ?? "scratch-and-dent"}
+            defaultValue={text("condition", appliance?.condition) || "scratch-and-dent"}
             error={state.errors?.condition}
             options={APPLIANCE_CONDITIONS.map((condition) => ({
               value: condition,
@@ -327,7 +350,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="cosmeticNotes"
             rows={3}
             optional
-            defaultValue={appliance?.cosmeticNotes ?? ""}
+            defaultValue={text("cosmeticNotes", appliance?.cosmeticNotes)}
             placeholder="Dent on the lower right side panel, roughly 4 inches across. Not visible from the front once installed."
             hint="Where it is, how big, and whether it shows once installed."
             error={state.errors?.cosmeticNotes}
@@ -337,7 +360,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="functionalNotes"
             rows={2}
             optional
-            defaultValue={appliance?.functionalNotes ?? ""}
+            defaultValue={text("functionalNotes", appliance?.functionalNotes)}
             placeholder="Cooling, freezer and ice maker tested. Holds temperature on both sections."
             error={state.errors?.functionalNotes}
           />
@@ -346,7 +369,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="description"
             rows={3}
             optional
-            defaultValue={appliance?.description ?? ""}
+            defaultValue={text("description", appliance?.description)}
             placeholder="Full-size French door refrigerator with a bottom freezer drawer and adjustable shelving."
             error={state.errors?.description}
           />
@@ -359,22 +382,22 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="warrantyAvailable"
             label="Warranty available"
             hint="1-year option can be offered"
-            defaultChecked={appliance?.warrantyAvailable ?? true}
+            defaultChecked={checked("warrantyAvailable", appliance?.warrantyAvailable ?? true)}
           />
           <Toggle
             name="deliveryAvailable"
             label="Delivery available"
-            defaultChecked={appliance?.deliveryAvailable ?? true}
+            defaultChecked={checked("deliveryAvailable", appliance?.deliveryAvailable ?? true)}
           />
           <Toggle
             name="installationAvailable"
             label="Installation available"
-            defaultChecked={appliance?.installationAvailable ?? true}
+            defaultChecked={checked("installationAvailable", appliance?.installationAvailable ?? true)}
           />
           <Toggle
             name="haulAwayAvailable"
             label="Haul-away available"
-            defaultChecked={appliance?.haulAwayAvailable ?? true}
+            defaultChecked={checked("haulAwayAvailable", appliance?.haulAwayAvailable ?? true)}
           />
         </div>
       </SectionCard>
@@ -389,26 +412,26 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="color"
             optional
             placeholder="Stainless Steel"
-            defaultValue={appliance?.color ?? ""}
+            defaultValue={text("color", appliance?.color)}
           />
           <Field
             label="Finish"
             name="finish"
             optional
             placeholder="Fingerprint Resistant Stainless"
-            defaultValue={appliance?.finish ?? ""}
+            defaultValue={text("finish", appliance?.finish)}
           />
           <Field
             label="Capacity"
             name="capacity"
             optional
             placeholder="28 cu. ft."
-            defaultValue={appliance?.capacity ?? ""}
+            defaultValue={text("capacity", appliance?.capacity)}
           />
           <SelectField
             label="Fuel type"
             name="fuelType"
-            defaultValue={appliance?.fuelType ?? ""}
+            defaultValue={text("fuelType", appliance?.fuelType)}
             hint="Leave as Not applicable for anything that isn't gas or electric-specific."
             options={[
               { value: "", label: "Not applicable" },
@@ -420,7 +443,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="dimensions"
             optional
             placeholder={'35.75" W x 34" D x 70" H'}
-            defaultValue={appliance?.dimensions ?? ""}
+            defaultValue={text("dimensions", appliance?.dimensions)}
             className="sm:col-span-2"
           />
           <Field
@@ -428,7 +451,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="sku"
             optional
             placeholder="KT-1041"
-            defaultValue={appliance?.sku ?? ""}
+            defaultValue={text("sku", appliance?.sku)}
             hint="Your internal tag number, if you use one."
           />
           <Field
@@ -436,7 +459,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             name="slug"
             optional
             placeholder="Generated automatically"
-            defaultValue={appliance?.slug ?? ""}
+            defaultValue={text("slug", appliance?.slug)}
             hint="Leave blank and we'll build it from brand, name and model."
           />
         </div>
@@ -450,7 +473,7 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
           <SelectField
             label="Stock status"
             name="status"
-            defaultValue={appliance?.status ?? "available"}
+            defaultValue={text("status", appliance?.status) || "available"}
             error={state.errors?.status}
             options={APPLIANCE_STATUSES.map((status) => ({
               value: status,
@@ -462,13 +485,13 @@ export function ApplianceForm({ appliance }: { appliance?: Appliance }) {
             <Toggle
               name="published"
               label="Published — visible on the website"
-              defaultChecked={appliance?.published ?? true}
+              defaultChecked={checked("published", appliance?.published ?? true)}
             />
             <Toggle
               name="featured"
               label="Feature on the homepage"
               hint="Use for a handful of units at a time"
-              defaultChecked={appliance?.featured ?? false}
+              defaultChecked={checked("featured", appliance?.featured ?? false)}
             />
           </div>
         </div>

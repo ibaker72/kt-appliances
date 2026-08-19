@@ -73,6 +73,14 @@ export const leadSchema = z.object({
   landingPage: z.string().trim().max(500).optional().default(""),
   referrer: z.string().trim().max(500).optional().default(""),
   formLocation: z.string().trim().max(120).optional().default(""),
+  /**
+   * `gclid` / `fbclid` from the inbound ad click.
+   *
+   * Not decoration: importing offline conversions back into Google Ads is keyed
+   * on the `gclid`, so without it the platform can never learn that a click
+   * became a sale. Captured alongside the UTMs and stored on the lead.
+   */
+  clickId: z.string().trim().max(255).optional().default(""),
 
   website: z.string().max(200).optional().default(""),
 });
@@ -85,6 +93,17 @@ export interface LeadFormState {
   message: string;
   /** Field-level messages keyed by input name. */
   errors?: Record<string, string>;
+  /**
+   * What the visitor typed, echoed back so a rejected submission does not empty
+   * the form.
+   *
+   * React resets an uncontrolled form after a form action completes, so without
+   * this a customer who mistypes one digit of their phone number loses their
+   * name, ZIP, email and message along with it — on the single most valuable
+   * path on the site. Only the fields a person actually types are echoed; the
+   * honeypot and the attribution fields deliberately are not.
+   */
+  values?: Record<string, string>;
 }
 
 export const initialLeadFormState: LeadFormState = { status: "idle", message: "" };

@@ -153,9 +153,9 @@ export default async function AdminInventoryPage({
                   defaultValue={published}
                   className="h-11 min-w-0 flex-1 border border-ink-200 bg-white px-3 text-[15px] text-ink-950"
                 >
-                  <option value="all">Any visibility</option>
-                  <option value="published">Published</option>
-                  <option value="unpublished">Hidden</option>
+                  <option value="all">Live and archived</option>
+                  <option value="published">Live on site</option>
+                  <option value="unpublished">Archived</option>
                 </select>
                 <button type="submit" className={buttonStyles("dark", "md", "shrink-0")}>
                   Filter

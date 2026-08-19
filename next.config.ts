@@ -2,20 +2,37 @@ import type { NextConfig } from "next";
 
 /**
  * Product photography is served from Supabase Storage in production. The bucket
- * host is derived from the project URL so there is no second place to update
+ * origin is derived from the project URL so there is no second place to update
  * when the project changes.
+ *
+ * The protocol is read from the URL rather than assumed to be https: a local
+ * Supabase stack answers on `http://127.0.0.1:54321`, and a hardcoded https
+ * pattern silently fails to match it — every product photo then 400s from the
+ * image optimizer with nothing in the page to explain why.
  */
-function supabaseImageHost(): string | null {
+function supabaseImageOrigin(): {
+  protocol: "http" | "https";
+  hostname: string;
+  port: string;
+} | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   if (!url) return null;
   try {
-    return new URL(url).hostname;
+    const parsed = new URL(url);
+    return {
+      protocol: parsed.protocol === "http:" ? "http" : "https",
+      hostname: parsed.hostname,
+      // Empty for a hosted project, which is what "no port" means to Next. A
+      // local stack answers on :54321, and a pattern without the port does not
+      // match it.
+      port: parsed.port,
+    };
   } catch {
     return null;
   }
 }
 
-const host = supabaseImageHost();
+const origin = supabaseImageOrigin();
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -27,8 +44,15 @@ const nextConfig: NextConfig = {
     deviceSizes: [360, 420, 640, 768, 1024, 1280, 1600, 1920],
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 30,
-    remotePatterns: host
-      ? [{ protocol: "https", hostname: host, pathname: "/storage/v1/object/public/**" }]
+    remotePatterns: origin
+      ? [
+          {
+            protocol: origin.protocol,
+            hostname: origin.hostname,
+            port: origin.port,
+            pathname: "/storage/v1/object/public/**",
+          },
+        ]
       : [],
   },
 

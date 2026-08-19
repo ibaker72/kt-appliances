@@ -10,7 +10,7 @@ import { buttonStyles } from "@/components/ui/button";
 import { submitLead } from "@/app/actions/leads";
 import { initialLeadFormState, type InquiryType } from "@/lib/leads/schema";
 import { ANALYTICS_EVENTS, type AnalyticsEvent } from "@/lib/analytics/events";
-import { track } from "@/lib/analytics/track";
+import { track, trackAdsConversion } from "@/lib/analytics/track";
 import { getAttribution, inferredSource } from "@/lib/analytics/attribution";
 import { siteConfig } from "@/lib/site-config";
 import { cn, formatPhoneNumber } from "@/lib/utils";
@@ -89,10 +89,31 @@ export function LeadForm({
   const successRef = useRef<HTMLDivElement>(null);
   const light = tone === "light";
 
+  /**
+   * What the visitor typed, if the server sent it back after a rejection.
+   *
+   * React resets an uncontrolled form once a form action completes. The text
+   * fields are repopulated through `defaultValue` — which the reset itself
+   * honours, because it restores each input to its current default. The phone
+   * field is controlled, so it is adjusted here instead: during render, the way
+   * React documents for state that has to follow a prop, rather than in an
+   * effect that would paint an empty box first.
+   */
+  const echoed = state.values;
+  const [echoedPhone, setEchoedPhone] = useState<string | undefined>(undefined);
+  if (echoed?.phone !== echoedPhone) {
+    setEchoedPhone(echoed?.phone);
+    if (echoed?.phone) setPhone(formatPhoneNumber(echoed.phone));
+  }
+
   useEffect(() => {
     if (state.status !== "success") return;
     track(INQUIRY_EVENT[inquiryType], { form_location: formLocation, appliance: applianceLabel });
     track(ANALYTICS_EVENTS.leadSubmitted, { inquiry_type: inquiryType, form_location: formLocation });
+    // The Google Ads conversion fires here and nowhere else: only a submission
+    // the server accepted is a lead, so a page view or an abandoned form can
+    // never be reported as one and bid against real enquiries.
+    trackAdsConversion();
     // No field reset needed — on success the form unmounts and the confirmation
     // panel below takes its place. Move focus there so it is announced.
     successRef.current?.focus();
@@ -156,6 +177,10 @@ export function LeadForm({
         formData.set("utmTerm", attribution.utmTerm ?? "");
         formData.set("landingPage", attribution.landingPage ?? "");
         formData.set("referrer", attribution.referrer ?? "");
+        // gclid / fbclid. Google Ads offline conversion import is keyed on it,
+        // so a lead without it can never be matched back to the click that paid
+        // for it.
+        formData.set("clickId", attribution.clickId ?? "");
         formAction(formData);
       }}
       className={cn("relative", className)}
@@ -197,6 +222,7 @@ export function LeadForm({
           required
           maxLength={120}
           placeholder="First and last name"
+          defaultValue={echoed?.name ?? ""}
           error={state.errors?.name}
           className={showZip && showEmail ? "sm:col-span-2" : ""}
         />
@@ -221,6 +247,7 @@ export function LeadForm({
             autoComplete="postal-code"
             maxLength={5}
             placeholder="18301"
+            defaultValue={echoed?.zip ?? ""}
             optional={!zipRequired}
             error={state.errors?.zip}
             hint="Helps us quote delivery."
@@ -234,6 +261,7 @@ export function LeadForm({
             autoComplete="email"
             maxLength={200}
             placeholder="you@example.com"
+            defaultValue={echoed?.email ?? ""}
             optional
             error={state.errors?.email}
             className={showZip ? "sm:col-span-2" : ""}
@@ -248,7 +276,7 @@ export function LeadForm({
           className="mt-4"
           optional
           maxLength={2000}
-          defaultValue={defaultMessage}
+          defaultValue={echoed?.message ?? defaultMessage}
           placeholder={
             messagePlaceholder ??
             "Tell us the appliance, brand or size you need — or ask us anything about a listing."

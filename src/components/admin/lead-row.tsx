@@ -19,7 +19,13 @@ const STATUS_LABELS: Record<string, string> = {
  * about, which campaign produced them, and one-tap call/text.
  */
 export function LeadRow({ lead }: { lead: AdminLead }) {
-  const attribution = [lead.source, lead.utmCampaign, lead.utmMedium, lead.utmContent].filter(Boolean);
+  const attribution = [
+    lead.source,
+    lead.utmCampaign,
+    lead.utmMedium,
+    lead.utmContent,
+    lead.utmTerm,
+  ].filter(Boolean);
 
   return (
     <li className="border border-line bg-white p-4 sm:p-5">
@@ -71,6 +77,14 @@ export function LeadRow({ lead }: { lead: AdminLead }) {
               ))}
               {lead.landingPage ? (
                 <span className="truncate">Landed on {lead.landingPage}</span>
+              ) : null}
+              {/* The click id is what Google Ads matches an offline conversion
+                  against, so it has to be copyable from here — that upload is
+                  how the account learns which ads produced actual sales. */}
+              {lead.clickId ? (
+                <span className="break-all font-mono text-[11px] text-ink-500">
+                  click {lead.clickId}
+                </span>
               ) : null}
             </p>
           ) : null}

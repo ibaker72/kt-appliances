@@ -1,23 +1,44 @@
 import "server-only";
 
 import { Resend } from "resend";
-import { siteConfig } from "@/lib/site-config";
+import { absoluteUrl, siteConfig } from "@/lib/site-config";
 import { INQUIRY_LABELS, type LeadData } from "./schema";
 import { formatPhoneNumber } from "@/lib/utils";
 
 /**
  * Lead notifications.
  *
- * Everything here is best effort: a failure is logged and swallowed so a
- * transient provider outage can never lose the customer's submission — the lead
- * is already persisted before notifications are attempted.
+ * Everything here is best effort in the sense that a failure is logged and
+ * swallowed rather than thrown — a transient provider outage must not surface as
+ * a form error to someone who already typed their number in. But each sender
+ * reports back whether the message actually went out, because when the database
+ * write also failed that is the difference between a lead the business has and
+ * one it does not. See `recordLead`.
  */
 
 const resendKey = process.env.RESEND_API_KEY?.trim();
 const notificationEmail = process.env.LEADS_NOTIFICATION_EMAIL?.trim() || siteConfig.email;
-const fromEmail = process.env.LEADS_FROM_EMAIL?.trim() || "leads@resend.dev";
+
+/**
+ * Resend refuses any `from` on a domain the account has not verified, so a
+ * placeholder here would fail every send with a 403 that only shows up in the
+ * server log. `onboarding@resend.dev` is the one address Resend accepts without
+ * a verified domain — it can only deliver to the account owner's own address,
+ * which is exactly the shape of an owner alert, so an unconfigured deployment
+ * still gets its leads instead of silently dropping them.
+ */
+const fromEmail = process.env.LEADS_FROM_EMAIL?.trim() || "onboarding@resend.dev";
 
 export const isEmailConfigured = Boolean(resendKey);
+
+/** New York wall time, which is the only clock the warehouse runs on. */
+function timestamp(): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date());
+}
 
 let resend: Resend | null = null;
 function getResend(): Resend | null {
@@ -43,13 +64,27 @@ function row(label: string, value: string | null | undefined): string {
   )}</td></tr>`;
 }
 
-/** Internal alert with everything needed to call the customer back immediately. */
-export async function sendInternalLeadNotification(lead: LeadData): Promise<void> {
+/** Link back to the listing the customer was looking at, when there is one. */
+function applianceLink(lead: LeadData): string | null {
+  if (!lead.applianceSlug) return null;
+  return absoluteUrl(`/inventory/${lead.applianceSlug}`);
+}
+
+/**
+ * Internal alert with everything needed to call the customer back immediately.
+ *
+ * Returns whether the provider accepted the message — the caller uses that to
+ * decide if the lead reached the business at all.
+ */
+export async function sendInternalLeadNotification(lead: LeadData): Promise<boolean> {
   const client = getResend();
-  if (!client) return;
+  if (!client) return false;
 
   const subjectParts = [INQUIRY_LABELS[lead.inquiryType], lead.name];
   if (lead.applianceLabel) subjectParts.push(lead.applianceLabel);
+
+  const listingUrl = applianceLink(lead);
+  const receivedAt = timestamp();
 
   const html = `
 <div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:620px">
@@ -63,14 +98,24 @@ export async function sendInternalLeadNotification(lead: LeadData): Promise<void
     )}</p>
     <h1 style="margin:0 0 18px;font-size:22px;color:#121417">${escapeHtml(lead.name)}</h1>
     <table style="border-collapse:collapse;width:100%">
+      ${row("Received", receivedAt)}
       ${row("Phone", formatPhoneNumber(lead.phone))}
       ${row("Email", lead.email)}
       ${row("ZIP", lead.zip)}
       ${row("Appliance", lead.applianceLabel)}
+      ${
+        listingUrl
+          ? `<tr><td style="padding:6px 14px 6px 0;color:#6b737d;font-size:13px;white-space:nowrap;vertical-align:top">Listing</td><td style="padding:6px 0;font-size:14px"><a href="${escapeHtml(
+              listingUrl,
+            )}" style="color:#c8202b;font-weight:600">${escapeHtml(listingUrl)}</a></td></tr>`
+          : ""
+      }
       ${row("Source", lead.source)}
       ${row("Campaign", lead.utmCampaign)}
       ${row("Medium", lead.utmMedium)}
       ${row("Ad content", lead.utmContent)}
+      ${row("Search term", lead.utmTerm)}
+      ${row("Click ID", lead.clickId)}
       ${row("Landing page", lead.landingPage)}
       ${row("Form", lead.formLocation)}
     </table>
@@ -93,15 +138,24 @@ export async function sendInternalLeadNotification(lead: LeadData): Promise<void
 </div>`;
 
   try {
-    await client.emails.send({
+    const { error } = await client.emails.send({
       from: `${siteConfig.name} Website <${fromEmail}>`,
       to: [notificationEmail],
       replyTo: lead.email || undefined,
       subject: `New lead: ${subjectParts.join(" — ")}`,
       html,
     });
+    if (error) {
+      // Resend reports a rejected send in the response body rather than by
+      // throwing, so a `from` on an unverified domain looks like success unless
+      // this is checked.
+      console.error("[leads] internal notification rejected:", error.message);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error("[leads] internal notification failed:", error);
+    return false;
   }
 }
 

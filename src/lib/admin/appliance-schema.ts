@@ -34,8 +34,28 @@ const money = z
   .transform((digits) => (digits === "" ? null : Number.parseInt(digits, 10)))
   .refine((value) => value === null || (Number.isFinite(value) && value >= 0), "Enter a valid price");
 
+/**
+ * An HTML checkbox.
+ *
+ * THE THING TO KNOW: an unchecked checkbox is not submitted at all. It is not
+ * "false", it is absent — so the schema has to accept a missing key, and it has
+ * to do it the way Zod actually decides optionality.
+ *
+ * A previous version listed `z.undefined()` as a union member and left it at
+ * that. Zod treats a key as optional only when the schema itself is optional,
+ * not when its accepted values happen to include `undefined`, so every unticked
+ * box failed with "expected nonoptional". Since "Feature on homepage" is
+ * unticked by default, that made saving *any* new appliance impossible, and the
+ * form reported it as "Check the highlighted fields" with nothing highlighted —
+ * because toggles render no field-level error.
+ *
+ * `.optional().default(...)` before the transform is the pattern the text and
+ * money fields in this file already use, and it is the one Zod honours.
+ */
 const checkbox = z
-  .union([z.literal("on"), z.literal("true"), z.literal("false"), z.literal(""), z.undefined()])
+  .union([z.literal("on"), z.literal("true"), z.literal("false"), z.literal("")])
+  .optional()
+  .default("false")
   .transform((value) => value === "on" || value === "true");
 
 export const applianceFormSchema = z
@@ -110,6 +130,16 @@ export interface AdminFormState {
   errors?: Record<string, string>;
   /** Set on successful create so the UI can link to the new record. */
   applianceId?: string;
+  /**
+   * Everything the owner typed, echoed back after a rejected save.
+   *
+   * React resets an uncontrolled form once a form action completes. Without
+   * this, one bad field empties the other twenty — including the condition
+   * notes, which are the longest thing on the form and the whole reason the
+   * listing is trustworthy. Somebody standing in a warehouse re-typing all of
+   * that stops using the admin.
+   */
+  values?: Record<string, string>;
 }
 
 export const initialAdminFormState: AdminFormState = { status: "idle", message: "" };

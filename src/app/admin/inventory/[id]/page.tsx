@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Copy, ExternalLink, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, CheckCircle2, Copy, ExternalLink, Tag } from "lucide-react";
 
 import { applianceQuickAction } from "@/app/admin/actions";
 import { ApplianceForm } from "@/components/admin/appliance-form";
+import { DeleteAppliance } from "@/components/admin/delete-appliance";
 import { ImageManager } from "@/components/admin/image-manager";
 import { buttonStyles } from "@/components/ui/button";
 import { requireAdmin } from "@/lib/admin/auth";
@@ -111,6 +112,40 @@ export default async function EditAppliancePage({
           Other actions
         </h2>
         <div className="mt-4 flex flex-wrap gap-3">
+          {appliance.status !== "sold" ? (
+            <form action={applianceQuickAction}>
+              <input type="hidden" name="intent" value="status" />
+              <input type="hidden" name="id" value={appliance.id} />
+              <input type="hidden" name="status" value="sold" />
+              <button type="submit" className={buttonStyles("dark", "md")}>
+                <Tag aria-hidden className="size-4" strokeWidth={2.5} />
+                Mark sold
+              </button>
+            </form>
+          ) : null}
+
+          <form action={applianceQuickAction}>
+            <input
+              type="hidden"
+              name="intent"
+              value={appliance.published ? "unpublish" : "publish"}
+            />
+            <input type="hidden" name="id" value={appliance.id} />
+            <button type="submit" className={buttonStyles("outline", "md")}>
+              {appliance.published ? (
+                <>
+                  <Archive aria-hidden className="size-4" strokeWidth={2.5} />
+                  Archive
+                </>
+              ) : (
+                <>
+                  <ArchiveRestore aria-hidden className="size-4" strokeWidth={2.5} />
+                  Restore to site
+                </>
+              )}
+            </button>
+          </form>
+
           <form action={applianceQuickAction}>
             <input type="hidden" name="intent" value="duplicate" />
             <input type="hidden" name="id" value={appliance.id} />
@@ -120,23 +155,15 @@ export default async function EditAppliancePage({
             </button>
           </form>
 
-          <form action={applianceQuickAction}>
-            <input type="hidden" name="intent" value="delete" />
-            <input type="hidden" name="id" value={appliance.id} />
-            <button
-              type="submit"
-              className="inline-flex h-11 items-center gap-2 border border-brand-500 px-5 text-ui font-semibold uppercase tracking-wide text-brand-500 transition-colors hover:bg-brand-500 hover:text-white"
-            >
-              <Trash2 aria-hidden className="size-4" strokeWidth={2.5} />
-              Delete permanently
-            </button>
-          </form>
+          <DeleteAppliance id={appliance.id} label={`${appliance.brand} ${appliance.title}`} />
         </div>
-        <p className="mt-3 text-[13px] leading-relaxed text-ink-500">
-          Deleting removes the record and its photos for good. To take a unit off the site while
-          keeping its history — and its search ranking — mark it{" "}
-          <strong className="font-semibold text-ink-700">Sold</strong> instead. Sold listings stay
-          live and point visitors at similar stock.
+        <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-ink-500">
+          <strong className="font-semibold text-ink-700">Mark sold</strong> is what you want when a
+          unit leaves the warehouse: the page stays live, shows SOLD and points shoppers at similar
+          stock, so the link in an old Facebook post still works.{" "}
+          <strong className="font-semibold text-ink-700">Archive</strong> takes it off the website
+          entirely but keeps the record, the photos and the web address, so it can be restored.
+          Deleting is permanent and takes the photos with it.
         </p>
       </section>
     </div>
