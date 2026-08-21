@@ -22,6 +22,33 @@ export const ANALYTICS_EVENTS = {
   leadSubmitted: "lead_submitted",
   appointmentBooked: "appointment_booked",
   filterApplied: "filter_applied",
+
+  /**
+   * Website chat assistant.
+   *
+   * The funnel, in order: the bubble is seen, it is opened, an action is taken,
+   * and one of the four conversions fires. Every payload carries context — the
+   * page kind, the action, the appliance category — and never a name, a phone
+   * number, an email or anything the visitor typed. See `track()` call sites in
+   * `components/chat`.
+   */
+  chatLauncherViewed: "chat_launcher_viewed",
+  chatOpened: "chat_opened",
+  chatQuickActionClicked: "chat_quick_action_clicked",
+  chatInventorySearch: "chat_inventory_search",
+  chatInventoryResultClicked: "chat_inventory_result_clicked",
+  chatAvailabilityStarted: "chat_availability_started",
+  chatMessageSent: "chat_message_sent",
+  chatLeadStarted: "chat_lead_started",
+  chatLeadSubmitted: "chat_lead_submitted",
+  chatAppointmentStarted: "chat_appointment_started",
+  chatAppointmentSlotSelected: "chat_appointment_slot_selected",
+  chatAppointmentBooked: "chat_appointment_booked",
+  chatDeliveryQuoteRequested: "chat_delivery_quote_requested",
+  chatFinancingClicked: "chat_financing_clicked",
+  chatCallClicked: "chat_call_clicked",
+  chatTextClicked: "chat_text_clicked",
+  chatHumanHandoff: "chat_human_handoff",
 } as const;
 
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
@@ -43,6 +70,16 @@ export const META_EVENT_MAP: Partial<Record<AnalyticsEvent, string>> = {
   // purpose: a booking is a firm commitment and should not be averaged into
   // enquiry conversion rates when optimising ad spend.
   appointment_booked: "Schedule",
+
+  // Chat conversions map onto the same standard events as their non-chat
+  // equivalents, so a booking made in the panel is optimised for identically to
+  // one made on /schedule and neither is double-counted as the other.
+  chat_call_clicked: "Contact",
+  chat_text_clicked: "Contact",
+  chat_lead_submitted: "Lead",
+  chat_delivery_quote_requested: "Lead",
+  chat_appointment_booked: "Schedule",
+  chat_inventory_result_clicked: "ViewContent",
 };
 
 export type AnalyticsPayload = Record<string, string | number | boolean | undefined | null>;

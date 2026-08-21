@@ -7,7 +7,11 @@ import {
   appointmentSchema,
   type AppointmentFormState,
 } from "@/lib/appointments/schema";
-import { AppointmentPersistenceError, bookAppointment } from "@/lib/appointments/service";
+import {
+  AppointmentPersistenceError,
+  AppointmentSlotTakenError,
+  bookAppointment,
+} from "@/lib/appointments/service";
 import { formatAppointmentDateTime } from "@/lib/appointments/time";
 import { maskPhoneNumber } from "@/lib/sms/phone";
 
@@ -92,6 +96,17 @@ export async function submitAppointment(
       },
     };
   } catch (error) {
+    if (error instanceof AppointmentSlotTakenError) {
+      // Since migration 0007 the database holds one active booking per slot, so
+      // two people choosing the same time is now a normal outcome rather than a
+      // silent overbooking. The message points at the field they have to change.
+      return {
+        status: "error",
+        message: "That time was just booked by someone else. Please pick another time.",
+        errors: { time: "No longer available" },
+      };
+    }
+
     if (error instanceof AppointmentPersistenceError) {
       // The booking genuinely did not save. Say so rather than showing a
       // confirmation for an appointment that does not exist.

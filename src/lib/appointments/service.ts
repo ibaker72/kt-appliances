@@ -2,6 +2,11 @@ import "server-only";
 
 import { getSupabaseAdminClient, isSupabaseWritable } from "@/lib/supabase/client";
 import {
+  sendAppointmentEmails,
+  type AppointmentEmailContext,
+  type AppointmentEmailOutcomes,
+} from "./email";
+import {
   sendAppointmentBookedNotifications,
   type AppointmentBookedNotifications,
   type AppointmentNotificationTarget,
@@ -39,6 +44,32 @@ export class AppointmentPersistenceError extends Error {
   }
 }
 
+/**
+ * Somebody else took the slot.
+ *
+ * A distinct type because it is the one insert failure that is not a fault: the
+ * booking is valid, the warehouse simply cannot be in two places at 1:30 PM. It
+ * needs different copy ("pick another time") and a different UI outcome (reopen
+ * the slot picker) from a database that is actually broken.
+ *
+ * Raised only from the partial unique index in migration 0007 — never inferred
+ * from an application-level availability check, which cannot see a concurrent
+ * insert.
+ */
+export class AppointmentSlotTakenError extends Error {
+  constructor(message = "That time was just booked by someone else.") {
+    super(message);
+    this.name = "AppointmentSlotTakenError";
+  }
+}
+
+/**
+ * Name of the partial unique index that enforces one active booking per slot.
+ * Postgres reports it in the error detail, which is how a slot collision is told
+ * apart from a repeated submission token.
+ */
+const SLOT_INDEX = "appointments_active_slot_idx";
+
 export interface PersistedAppointment {
   id: string | null;
   /**
@@ -54,6 +85,7 @@ export interface BookAppointmentResult {
   id: string | null;
   duplicate: boolean;
   notifications: AppointmentBookedNotifications;
+  emails: AppointmentEmailOutcomes;
 }
 
 /** Test seam. Production uses the defaults. */
@@ -62,10 +94,21 @@ export interface BookAppointmentDeps {
   notify: (input: {
     appointment: AppointmentNotificationTarget;
   }) => Promise<AppointmentBookedNotifications>;
+  email: (appointment: AppointmentEmailContext) => Promise<AppointmentEmailOutcomes>;
 }
 
-/** Postgres unique-violation. Here it can only be the submission token. */
+/**
+ * Postgres unique-violation. Two constraints on this table can raise it — the
+ * submission token and the active-slot index — and they mean opposite things,
+ * so the constraint name decides which.
+ */
 const UNIQUE_VIOLATION = "23505";
+
+/** True when a 23505 came from the one-booking-per-slot index. */
+function conflictIsSlot(error: { message?: string; details?: string | null }): boolean {
+  const haystack = `${error.message ?? ""} ${error.details ?? ""}`;
+  return haystack.includes(SLOT_INDEX);
+}
 
 export async function persistAppointment(
   appointment: AppointmentData,
@@ -102,7 +145,9 @@ export async function persistAppointment(
     timezone: appointment.timeZone,
     notes: appointment.notes || null,
 
+    purpose: appointment.purpose || null,
     appliance_id: appointment.applianceId || null,
+    appliance_slug: appointment.applianceSlug || null,
     appliance_label: appointment.applianceLabel || null,
 
     // Consent provenance is written here and nowhere else. The timestamp and the
@@ -131,6 +176,16 @@ export async function persistAppointment(
 
   if (!error) return { id: (data?.id as string) ?? null, duplicate: false };
 
+  if (error.code === UNIQUE_VIOLATION && conflictIsSlot(error)) {
+    // The slot went while this visitor was typing. Not an error in the booking
+    // and not something a retry of the same request can fix — the caller has to
+    // put them back in front of the slot picker.
+    console.info("[appointments] slot already taken", {
+      scheduledFor: appointment.scheduledFor.toISOString(),
+    });
+    throw new AppointmentSlotTakenError();
+  }
+
   if (error.code === UNIQUE_VIOLATION && appointment.submissionToken) {
     // The same submission arriving twice. Resolve to the appointment that
     // already exists rather than creating a second one; the notification claims
@@ -157,6 +212,12 @@ export async function persistAppointment(
 const defaultDeps: BookAppointmentDeps = {
   persist: persistAppointment,
   notify: sendAppointmentBookedNotifications,
+  email: sendAppointmentEmails,
+};
+
+const NO_EMAILS: AppointmentEmailOutcomes = {
+  owner: { status: "failed", reason: "exception" },
+  customer: { status: "failed", reason: "exception" },
 };
 
 export async function bookAppointment(
@@ -197,7 +258,37 @@ export async function bookAppointment(
     };
   }
 
-  return { ok: true, id, duplicate, notifications };
+  // Email, on the same terms as SMS: after the commit, failures swallowed. A
+  // resubmitted booking is not re-announced — the appointment already exists and
+  // the owner has already been told about it.
+  let emails: AppointmentEmailOutcomes;
+  if (duplicate) {
+    emails = {
+      owner: { status: "skipped", reason: "duplicate-submission" },
+      customer: { status: "skipped", reason: "duplicate-submission" },
+    };
+  } else {
+    try {
+      emails = await deps.email({
+        ...target,
+        email: appointment.email,
+        zip: appointment.zip,
+        purpose: appointment.purpose,
+        applianceSlug: appointment.applianceSlug,
+        source: appointment.source,
+        utmCampaign: appointment.utmCampaign,
+        formLocation: appointment.formLocation,
+      });
+    } catch (error) {
+      console.error("[appointments] email dispatch threw - booking is unaffected", {
+        appointmentId: id,
+        error,
+      });
+      emails = NO_EMAILS;
+    }
+  }
+
+  return { ok: true, id, duplicate, notifications, emails };
 }
 
 /** Surfaced by the admin so "no database" and "SMS off" read differently. */

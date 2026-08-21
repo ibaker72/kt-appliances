@@ -36,10 +36,13 @@ export interface AdminAppointment {
   email: string | null;
   zip: string | null;
   serviceType: AppointmentServiceType;
+  /** Customer-facing booking reason, when one was chosen. Null on older rows. */
+  purpose: string | null;
   scheduledFor: string;
   timezone: string;
   notes: string | null;
   applianceLabel: string | null;
+  applianceSlug: string | null;
   smsConsent: boolean;
   smsConsentAt: string | null;
   status: AppointmentStatus;
@@ -86,10 +89,12 @@ function mapAppointment(row: Row): AdminAppointment {
     email: nullableStr(row.email),
     zip: nullableStr(row.zip),
     serviceType: (str(row.service_type) || "warehouse-visit") as AppointmentServiceType,
+    purpose: nullableStr(row.purpose),
     scheduledFor: str(row.scheduled_for),
     timezone: str(row.timezone) || "America/New_York",
     notes: nullableStr(row.notes),
     applianceLabel: nullableStr(row.appliance_label),
+    applianceSlug: nullableStr(row.appliance_slug),
     smsConsent: row.sms_consent === true,
     smsConsentAt: nullableStr(row.sms_consent_at),
     status: (str(row.status) || "confirmed") as AppointmentStatus,

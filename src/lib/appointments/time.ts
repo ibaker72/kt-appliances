@@ -15,6 +15,60 @@
 export const BUSINESS_TIME_ZONE = "America/New_York";
 
 /**
+ * How long one appointment occupies the warehouse, and therefore how far apart
+ * bookable start times are.
+ *
+ * Configuration, not an environment variable: the slot grid is baked into a
+ * unique index in Postgres (`appointments_active_slot_idx`, migration 0007), so
+ * changing it is a schema decision that has to be taken with the existing
+ * bookings in view — not something a deploy-time variable should be able to move
+ * out from under them.
+ */
+export const APPOINTMENT_DURATION_MINUTES = 30;
+
+/** `"10:00"` → 600. Returns null for anything that is not a `HH:MM` clock time. */
+export function minutesFromClock(value: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
+  return hour * 60 + minute;
+}
+
+/** 600 → `"10:00"`. */
+export function clockFromMinutes(minutes: number): string {
+  const hour = Math.floor(minutes / 60) % 24;
+  const minute = minutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/**
+ * Every bookable start time between `open` and `close`, `step` minutes apart.
+ *
+ * The last start is one full appointment before closing: a slot that begins at
+ * closing time schedules someone's arrival for the moment the doors lock.
+ * Returns an empty array rather than guessing when the window is unusable, so a
+ * mistyped hour in `siteConfig` shows up as "no times" instead of as a grid of
+ * times nobody is there for.
+ */
+export function buildSlots(
+  open: string,
+  close: string,
+  step: number = APPOINTMENT_DURATION_MINUTES,
+): string[] {
+  const start = minutesFromClock(open);
+  const end = minutesFromClock(close);
+  if (start == null || end == null || step <= 0 || end - start < step) return [];
+
+  const slots: string[] = [];
+  for (let minutes = start; minutes + step <= end; minutes += step) {
+    slots.push(clockFromMinutes(minutes));
+  }
+  return slots;
+}
+
+/**
  * How far ahead a booking must be. A slot fifteen minutes from now is not an
  * appointment anyone can prepare for — the customer would arrive before the
  * owner had read the alert.

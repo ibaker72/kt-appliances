@@ -400,6 +400,49 @@ export async function getApplianceBySlug(slug: string): Promise<Appliance | null
 }
 
 /**
+ * Looks up one published listing by its primary key.
+ *
+ * The counterpart to `getApplianceBySlug`, for callers that hold an id rather
+ * than a URL — the chat assistant attaches an appliance to an appointment by id,
+ * and has to re-read the unit server-side to confirm it is real, published and
+ * still on the floor before writing that id onto a booking.
+ *
+ * The uuid shape is checked before the query, not for safety (PostgREST
+ * parameterises the value) but because an unparseable uuid is a 400 from
+ * Postgres rather than an empty result, and "not found" is the honest answer to
+ * a malformed id.
+ */
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function getApplianceById(id: string): Promise<Appliance | null> {
+  const trimmed = id.trim();
+  if (!trimmed) return null;
+
+  const client = getSupabaseReadClient();
+
+  if (!client) {
+    if (!isDemoInventory()) return null;
+    return DEMO_APPLIANCES.find((item) => item.id === trimmed && item.published) ?? null;
+  }
+
+  if (!UUID_PATTERN.test(trimmed)) return null;
+
+  const { data, error } = await client
+    .from("appliances")
+    .select(SELECT)
+    .eq("id", trimmed)
+    .eq("published", true)
+    .neq("status", "draft")
+    .maybeSingle();
+
+  if (error) {
+    console.error("[inventory] id lookup failed:", error.message);
+    return null;
+  }
+  return data ? mapRow(data as Row) : null;
+}
+
+/**
  * Looks up listings by slug, preserving the order asked for.
  *
  * Used by the saved list, which stores slugs only: re-reading the catalogue on

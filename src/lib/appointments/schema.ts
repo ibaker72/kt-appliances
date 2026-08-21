@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+import { siteConfig } from "@/lib/site-config";
 import {
   BUSINESS_TIME_ZONE,
   MAX_DAYS_AHEAD,
   MIN_LEAD_TIME_MINUTES,
+  buildSlots,
   wallTimeToUtc,
 } from "./time";
 
@@ -71,22 +73,23 @@ export const SMS_CONSENT_TEXT =
 export const SMS_CONSENT_SOURCE = "appointment_web_form";
 
 /**
- * Bookable start times, 30 minutes apart.
+ * Bookable start times, one appointment length apart.
  *
- * The warehouse opens at 10:00 and after-hours visits run to 21:00, so the last
- * start is 20:30 — booking a 21:00 slot would schedule someone's arrival for the
- * moment the doors lock. Hours come from `siteConfig`; the slot grid is derived
- * here rather than duplicated in the form.
+ * Derived from `siteConfig.hours` rather than restated: the warehouse opens at
+ * `regular.open` and after-hours visits run to `afterHours.close`, so the last
+ * start is one appointment before that — booking a 21:00 slot would schedule
+ * someone's arrival for the moment the doors lock. Previously this was a
+ * hand-counted `length: 22` that happened to agree with the published hours;
+ * now moving the hours moves the grid, and the chat assistant's slot picker and
+ * this form cannot disagree about which times exist.
  */
-export const APPOINTMENT_SLOTS: readonly string[] = Array.from({ length: 22 }, (_, index) => {
-  const minutesFromOpen = index * 30;
-  const hour = 10 + Math.floor(minutesFromOpen / 60);
-  const minute = minutesFromOpen % 60;
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-});
+export const APPOINTMENT_SLOTS: readonly string[] = buildSlots(
+  siteConfig.hours.regular.open,
+  siteConfig.hours.afterHours.close,
+);
 
-/** Slots at or after 17:00 are the after-hours window, which the form labels. */
-export const AFTER_HOURS_FROM = "17:00";
+/** Slots at or after the after-hours boundary are appointment-only, which the UI labels. */
+export const AFTER_HOURS_FROM = siteConfig.hours.afterHours.open;
 
 /** US phone: exactly 10 digits after stripping formatting and an optional +1. */
 const phoneSchema = z
@@ -146,6 +149,18 @@ export const appointmentSchema = z
     notes: z.string().trim().max(2000).optional().default(""),
 
     smsConsent: consentSchema,
+
+    /**
+     * Customer-facing booking reason, from `APPOINTMENT_PURPOSES`.
+     *
+     * Optional and unvalidated against the catalogue on purpose: `serviceType`
+     * is the field the warehouse operates on and it is already a closed enum,
+     * so an unrecognised purpose must not be able to reject an otherwise valid
+     * booking. `describeAppointmentPurpose` falls back to the service label for
+     * anything it does not recognise — including every appointment booked
+     * before this column existed.
+     */
+    purpose: z.string().trim().max(60).optional().default(""),
 
     // Context attached by the form, not typed by the visitor.
     applianceId: z.string().trim().max(64).optional().default(""),

@@ -2,10 +2,10 @@ import { CalendarClock, MessageSquareText, Phone } from "lucide-react";
 
 import { updateAppointmentStatusAction } from "@/app/admin/actions";
 import {
-  APPOINTMENT_SERVICE_LABELS,
   APPOINTMENT_STATUSES,
   APPOINTMENT_STATUS_LABELS,
 } from "@/lib/appointments/schema";
+import { describeAppointmentPurpose } from "@/lib/appointments/purposes";
 import { formatAppointmentDateTime } from "@/lib/appointments/time";
 import type {
   AdminAppointment,
@@ -83,9 +83,19 @@ export function AppointmentRow({ appointment }: { appointment: AdminAppointment 
             >
               {APPOINTMENT_STATUS_LABELS[appointment.status] ?? appointment.status}
             </span>
+            {/* What the customer chose, in their words. Falls back to the
+                service type for bookings made before purposes existed. */}
             <span className="text-[12.5px] text-ink-500">
-              {APPOINTMENT_SERVICE_LABELS[appointment.serviceType] ?? appointment.serviceType}
+              {describeAppointmentPurpose(appointment.purpose, appointment.serviceType)}
             </span>
+            {/* Where it came from. The chat assistant and the /schedule page
+                write to the same table, and the owner should be able to tell
+                which is producing bookings. */}
+            {appointment.formLocation ? (
+              <span className="inline-block bg-bone-200 px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-ink-600">
+                {appointment.formLocation.replace(/_/g, " ")}
+              </span>
+            ) : null}
           </p>
 
           <p className="mt-1.5 flex items-center gap-2 font-display text-[15px] font-bold text-ink-900">
@@ -107,7 +117,16 @@ export function AppointmentRow({ appointment }: { appointment: AdminAppointment 
               <span className="text-[11.5px] font-semibold uppercase tracking-wide text-ink-500">
                 Appliance
               </span>{" "}
-              {appointment.applianceLabel}
+              {appointment.applianceSlug ? (
+                <a
+                  href={`/inventory/${appointment.applianceSlug}`}
+                  className="font-medium underline underline-offset-2 hover:text-brand-500"
+                >
+                  {appointment.applianceLabel}
+                </a>
+              ) : (
+                appointment.applianceLabel
+              )}
             </p>
           ) : null}
 
